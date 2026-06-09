@@ -1,0 +1,23 @@
+[
+  {
+    "title": "복지부-의사협 전공의 복귀 협상 재개…조건부 복귀안 논의",
+    "description": "보건복지부와 대한의사협회가 전공의 사태 해결을 위한 협상 테이블에 다시 앉았다. 전공의 측은 의대 증원 규모 재검토를 복귀 전제 조건으로 요구하고 있다.",
+    "url": "https://www.newsis.com/mock/new/med/001",
+    "publishedAt": "2026-06-09T10:00:00Z",
+    "outletId": "newsis"
+  },
+  {
+    "title": "삼성전자 HBM4 엔비디아 납품 협의 마무리 단계…하반기 공급 전망",
+    "description": "삼성전자가 엔비디아의 차세대 GPU에 탑재될 HBM4 메모리 공급 협의를 마무리 단계에서 진행 중이다. 업계에서는 3분기 인증 완료 후 4분기 본격 납품이 시작될 것으로 보고 있다.",
+    "url": "https://www.news1.kr/mock/new/hbm/001",
+    "publishedAt": "2026-06-09T11:30:00Z",
+    "outletId": "news1"
+  },
+  {
+    "title": "황선우, 세계수영선수권 자유형 200m 금메달…한국 수영 사상 첫 쾌거",
+    "description": "황선우가 세계수영선수권대회 남자 자유형 200m에서 금메달을 획득했다. 한국 수영이 세계선수권 개인 종목에서 금메달을 딴 것은 이번이 처음이다.",
+    "url": "https://www.hani.co.kr/mock/new/sports/001",
+    "publishedAt": "2026-06-09T08:00:00Z",
+    "outletId": "hani"
+  }
+]

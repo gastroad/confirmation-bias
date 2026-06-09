@@ -1,0 +1,246 @@
+{
+  "clusters": [
+    {
+      "id": "cl_medical",
+      "representativeTitle": "전공의 집단사직 장기화…의료 공백 확산"
+    },
+    {
+      "id": "cl_hbm",
+      "representativeTitle": "SK하이닉스 HBM3E 독점 공급…AI 반도체 패권 경쟁"
+    },
+    {
+      "id": "cl_tariff",
+      "representativeTitle": "한미 관세 협상 재개…자동차·반도체 핵심 쟁점"
+    },
+    {
+      "id": "cl_realestate",
+      "representativeTitle": "서울 아파트 11주 연속 상승…정부 추가 대책 검토"
+    },
+    {
+      "id": "cl_semiconductor_law",
+      "representativeTitle": "반도체 특별법 국회 본회의 통과…업계 환영"
+    },
+    {
+      "id": "cl_energy",
+      "representativeTitle": "정부, 2035 온실가스 감축목표 상향…재생에너지 확대 논쟁"
+    }
+  ],
+  "articles": [
+    {
+      "id": "art_med_001",
+      "title": "전공의 이탈 6개월째…응급실 포화, 수술 지연 현실화",
+      "description": "전국 주요 상급종합병원의 전공의 복귀율이 18%에 그치면서 응급실 과부하와 중증 수술 지연 사태가 심각해지고 있다. 의료계는 정부의 의대 증원 원점 재논의 없이는 정상화가 불가능하다는 입장이다.",
+      "url": "https://www.chosun.com/mock/med/001",
+      "publishedAt": "2026-06-08T09:15:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_medical"
+    },
+    {
+      "id": "art_med_002",
+      "title": "전공의들이 병원을 떠난 이유…'근로 착취' 구조가 먼저다",
+      "description": "전공의 파업의 뿌리에는 주 100시간에 달하는 과도한 수련 노동이 있다. 의대 증원 논쟁에 가려졌지만, 전공의 처우 개선 없이는 어떤 해법도 미봉책에 그친다는 지적이 의료계 내부에서도 나온다.",
+      "url": "https://www.hani.co.kr/mock/med/002",
+      "publishedAt": "2026-06-08T10:40:00Z",
+      "outletId": "hani",
+      "clusterId": "cl_medical"
+    },
+    {
+      "id": "art_med_003",
+      "title": "의대 증원 갈등 6개월…정부·의사 양측 모두 '출구' 필요",
+      "description": "의대 정원 2000명 증원을 놓고 정부와 의료계가 반년째 대치 중이다. 전공의 공백으로 의료 현장은 한계에 달했고, 전문가들은 양측이 '체면 살리기' 협상에 나설 시점이라고 진단한다.",
+      "url": "https://www.joongang.co.kr/mock/med/003",
+      "publishedAt": "2026-06-08T13:20:00Z",
+      "outletId": "joongang",
+      "clusterId": "cl_medical"
+    },
+    {
+      "id": "art_med_004",
+      "title": "전공의 복귀율 18%…의료 공백 해소 '요원'",
+      "description": "보건복지부에 따르면 전국 수련병원의 전공의 복귀율이 18.3%에 머물고 있다. 내과·외과 등 필수의료 전공의 부족이 심각해 주요 대학병원들이 교수들의 연장 근무로 버티는 상황이다.",
+      "url": "https://www.yna.co.kr/mock/med/004",
+      "publishedAt": "2026-06-08T07:00:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_medical"
+    },
+    {
+      "id": "art_hbm_001",
+      "title": "SK하이닉스, HBM3E 엔비디아 독점 공급…AI 메모리 시장 장악",
+      "description": "SK하이닉스가 엔비디아 블랙웰 GPU에 탑재될 HBM3E 5세대 메모리를 사실상 단독 공급하며 AI 반도체 메모리 시장의 패권을 쥐고 있다. 삼성전자의 HBM3E 인증 지연이 독주 배경이다.",
+      "url": "https://www.chosun.com/mock/hbm/001",
+      "publishedAt": "2026-06-07T08:00:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_hbm"
+    },
+    {
+      "id": "art_hbm_002",
+      "title": "하이닉스 2분기 영업이익 9조 돌파 전망…HBM 덕분",
+      "description": "증권업계는 SK하이닉스의 2분기 영업이익이 9조 원을 넘어설 것으로 전망하고 있다. AI 서버용 HBM 수요 급증이 실적 호조의 핵심 요인으로 꼽힌다.",
+      "url": "https://www.news1.kr/mock/hbm/002",
+      "publishedAt": "2026-06-07T10:30:00Z",
+      "outletId": "news1",
+      "clusterId": "cl_hbm"
+    },
+    {
+      "id": "art_hbm_003",
+      "title": "삼성전자 HBM 인증 지연 언제 끝나나…엔비디아 공급 시계 안갯속",
+      "description": "엔비디아로부터 HBM3E 공급 인증을 받지 못하고 있는 삼성전자가 수율 문제 해결에 총력을 기울이고 있다. 업계에서는 올 4분기가 분기점이 될 것으로 보고 있다.",
+      "url": "https://www.donga.com/mock/hbm/003",
+      "publishedAt": "2026-06-07T14:00:00Z",
+      "outletId": "donga",
+      "clusterId": "cl_hbm"
+    },
+    {
+      "id": "art_hbm_004",
+      "title": "AI 붐에 HBM 수요 폭발…한국 반도체 업계 '즐거운 비명'",
+      "description": "챗GPT 이후 생성형 AI 모델의 파라미터 규모가 커지면서 고대역폭 메모리(HBM) 수요가 폭발적으로 늘고 있다. SK하이닉스와 삼성전자 모두 HBM 생산 라인 증설에 나섰다.",
+      "url": "https://www.yna.co.kr/mock/hbm/004",
+      "publishedAt": "2026-06-07T06:30:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_hbm"
+    },
+    {
+      "id": "art_tariff_001",
+      "title": "트럼프 25% 관세 현실화…한국 자동차·철강 수출 '비상'",
+      "description": "미국의 한국산 자동차에 대한 25% 관세 부과가 현실화하면서 현대·기아차를 비롯한 국내 완성차 업체들이 긴급 대책 마련에 나섰다. 연간 수출 손실이 최대 3조 원에 달할 것이라는 분석도 나온다.",
+      "url": "https://www.chosun.com/mock/tariff/001",
+      "publishedAt": "2026-06-06T09:00:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_tariff"
+    },
+    {
+      "id": "art_tariff_002",
+      "title": "미국 관세 폭탄, 수출 의존 한국 경제 직격…서민 물가 직접 타격",
+      "description": "미국발 관세 충격이 대기업 수출에 그치지 않고 중소 부품업체와 최종 소비자 물가로까지 번질 것이라는 우려가 커지고 있다. 경제학자들은 '무역 전쟁의 진짜 피해자는 서민'이라고 경고한다.",
+      "url": "https://www.hani.co.kr/mock/tariff/002",
+      "publishedAt": "2026-06-06T11:00:00Z",
+      "outletId": "hani",
+      "clusterId": "cl_tariff"
+    },
+    {
+      "id": "art_tariff_003",
+      "title": "한미 통상 협상, 한국의 협상력은 어디서 오나",
+      "description": "관세 협상에서 한국이 미국에 내밀 수 있는 카드는 무엇인가. 주한미군 방위비 분담, 대미 투자 확대, 농산물 시장 개방 등이 협상 테이블에 오를 수 있다는 분석이 나온다.",
+      "url": "https://www.khan.co.kr/mock/tariff/003",
+      "publishedAt": "2026-06-06T15:00:00Z",
+      "outletId": "khan",
+      "clusterId": "cl_tariff"
+    },
+    {
+      "id": "art_tariff_004",
+      "title": "한미 관세 협상 재개…자동차·반도체·농산물 3대 쟁점",
+      "description": "한미 양국이 관세 협상을 재개했다. 미국이 요구하는 한국산 자동차 관세 철폐, 반도체 공급망 협력, 미국산 농산물 시장 추가 개방이 핵심 의제다.",
+      "url": "https://www.yna.co.kr/mock/tariff/004",
+      "publishedAt": "2026-06-06T06:00:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_tariff"
+    },
+    {
+      "id": "art_re_001",
+      "title": "서울 아파트 11주 연속 상승…강남 3구 재건축 기대감 확산",
+      "description": "한국부동산원에 따르면 서울 아파트 매매가격이 11주 연속 오름세를 이어갔다. 강남·서초·송파 등 강남 3구의 재건축 추진 단지 중심으로 집값 상승 기대감이 높아지고 있다.",
+      "url": "https://www.chosun.com/mock/re/001",
+      "publishedAt": "2026-06-05T08:00:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_realestate"
+    },
+    {
+      "id": "art_re_002",
+      "title": "집값 폭등 또 시작되나…서민 내 집 마련 꿈 또다시 멀어져",
+      "description": "서울 아파트값이 11주 연속 오르면서 중저가 주택을 찾는 실수요자들의 시름이 깊어지고 있다. 전세가도 동반 상승해 '전세 난민'이 다시 늘 것이라는 우려가 크다.",
+      "url": "https://www.hani.co.kr/mock/re/002",
+      "publishedAt": "2026-06-05T10:30:00Z",
+      "outletId": "hani",
+      "clusterId": "cl_realestate"
+    },
+    {
+      "id": "art_re_003",
+      "title": "아파트값 반등 '신호탄'인가, 일시적 반등인가",
+      "description": "서울 아파트 가격이 연속 상승세를 기록하자 부동산 전문가들 사이에서 이것이 본격적인 상승 전환인지 아니면 특정 지역 현상에 불과한지를 놓고 의견이 엇갈리고 있다.",
+      "url": "https://www.joongang.co.kr/mock/re/003",
+      "publishedAt": "2026-06-05T13:00:00Z",
+      "outletId": "joongang",
+      "clusterId": "cl_realestate"
+    },
+    {
+      "id": "art_re_004",
+      "title": "서울 아파트 매매가 11주 연속 상승…정부 추가 대책 검토",
+      "description": "국토교통부는 서울 아파트 가격 상승세가 지속되자 추가 공급 대책 검토에 착수했다. 3기 신도시 공급 일정 앞당기기와 재건축 규제 일부 완화가 유력한 카드로 거론된다.",
+      "url": "https://www.yna.co.kr/mock/re/004",
+      "publishedAt": "2026-06-05T07:30:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_realestate"
+    },
+    {
+      "id": "art_semi_001",
+      "title": "반도체 특별법 국회 통과…보조금·세제 혜택 법적 근거 마련",
+      "description": "삼성전자·SK하이닉스 등 반도체 기업에 대한 정부 보조금 지원과 세제 혜택의 법적 근거를 담은 반도체 특별법이 국회 본회의를 통과했다. 여야가 이례적으로 초당적 협력에 나선 결과다.",
+      "url": "https://www.chosun.com/mock/semi/001",
+      "publishedAt": "2026-06-04T16:00:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_semiconductor_law"
+    },
+    {
+      "id": "art_semi_002",
+      "title": "반도체 특별법 통과에 재계 환영…'이제 실행이 중요'",
+      "description": "반도체 특별법 통과 소식에 삼성전자와 SK하이닉스 등 반도체 업계가 일제히 환영 성명을 냈다. 업계는 법 시행 이후 구체적인 보조금 지급 기준과 투자 인센티브 설계가 핵심이라고 강조했다.",
+      "url": "https://www.donga.com/mock/semi/002",
+      "publishedAt": "2026-06-04T17:30:00Z",
+      "outletId": "donga",
+      "clusterId": "cl_semiconductor_law"
+    },
+    {
+      "id": "art_semi_003",
+      "title": "반도체 특별법, 여야 초당 협력 '이례적'…뒤에 숨은 계산은",
+      "description": "반도체 특별법이 여야 합의로 신속 처리된 배경에는 미·중 기술 패권 경쟁 속 한국 반도체 산업 보호라는 공동 인식이 있다. 하지만 법인세 감면 조항은 여야 간 이견이 마지막까지 남았다.",
+      "url": "https://www.khan.co.kr/mock/semi/003",
+      "publishedAt": "2026-06-04T19:00:00Z",
+      "outletId": "khan",
+      "clusterId": "cl_semiconductor_law"
+    },
+    {
+      "id": "art_semi_004",
+      "title": "반도체 특별법 국회 통과…정부 '조속 시행' 의지",
+      "description": "기획재정부와 산업통상자원부는 반도체 특별법 국회 통과 직후 공동 브리핑을 열고 하위 법령 마련에 신속히 나서겠다고 밝혔다.",
+      "url": "https://www.yna.co.kr/mock/semi/004",
+      "publishedAt": "2026-06-04T15:30:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_semiconductor_law"
+    },
+    {
+      "id": "art_energy_001",
+      "title": "탄소중립 목표 상향, 원전 없이 가능한가…에너지 안보 논란",
+      "description": "정부가 2035년 온실가스 감축 목표를 상향 조정하면서 원전 유지·확대 없이는 목표 달성이 불가능하다는 주장과, 재생에너지 확대만으로도 가능하다는 반론이 맞서고 있다.",
+      "url": "https://www.chosun.com/mock/energy/001",
+      "publishedAt": "2026-06-03T09:00:00Z",
+      "outletId": "chosun",
+      "clusterId": "cl_energy"
+    },
+    {
+      "id": "art_energy_002",
+      "title": "기후위기, 더 이상 미룰 수 없다…재생에너지 전환 서둘러야",
+      "description": "한국의 2035 온실가스 감축 목표 상향이 국제적 기준에 비춰 여전히 부족하다는 비판이 환경단체들 사이에서 나오고 있다. 태양광·풍력 보급 속도를 두 배 이상 높여야 한다는 주장이다.",
+      "url": "https://www.hani.co.kr/mock/energy/002",
+      "publishedAt": "2026-06-03T11:00:00Z",
+      "outletId": "hani",
+      "clusterId": "cl_energy"
+    },
+    {
+      "id": "art_energy_003",
+      "title": "원전이냐 재생에너지냐, 이분법을 넘어서야",
+      "description": "한국의 에너지 정책 논쟁이 '원전 대 재생에너지'의 이분법에 갇혀 있다는 비판이 제기된다. 전문가들은 두 에너지원을 병행 발전시키면서 전력망 안정성을 확보하는 현실적 접근이 필요하다고 강조한다.",
+      "url": "https://www.khan.co.kr/mock/energy/003",
+      "publishedAt": "2026-06-03T14:00:00Z",
+      "outletId": "khan",
+      "clusterId": "cl_energy"
+    },
+    {
+      "id": "art_energy_004",
+      "title": "정부, 2035 국가온실가스감축목표 상향 발표…재생에너지 비중 확대",
+      "description": "환경부와 산업통상자원부는 2035년 국가온실가스감축목표(NDC)를 기존 대비 상향 조정하는 내용의 계획을 발표했다. 태양광·풍력 설비 확대가 핵심 수단으로 제시됐다.",
+      "url": "https://www.yna.co.kr/mock/energy/004",
+      "publishedAt": "2026-06-03T06:00:00Z",
+      "outletId": "yonhap",
+      "clusterId": "cl_energy"
+    }
+  ]
+}

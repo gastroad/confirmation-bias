@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Outlet {
+  id      String  @id
+  name    String
+  domain  String
+  leaning String  // "left" | "center_left" | "center" | "center_right" | "right" | "unknown"
+
+  articles Article[]
+}
+
+model Cluster {
+  id                  String   @id @default(uuid())
+  representativeTitle String
+  summary             String?
+  centroidJson        String?  // JSON.stringify(number[]) — 128-dim normalized vector
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  articles Article[]
+}
+
+model Article {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  body          String?
+  url           String   @unique
+  publishedAt   DateTime
+  embeddingJson String?  // JSON.stringify(number[]) — 128-dim normalized vector
+
+  outletId  String
+  outlet    Outlet   @relation(fields: [outletId], references: [id])
+  clusterId String?
+  cluster   Cluster? @relation(fields: [clusterId], references: [id])
+
+  createdAt DateTime @default(now())
+}
