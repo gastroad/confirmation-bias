@@ -1,0 +1,310 @@
+{
+  "politics": [
+    {
+      "publisher": "경향신문",
+      "url": "https://www.khan.co.kr/rss/rssdata/politic_news.xml",
+      "leaning": "center_left"
+    },
+    {
+      "publisher": "뉴시스",
+      "url": "https://newsis.com/RSS/politics.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "동아일보",
+      "url": "https://rss.donga.com/politics.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "서울신문",
+      "url": "https://www.seoul.co.kr/xml/rss/rss_politics.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "세계일보",
+      "url": "http://www.segye.com/Articles/RSSList/segye_politic.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "시사인",
+      "url": "https://www.sisain.co.kr/rss/S1N6.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "시사저널",
+      "url": "http://www.sisajournal.com/rss/S1N58.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "여성신문",
+      "url": "http://www.womennews.co.kr/rss/S1N1.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "연합뉴스",
+      "url": "https://www.yna.co.kr/rss/politics.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "조선일보",
+      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/politics/?outputType=xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "중앙일보",
+      "url": "https://rss.joins.com/joins_politics_list.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "천지일보",
+      "url": "https://cdn.newscj.com/rss/gns_S1N1.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "프레시안",
+      "url": "https://www.pressian.com/api/v3/site/rss/section/66",
+      "leaning": "left"
+    },
+    {
+      "publisher": "한겨레신문",
+      "url": "https://www.hani.co.kr/rss/politics/",
+      "leaning": "left"
+    },
+    {
+      "publisher": "KBS",
+      "url": "https://news.kbs.co.kr/rss/rss.do?sec=politics",
+      "leaning": "center"
+    }
+  ],
+  "economy": [
+    {
+      "publisher": "경향신문",
+      "url": "https://www.khan.co.kr/rss/rssdata/economy_news.xml",
+      "leaning": "center_left"
+    },
+    {
+      "publisher": "뉴시스",
+      "url": "https://newsis.com/RSS/economy.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "동아일보",
+      "url": "https://rss.donga.com/economy.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "서울신문",
+      "url": "https://www.seoul.co.kr/xml/rss/rss_economy.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "세계일보",
+      "url": "http://www.segye.com/Articles/RSSList/segye_economy.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "시사인",
+      "url": "https://www.sisain.co.kr/rss/S1N7.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "시사저널",
+      "url": "http://www.sisajournal.com/rss/S1N54.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "여성신문",
+      "url": "http://www.womennews.co.kr/rss/S1N4.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "연합뉴스",
+      "url": "https://www.yna.co.kr/rss/economy.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "조선일보",
+      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "중앙일보",
+      "url": "https://rss.joins.com/joins_economy_list.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "천지일보",
+      "url": "https://cdn.newscj.com/rss/gns_S1N2.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "프레시안",
+      "url": "https://www.pressian.com/api/v3/site/rss/section/67",
+      "leaning": "left"
+    },
+    {
+      "publisher": "한겨레신문",
+      "url": "https://www.hani.co.kr/rss/economy/",
+      "leaning": "left"
+    },
+    {
+      "publisher": "KBS",
+      "url": "https://news.kbs.co.kr/rss/rss.do?sec=economy",
+      "leaning": "center"
+    }
+  ],
+  "society": [
+    {
+      "publisher": "경향신문",
+      "url": "https://www.khan.co.kr/rss/rssdata/society_news.xml",
+      "leaning": "center_left"
+    },
+    {
+      "publisher": "뉴시스",
+      "url": "https://newsis.com/RSS/society.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "동아일보",
+      "url": "https://rss.donga.com/national.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "서울신문",
+      "url": "https://www.seoul.co.kr/xml/rss/rss_society.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "세계일보",
+      "url": "http://www.segye.com/Articles/RSSList/segye_society.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "시사인",
+      "url": "https://www.sisain.co.kr/rss/S1N8.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "시사저널",
+      "url": "http://www.sisajournal.com/rss/S1N47.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "여성신문",
+      "url": "http://www.womennews.co.kr/rss/S1N2.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "연합뉴스",
+      "url": "https://www.yna.co.kr/rss/society.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "조선일보",
+      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/national/?outputType=xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "중앙일보",
+      "url": "https://rss.joins.com/joins_society_list.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "천지일보",
+      "url": "https://cdn.newscj.com/rss/gns_S1N3.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "프레시안",
+      "url": "https://www.pressian.com/api/v3/site/rss/section/68",
+      "leaning": "left"
+    },
+    {
+      "publisher": "한겨레신문",
+      "url": "https://www.hani.co.kr/rss/society/",
+      "leaning": "left"
+    },
+    {
+      "publisher": "KBS",
+      "url": "https://news.kbs.co.kr/rss/rss.do?sec=society",
+      "leaning": "center"
+    }
+  ],
+  "international": [
+    {
+      "publisher": "경향신문",
+      "url": "https://www.khan.co.kr/rss/rssdata/kh_world.xml",
+      "leaning": "center_left"
+    },
+    {
+      "publisher": "뉴시스",
+      "url": "https://newsis.com/RSS/international.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "동아일보",
+      "url": "https://rss.donga.com/international.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "서울신문",
+      "url": "https://www.seoul.co.kr/xml/rss/rss_international.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "세계일보",
+      "url": "http://www.segye.com/Articles/RSSList/segye_international.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "시사인",
+      "url": "https://www.sisain.co.kr/rss/S1N11.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "시사저널",
+      "url": "http://www.sisajournal.com/rss/S1N59.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "여성신문",
+      "url": "http://www.womennews.co.kr/rss/S1N3.xml",
+      "leaning": "left"
+    },
+    {
+      "publisher": "연합뉴스",
+      "url": "https://www.yna.co.kr/rss/international.xml",
+      "leaning": "center"
+    },
+    {
+      "publisher": "조선일보",
+      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/international/?outputType=xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "중앙일보",
+      "url": "https://rss.joins.com/joins_world_list.xml",
+      "leaning": "center_right"
+    },
+    {
+      "publisher": "천지일보",
+      "url": "https://cdn.newscj.com/rss/gns_S1N4.xml",
+      "leaning": "right"
+    },
+    {
+      "publisher": "프레시안",
+      "url": "https://www.pressian.com/api/v3/site/rss/section/65",
+      "leaning": "left"
+    },
+    {
+      "publisher": "한겨레신문",
+      "url": "https://www.hani.co.kr/rss/international/",
+      "leaning": "left"
+    },
+    {
+      "publisher": "KBS",
+      "url": "https://news.kbs.co.kr/rss/rss.do?sec=world",
+      "leaning": "center"
+    }
+  ]
+}

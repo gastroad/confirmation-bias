@@ -1,14 +1,21 @@
 import type { Leaning, LeaningDistribution, LeaningGroup, LeaningGroupRatios, OutletMetadata } from "@/types";
 
 export const OUTLETS: OutletMetadata[] = [
-  { id: "chosun",   name: "조선일보", domain: "chosun.com",     leaning: "right",        leaningLabel: "보수" },
-  { id: "joongang", name: "중앙일보", domain: "joongang.co.kr", leaning: "center_right", leaningLabel: "중도보수" },
-  { id: "donga",    name: "동아일보", domain: "donga.com",      leaning: "center_right", leaningLabel: "중도보수" },
-  { id: "hani",     name: "한겨레",   domain: "hani.co.kr",     leaning: "left",         leaningLabel: "진보" },
-  { id: "khan",     name: "경향신문", domain: "khan.co.kr",     leaning: "center_left",  leaningLabel: "중도진보" },
-  { id: "yonhap",   name: "연합뉴스", domain: "yna.co.kr",      leaning: "center",       leaningLabel: "중도" },
-  { id: "news1",    name: "뉴스1",    domain: "news1.kr",       leaning: "center",       leaningLabel: "중도" },
-  { id: "newsis",   name: "뉴시스",   domain: "newsis.com",     leaning: "center",       leaningLabel: "중도" },
+  { id: "chosun",      name: "조선일보",  domain: "chosun.com",       leaning: "right",        leaningLabel: "보수" },
+  { id: "segye",       name: "세계일보",  domain: "segye.com",        leaning: "right",        leaningLabel: "보수" },
+  { id: "cheonji",     name: "천지일보",  domain: "newscj.com",       leaning: "right",        leaningLabel: "보수" },
+  { id: "joongang",    name: "중앙일보",  domain: "joongang.co.kr",   leaning: "center_right", leaningLabel: "중도보수" },
+  { id: "donga",       name: "동아일보",  domain: "donga.com",        leaning: "center_right", leaningLabel: "중도보수" },
+  { id: "yonhap",      name: "연합뉴스",  domain: "yna.co.kr",        leaning: "center",       leaningLabel: "중도" },
+  { id: "newsis",      name: "뉴시스",    domain: "newsis.com",       leaning: "center",       leaningLabel: "중도" },
+  { id: "seoul",       name: "서울신문",  domain: "seoul.co.kr",      leaning: "center",       leaningLabel: "중도" },
+  { id: "sisajournal", name: "시사저널",  domain: "sisajournal.com",  leaning: "center",       leaningLabel: "중도" },
+  { id: "kbs",         name: "KBS",       domain: "kbs.co.kr",        leaning: "center",       leaningLabel: "중도" },
+  { id: "khan",        name: "경향신문",  domain: "khan.co.kr",       leaning: "center_left",  leaningLabel: "중도진보" },
+  { id: "hani",        name: "한겨레신문", domain: "hani.co.kr",      leaning: "left",         leaningLabel: "진보" },
+  { id: "sisain",      name: "시사인",    domain: "sisain.co.kr",     leaning: "left",         leaningLabel: "진보" },
+  { id: "pressian",    name: "프레시안",  domain: "pressian.com",     leaning: "left",         leaningLabel: "진보" },
+  { id: "womennews",   name: "여성신문",  domain: "womennews.co.kr",  leaning: "left",         leaningLabel: "진보" },
 ];
 
 export const OUTLET_MAP: Record<string, OutletMetadata> = Object.fromEntries(
