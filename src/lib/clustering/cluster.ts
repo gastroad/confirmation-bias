@@ -52,9 +52,11 @@ export async function ingestArticle(input: IngestInput): Promise<IngestResult> {
     result = { action: "new_cluster", clusterId: await createCluster(input.title, embedding), score: bestScore };
   }
 
-  // Persist article
-  await db.article.create({
-    data: {
+  // Persist article — skip if URL already exists
+  const created = await db.article.upsert({
+    where:  { url: input.url },
+    update: {},
+    create: {
       title:         input.title,
       description:   input.description,
       url:           input.url,
@@ -64,6 +66,7 @@ export async function ingestArticle(input: IngestInput): Promise<IngestResult> {
       embeddingJson: JSON.stringify(embedding),
     },
   });
+  if (created.clusterId !== result.clusterId) return result; // already existed, skip centroid update
 
   // Update centroid of the (possibly new) cluster
   await refreshCentroid(result.clusterId, embedding);
