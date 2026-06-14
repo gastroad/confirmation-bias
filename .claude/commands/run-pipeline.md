@@ -1,11 +1,21 @@
-RSS 수집부터 DB 저장까지 전체 파이프라인을 실행합니다.
+---
+description: RSS 수집부터 DB 저장까지 전체 파이프라인을 실행합니다.
+---
 
-다음 순서로 실행하세요:
+# Run Pipeline
 
-1. `npm run collect` — RSS 피드를 수집해 `data/new-articles.json`에 저장합니다.
-2. 수집 결과를 확인합니다 (몇 개 수집됐는지, 에러 없는지).
-3. `npm run ingest` — 임베딩 생성 후 클러스터 배정하여 DB에 저장합니다.
-4. ingest 결과를 확인합니다 (assigned/new_cluster 비율, 에러 없는지).
+RSS 피드 수집부터 임베딩·클러스터 배정·DB 저장까지 전체 파이프라인을 순서대로 실행합니다.
 
-OpenAI 431 에러가 발생하면 자동 재시도(최대 5회)되므로 기다립니다.
-ECONNRESET 에러도 마찬가지로 자동 재시도됩니다.
+## 실행 순서
+
+1. **수집** — `npm run collect`
+   RSS 피드를 수집해 `data/new-articles.json`에 저장합니다.
+2. **수집 결과 확인** — 몇 개가 수집됐는지, 에러는 없는지 점검합니다.
+3. **적재** — `npm run ingest`
+   임베딩을 생성한 뒤 클러스터를 배정하여 DB에 저장합니다.
+4. **적재 결과 확인** — `assigned` / `new_cluster` 비율과 에러 여부를 점검합니다.
+
+## 에러 처리
+
+- OpenAI **431** 에러는 자동 재시도(최대 5회)되므로 기다립니다.
+- **ECONNRESET** 에러도 동일하게 자동 재시도됩니다.
