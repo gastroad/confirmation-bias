@@ -1,24 +1,23 @@
-import { db } from "@/lib/db";
+import { db } from "../db";
 import { cosineSimilarity, updateCentroid } from "./similarity";
 import { generateEmbedding } from "./embed";
 import { llmJudge } from "./llm-judge";
-import type { IngestInput } from "@/types";
+import type { IngestInput } from "./types";
 
-const ASSIGN_THRESHOLD = 0.85;  // direct match
-const JUDGE_THRESHOLD  = 0.70;  // ambiguous → LLM judge
-const WINDOW_HOURS     = 48;    // only compare against recent clusters
+const ASSIGN_THRESHOLD = 0.85;
+const JUDGE_THRESHOLD  = 0.70;
+const WINDOW_HOURS     = 48;
 
 export type IngestResult =
-  | { action: "assigned"; clusterId: string; score: number }
+  | { action: "assigned";       clusterId: string; score: number }
   | { action: "judge_assigned"; clusterId: string; score: number }
   | { action: "judge_rejected"; clusterId: string; score: number }
-  | { action: "new_cluster"; clusterId: string; score: number };
+  | { action: "new_cluster";    clusterId: string; score: number };
 
 export async function ingestArticle(input: IngestInput): Promise<IngestResult> {
   const text = [input.title, input.description].filter(Boolean).join(" ");
   const embedding = await generateEmbedding(text);
 
-  // Compare against cluster centroids within the recency window
   const since = new Date(Date.now() - WINDOW_HOURS * 60 * 60 * 1000);
   const recentClusters = await db.cluster.findMany({
     where: { updatedAt: { gte: since }, centroidJson: { not: null } },
@@ -52,7 +51,6 @@ export async function ingestArticle(input: IngestInput): Promise<IngestResult> {
     result = { action: "new_cluster", clusterId: await createCluster(input.title, embedding), score: bestScore };
   }
 
-  // Persist article — skip if URL already exists
   const created = await db.article.upsert({
     where:  { url: input.url },
     update: {},
@@ -66,9 +64,8 @@ export async function ingestArticle(input: IngestInput): Promise<IngestResult> {
       embeddingJson: JSON.stringify(embedding),
     },
   });
-  if (created.clusterId !== result.clusterId) return result; // already existed, skip centroid update
+  if (created.clusterId !== result.clusterId) return result;
 
-  // Update centroid of the (possibly new) cluster
   await refreshCentroid(result.clusterId, embedding);
 
   return result;
@@ -90,10 +87,10 @@ async function refreshCentroid(clusterId: string, newEmbedding: number[]) {
 
   const count = cluster._count.articles;
   const centroid = JSON.parse(cluster.centroidJson) as number[];
-  const updated = updateCentroid(centroid, newEmbedding, count - 1); // count already includes new article
+  const updated = updateCentroid(centroid, newEmbedding, count - 1);
 
   await db.cluster.update({
     where: { id: clusterId },
-    data: { centroidJson: JSON.stringify(updated) },
+    data:  { centroidJson: JSON.stringify(updated) },
   });
 }

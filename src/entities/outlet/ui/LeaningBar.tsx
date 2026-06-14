@@ -1,7 +1,7 @@
 "use client";
 
-import { LEANING_ORDER, LEANING_COLORS, LEANING_LABELS } from "@/lib/outlets";
-import type { LeaningDistribution } from "@/types";
+import { LEANING_ORDER, LEANING_COLORS, LEANING_LABELS } from "../model";
+import type { LeaningDistribution } from "../model";
 
 interface Props {
   distribution: LeaningDistribution;

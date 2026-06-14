@@ -9,7 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import type { TimelinePoint } from "@/types";
+import type { TimelinePoint } from "@/entities/article";
 
 interface Props {
   data: TimelinePoint[];

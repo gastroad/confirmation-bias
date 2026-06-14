@@ -1,23 +1,6 @@
-/**
- * Ingest pipeline demo
- *
- * Reads data/new-articles.json and runs each article through the clustering pipeline:
- *   score ≥ 0.85  → direct assignment to existing cluster
- *   0.70–0.85     → LLM judge decides (mock in MVP)
- *   score < 0.70  → new cluster created
- *
- * Usage: npm run ingest
- */
-
-import { PrismaLibSql } from "@prisma/adapter-libsql";
-import { PrismaClient } from "../src/generated/prisma/client";
-import { ingestArticle } from "../src/lib/clustering/cluster";
+import { db } from "../server/db";
+import { ingestArticle } from "../server/clustering/cluster";
 import newArticles from "../data/new-articles.json";
-
-// Bootstrap the prisma singleton that cluster.ts reads via lib/db
-const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL ?? "file:./dev.db" });
-const prisma = new PrismaClient({ adapter });
-(globalThis as Record<string, unknown>).prisma = prisma;
 
 async function main() {
   console.log(`🔍 Ingesting ${newArticles.length} new articles…\n`);
@@ -45,4 +28,4 @@ async function main() {
 
 main()
   .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+  .finally(() => db.$disconnect());
