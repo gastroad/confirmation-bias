@@ -1,5 +1,8 @@
 FSD 규칙에 따라 새 Entity를 추가합니다.
 
+TRIGGER — 사용자가 새 entity 추가, 새 도메인 모델 생성, 새 FSD 슬라이스 추가를 요청할 때 자동으로 이 절차를 따른다.
+SKIP — 기존 entity를 수정하거나, entity 구조에 대해 질문만 하는 경우.
+
 다음 절차를 따르세요:
 
 1. `src/entities/$ARGUMENTS/` 디렉토리를 생성합니다.
