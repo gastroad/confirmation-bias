@@ -9,7 +9,6 @@
  * Usage: npm run ingest
  */
 
-import "dotenv/config";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { ingestArticle } from "../src/lib/clustering/cluster";

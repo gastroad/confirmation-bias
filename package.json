@@ -9,9 +9,9 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "npx tsx prisma/seed.ts",
-    "collect": "npx tsx scripts/collect.ts",
-    "ingest": "npx tsx scripts/ingest.ts"
+    "db:seed": "npx tsx --env-file=.env prisma/seed.ts",
+    "collect": "npx tsx --env-file=.env scripts/collect.ts",
+    "ingest": "npx tsx --env-file=.env scripts/ingest.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
