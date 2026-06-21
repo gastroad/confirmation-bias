@@ -5,7 +5,7 @@ import {
   LEANING_COLORS,
   LEANING_LABELS,
 } from "@/entities/outlet";
-import { TimelineChart } from "@/entities/cluster";
+import { TimelineChart } from "./TimelineChart";
 import type { ClusterDetail } from "@/entities/cluster";
 import { formatDate } from "@/shared/lib/format";
 import * as styles from "./ClusterDetailView.css";

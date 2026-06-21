@@ -25,6 +25,8 @@ model Cluster {
   updatedAt           DateTime @updatedAt
 
   articles Article[]
+
+  @@index([updatedAt]) // 목록 커서 페이지네이션(orderBy updatedAt desc)
 }
 
 model Article {
@@ -42,4 +44,8 @@ model Article {
   cluster   Cluster? @relation(fields: [clusterId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([clusterId])            // 클러스터별 기사 로드
+  @@index([outletId])             // 언론사 필터(some outletId in) · stats groupBy
+  @@index([clusterId, outletId])  // 필터 + 집계 복합
 }
