@@ -106,11 +106,21 @@ createGlobalTheme(":root", vars, {
   },
 });
 
-// Auto dark mode via prefers-color-scheme; only the color tokens are reassigned.
-globalStyle(":root", {
+// 다크 토큰 묶음. 색 토큰만 재할당한다(radius/font/layout은 공통).
+const darkVars = assignVars(vars.color, darkColors);
+
+// 시스템 모드(= data-theme 속성 없음)일 때만 OS 설정을 따른다.
+// 사용자가 라이트/다크를 명시하면 아래 [data-theme] 규칙이 우선한다.
+globalStyle(":root:not([data-theme])", {
   "@media": {
     "(prefers-color-scheme: dark)": {
-      vars: assignVars(vars.color, darkColors),
+      vars: darkVars,
     },
   },
+});
+
+// 사용자가 명시적으로 다크를 선택.
+// (data-theme="light"는 :root 기본값이 라이트라 별도 규칙 불필요)
+globalStyle(':root[data-theme="dark"]', {
+  vars: darkVars,
 });

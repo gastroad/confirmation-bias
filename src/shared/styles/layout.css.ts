@@ -35,6 +35,10 @@ export const container = style({
   gap: 24,
 });
 
+export const headerActions = style({
+  marginLeft: "auto",
+});
+
 export const brand = style({
   fontSize: 18,
   fontWeight: 700,

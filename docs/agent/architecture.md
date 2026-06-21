@@ -27,18 +27,22 @@ RSS 피드
 ## FSD 레이어 (src/)
 
 ```
-shared/          — 프레임워크 무관 유틸 (format.ts 등)
+shared/          — 프레임워크 무관 유틸 / 스타일
+  lib/           — format.ts 등
+  styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts, ui/, index.ts
   article/       — model.ts, index.ts
   cluster/       — model.ts, api.ts(서버 전용), ui/, index.ts
+features/        — 사용자 인터랙션 (상태 가능)
+  theme-toggle/  — model.ts, ui/(ThemeToggle, ThemeScript), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
   cluster-detail/
 app/             — Next.js App Router (page.tsx, layout.tsx, API routes)
 ```
 
-**레이어 의존 방향:** `app → widgets → entities → shared` (단방향)
+**레이어 의존 방향:** `app → widgets → features → entities → shared` (단방향)
 
 - `entities/cluster/api.ts` 만 예외적으로 `@server/db` import 허용 (서버 전용 파일)
-- `features/` 레이어는 사용자 인터랙션(필터, 정렬 등)이 생기면 그때 추가
+- `features/`는 상태·인터랙션 허용(entities의 `ui/` dumb 규칙과 다름). 필터·정렬 등도 여기에 추가

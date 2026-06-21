@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
+import { ThemeToggle } from "@/features/theme-toggle";
 import * as layout from "@/shared/styles/layout.css";
 
 export default async function ClusterDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,9 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
           </Link>
           <span className={layout.divider}>|</span>
           <h1 className={layout.brandSmall}>확증편향</h1>
+          <div className={layout.headerActions}>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
