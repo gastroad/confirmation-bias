@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getClusterDetail } from "@/entities/cluster";
+import { findClusterDetailRow } from "@server/queries/clusters";
+import { toClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ThemeToggle } from "@/features/theme-toggle";
 import * as layout from "@/shared/styles/layout.css";
 
 export default async function ClusterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cluster = await getClusterDetail(id);
+  const row = await findClusterDetailRow(id);
 
-  if (!cluster) notFound();
+  if (!row) notFound();
+
+  const cluster = toClusterDetail(row);
 
   return (
     <div className={layout.page}>

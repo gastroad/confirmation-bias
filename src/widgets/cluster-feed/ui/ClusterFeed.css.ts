@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, keyframes } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/theme.css";
 
 export const stats = style({
@@ -120,4 +120,57 @@ export const code = style({
   background: vars.color.surfaceHover,
   padding: "0 4px",
   borderRadius: vars.radius.sm,
+});
+
+const shimmer = keyframes({
+  "0%": { backgroundPosition: "-200% 0" },
+  "100%": { backgroundPosition: "200% 0" },
+});
+
+export const skeletonCard = style({
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${vars.color.border}`,
+  padding: 16,
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+});
+
+const skeletonBase = style({
+  background: `linear-gradient(90deg, ${vars.color.surface} 25%, ${vars.color.surfaceHover} 37%, ${vars.color.surface} 63%)`,
+  backgroundSize: "200% 100%",
+  animation: `${shimmer} 1.4s ease-in-out infinite`,
+  borderRadius: vars.radius.sm,
+});
+
+export const skeletonTitle = style([skeletonBase, { height: 16, width: "70%" }]);
+export const skeletonBar = style([
+  skeletonBase,
+  { height: 12, width: "100%", borderRadius: vars.radius.full },
+]);
+export const skeletonFooter = style([skeletonBase, { height: 12, width: "40%" }]);
+
+export const sentinel = style({
+  height: 1,
+});
+
+export const status = style({
+  padding: "16px 0",
+  textAlign: "center",
+  fontSize: 13,
+  color: vars.color.textFaint,
+});
+
+export const retryButton = style({
+  marginTop: 8,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.bg,
+  borderRadius: vars.radius.md,
+  padding: "6px 12px",
+  fontSize: 13,
+  color: vars.color.text,
+  cursor: "pointer",
+  selectors: {
+    "&:hover": { borderColor: vars.color.borderHover },
+  },
 });

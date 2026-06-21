@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeScript } from "@/features/theme-toggle";
+import { Providers } from "./providers";
 import "./global.css";
 
 const geistSans = Geist({
@@ -31,7 +32,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeScript />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

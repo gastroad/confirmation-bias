@@ -1,15 +1,13 @@
-import { getClusterDetail } from "@/entities/cluster";
+import { findClusterDetailRow } from "@server/queries/clusters";
+import { toClusterDetail } from "@/entities/cluster";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const detail = await getClusterDetail(id);
+  const row = await findClusterDetailRow(id);
 
-  if (!detail) {
+  if (!row) {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  return Response.json(detail);
+  return Response.json(toClusterDetail(row));
 }
