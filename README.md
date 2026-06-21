@@ -33,7 +33,9 @@ RSS 피드
   └─▶ scripts/collect.ts       RSS 파싱 → data/new-articles.json
         └─▶ scripts/ingest.ts  임베딩 생성 → 클러스터 배정 → DB upsert
               └─▶ SQLite (Prisma)
-                    └─▶ Next.js App  Server Component가 DB 직접 조회
+                    └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
+                          └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
+                                └─▶ 클라이언트 (react-query)  무한 스크롤 피드
 ```
 
 **클러스터 배정 로직** — 코사인 유사도 기준:
@@ -103,19 +105,24 @@ npm run test:e2e             # E2E (dev 서버 미리 실행 필요)
 
 ```
 confirmation-bias/
-├── server/            BE 파이프라인 (DB · 클러스터링 로직)
+├── server/            BE (DB · 클러스터링 · 조회 쿼리)
 │   ├── db.ts          Prisma 싱글턴
+│   ├── queries/       순수 Prisma 조회 (커서 페이지네이션·집계)
 │   └── clustering/    embed · similarity · cluster · llm-judge
 ├── scripts/           collect.ts · ingest.ts (일회성 실행)
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
-│   ├── app/           App Router (page · layout · API routes)
+│   ├── app/           App Router (page · layout · API routes · providers)
 │   ├── widgets/       cluster-feed · cluster-detail
-│   ├── entities/      outlet · article · cluster
-│   └── shared/        프레임워크 무관 유틸
+│   ├── features/      theme-toggle · outlet-filter (상태·인터랙션)
+│   ├── entities/      outlet · article · cluster (model · lib · api · ui)
+│   └── shared/        프레임워크 무관 유틸 · 스타일(vanilla-extract)
 ├── e2e/               Playwright 테스트
 └── docs/agent/        아키텍처 · 컨벤션 · 워크플로 문서
 ```
+
+데이터 흐름은 **클라이언트(react-query) → API 라우트 → `server/queries` → DB**로,
+UI 레이어는 DB에 직접 접근하지 않고 `entities/*/api.ts` 클라이언트 fetcher로 호출합니다.
 
 ## 📰 분류 대상 언론사
 
