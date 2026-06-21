@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify.sh\"",
+            "timeout": 180,
+            "statusMessage": "검증 실행 중 (tsc/lint/test/build)…"
+          }
+        ]
+      }
+    ]
+  }
+}
