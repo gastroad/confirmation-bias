@@ -39,11 +39,6 @@ export const buttonActive = style([
   },
 ]);
 
-export const icon = style({
-  width: 16,
-  height: 16,
-});
-
 export const srOnly = style({
   position: "absolute",
   width: 1,

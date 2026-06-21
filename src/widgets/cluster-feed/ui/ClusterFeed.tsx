@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -8,6 +7,8 @@ import { LeaningBar, GroupRatioBadges, LEANING_LABELS } from "@/entities/outlet"
 import { fetchClustersPage, fetchClusterStats, type ClusterSummary } from "@/entities/cluster";
 import { OUTLETS_PARAM, parseOutletParam } from "@/features/outlet-filter";
 import { formatRelative } from "@/shared/lib/format";
+import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
+import { Skeleton } from "@/shared/ui";
 import * as styles from "./ClusterFeed.css";
 
 const SKELETON_COUNT = 5;
@@ -59,9 +60,9 @@ function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
 function ClusterCardSkeleton() {
   return (
     <div className={styles.skeletonCard}>
-      <div className={styles.skeletonTitle} />
-      <div className={styles.skeletonBar} />
-      <div className={styles.skeletonFooter} />
+      <Skeleton width="70%" height={16} />
+      <Skeleton width="100%" height={12} radius={9999} />
+      <Skeleton width="40%" height={12} />
     </div>
   );
 }
@@ -91,23 +92,10 @@ export function ClusterFeed() {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const sentinelRef = useInfiniteScroll<HTMLDivElement>({
+    onLoadMore: () => fetchNextPage(),
+    enabled: hasNextPage && !isFetchingNextPage,
+  });
 
   const clusters = data?.pages.flatMap((p) => p.items) ?? [];
 

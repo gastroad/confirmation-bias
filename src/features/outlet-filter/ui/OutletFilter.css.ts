@@ -18,6 +18,17 @@ export const header = style({
   gap: 8,
 });
 
+export const toggle = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  border: "none",
+  background: "transparent",
+  padding: 0,
+  cursor: "pointer",
+  color: vars.color.textMuted,
+});
+
 export const title = style({
   fontSize: 12,
   fontWeight: 600,
@@ -25,6 +36,14 @@ export const title = style({
   textTransform: "uppercase",
   letterSpacing: "0.05em",
 });
+
+export const chevron = style({
+  color: vars.color.textFaint,
+  flexShrink: 0,
+  transition: "transform 0.15s",
+});
+
+export const chevronOpen = style([chevron, { transform: "rotate(180deg)" }]);
 
 export const clearButton = style({
   border: "none",
