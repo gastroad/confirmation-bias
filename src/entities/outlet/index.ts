@@ -13,6 +13,9 @@ export {
   LEANING_LABELS,
   LEANING_COLORS,
   LEANING_ORDER,
+  LEANING_GROUP_LABELS,
+  LEANING_GROUP_ORDER,
+  OUTLETS_BY_GROUP,
   emptyDistribution,
   calcLeaningGroupRatios,
 } from "./model";

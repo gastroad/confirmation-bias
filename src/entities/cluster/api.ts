@@ -4,8 +4,13 @@ import type { Leaning } from "@/entities/outlet";
 import type { TimelinePoint } from "@/entities/article";
 import type { ClusterSummary, ClusterDetail } from "./model";
 
-export async function getClusters(): Promise<ClusterSummary[]> {
+export async function getClusters(outletIds?: string[]): Promise<ClusterSummary[]> {
+  // 선택 언론사가 보도한 클러스터만 남긴다. 성향 분포는 전체 기사 기준으로 계산하므로
+  // where로 클러스터만 거르고 articles include 범위는 그대로 둔다.
+  const hasFilter = outletIds !== undefined && outletIds.length > 0;
+
   const clusters = await db.cluster.findMany({
+    where: hasFilter ? { articles: { some: { outletId: { in: outletIds } } } } : undefined,
     orderBy: { updatedAt: "desc" },
     include: {
       articles: {
@@ -21,9 +26,8 @@ export async function getClusters(): Promise<ClusterSummary[]> {
       dist[leaning]++;
     }
     const times = c.articles.map((a) => a.publishedAt.getTime());
-    const latest = times.length > 0
-      ? new Date(Math.max(...times)).toISOString()
-      : c.createdAt.toISOString();
+    const latest =
+      times.length > 0 ? new Date(Math.max(...times)).toISOString() : c.createdAt.toISOString();
 
     return {
       id: c.id,
@@ -84,9 +88,8 @@ export async function getClusterDetail(id: string): Promise<ClusterDetail | null
     .map(([hour, count]) => ({ hour, count }));
 
   const times = cluster.articles.map((a) => a.publishedAt.getTime());
-  const latest = times.length > 0
-    ? new Date(Math.max(...times)).toISOString()
-    : cluster.createdAt.toISOString();
+  const latest =
+    times.length > 0 ? new Date(Math.max(...times)).toISOString() : cluster.createdAt.toISOString();
 
   return {
     id: cluster.id,

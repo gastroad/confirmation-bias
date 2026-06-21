@@ -1,25 +1,22 @@
-import type { LeaningGroup, LeaningGroupRatios } from "../model";
+import { LEANING_GROUP_LABELS } from "../model";
+import type { LeaningGroupRatios } from "../model";
 import * as styles from "./GroupRatioBadges.css";
 
 interface Props {
   ratios: LeaningGroupRatios;
 }
 
-const GROUP_CONFIG: { key: LeaningGroup; label: string }[] = [
-  { key: "conservative", label: "보수" },
-  { key: "neutral", label: "중도" },
-  { key: "progressive", label: "진보" },
-];
+const GROUP_ORDER = ["conservative", "neutral", "progressive"] as const;
 
 export function GroupRatioBadges({ ratios }: Props) {
   return (
     <div className={styles.root}>
-      {GROUP_CONFIG.map(({ key, label }) => {
+      {GROUP_ORDER.map((key) => {
         const pct = ratios[key];
         if (pct === 0) return null;
         return (
           <span key={key} className={styles.badge[key]}>
-            {label} {(pct * 100).toFixed(0)}%
+            {LEANING_GROUP_LABELS[key]} {(pct * 100).toFixed(0)}%
           </span>
         );
       })}

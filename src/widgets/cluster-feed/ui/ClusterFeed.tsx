@@ -7,6 +7,7 @@ import * as styles from "./ClusterFeed.css";
 
 interface Props {
   clusters: ClusterSummary[];
+  isFiltered?: boolean;
 }
 
 function StatsBar({ clusters }: { clusters: ClusterSummary[] }) {
@@ -43,14 +44,23 @@ function StatsBar({ clusters }: { clusters: ClusterSummary[] }) {
   );
 }
 
-export function ClusterFeed({ clusters }: Props) {
+export function ClusterFeed({ clusters, isFiltered = false }: Props) {
   if (clusters.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <p className={styles.emptyTitle}>데이터가 없습니다.</p>
-        <p className={styles.emptyHint}>
-          <code className={styles.code}>npm run ingest</code> 로 기사를 수집해주세요.
-        </p>
+        {isFiltered ? (
+          <>
+            <p className={styles.emptyTitle}>선택한 언론사가 보도한 이슈가 없습니다.</p>
+            <p className={styles.emptyHint}>필터를 조정해 보세요.</p>
+          </>
+        ) : (
+          <>
+            <p className={styles.emptyTitle}>데이터가 없습니다.</p>
+            <p className={styles.emptyHint}>
+              <code className={styles.code}>npm run ingest</code> 로 기사를 수집해주세요.
+            </p>
+          </>
+        )}
       </div>
     );
   }

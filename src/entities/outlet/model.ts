@@ -1,10 +1,4 @@
-export type Leaning =
-  | "left"
-  | "center_left"
-  | "center"
-  | "center_right"
-  | "right"
-  | "unknown";
+export type Leaning = "left" | "center_left" | "center" | "center_right" | "right" | "unknown";
 
 export type LeaningGroup = "conservative" | "neutral" | "progressive";
 
@@ -21,21 +15,57 @@ export interface OutletMetadata {
 }
 
 export const OUTLETS: OutletMetadata[] = [
-  { id: "chosun",      name: "조선일보",   domain: "chosun.com",       leaning: "right",        leaningLabel: "보수" },
-  { id: "segye",       name: "세계일보",   domain: "segye.com",        leaning: "right",        leaningLabel: "보수" },
-  { id: "cheonji",     name: "천지일보",   domain: "newscj.com",       leaning: "right",        leaningLabel: "보수" },
-  { id: "joongang",    name: "중앙일보",   domain: "joongang.co.kr",   leaning: "center_right", leaningLabel: "중도보수" },
-  { id: "donga",       name: "동아일보",   domain: "donga.com",        leaning: "center_right", leaningLabel: "중도보수" },
-  { id: "yonhap",      name: "연합뉴스",   domain: "yna.co.kr",        leaning: "center",       leaningLabel: "중도" },
-  { id: "newsis",      name: "뉴시스",     domain: "newsis.com",       leaning: "center",       leaningLabel: "중도" },
-  { id: "seoul",       name: "서울신문",   domain: "seoul.co.kr",      leaning: "center",       leaningLabel: "중도" },
-  { id: "sisajournal", name: "시사저널",   domain: "sisajournal.com",  leaning: "center",       leaningLabel: "중도" },
-  { id: "kbs",         name: "KBS",        domain: "kbs.co.kr",        leaning: "center",       leaningLabel: "중도" },
-  { id: "khan",        name: "경향신문",   domain: "khan.co.kr",       leaning: "center_left",  leaningLabel: "중도진보" },
-  { id: "hani",        name: "한겨레신문", domain: "hani.co.kr",       leaning: "left",         leaningLabel: "진보" },
-  { id: "sisain",      name: "시사인",     domain: "sisain.co.kr",     leaning: "left",         leaningLabel: "진보" },
-  { id: "pressian",    name: "프레시안",   domain: "pressian.com",     leaning: "left",         leaningLabel: "진보" },
-  { id: "womennews",   name: "여성신문",   domain: "womennews.co.kr",  leaning: "left",         leaningLabel: "진보" },
+  { id: "chosun", name: "조선일보", domain: "chosun.com", leaning: "right", leaningLabel: "보수" },
+  { id: "segye", name: "세계일보", domain: "segye.com", leaning: "right", leaningLabel: "보수" },
+  { id: "cheonji", name: "천지일보", domain: "newscj.com", leaning: "right", leaningLabel: "보수" },
+  {
+    id: "joongang",
+    name: "중앙일보",
+    domain: "joongang.co.kr",
+    leaning: "center_right",
+    leaningLabel: "중도보수",
+  },
+  {
+    id: "donga",
+    name: "동아일보",
+    domain: "donga.com",
+    leaning: "center_right",
+    leaningLabel: "중도보수",
+  },
+  { id: "yonhap", name: "연합뉴스", domain: "yna.co.kr", leaning: "center", leaningLabel: "중도" },
+  { id: "newsis", name: "뉴시스", domain: "newsis.com", leaning: "center", leaningLabel: "중도" },
+  { id: "seoul", name: "서울신문", domain: "seoul.co.kr", leaning: "center", leaningLabel: "중도" },
+  {
+    id: "sisajournal",
+    name: "시사저널",
+    domain: "sisajournal.com",
+    leaning: "center",
+    leaningLabel: "중도",
+  },
+  { id: "kbs", name: "KBS", domain: "kbs.co.kr", leaning: "center", leaningLabel: "중도" },
+  {
+    id: "khan",
+    name: "경향신문",
+    domain: "khan.co.kr",
+    leaning: "center_left",
+    leaningLabel: "중도진보",
+  },
+  { id: "hani", name: "한겨레신문", domain: "hani.co.kr", leaning: "left", leaningLabel: "진보" },
+  { id: "sisain", name: "시사인", domain: "sisain.co.kr", leaning: "left", leaningLabel: "진보" },
+  {
+    id: "pressian",
+    name: "프레시안",
+    domain: "pressian.com",
+    leaning: "left",
+    leaningLabel: "진보",
+  },
+  {
+    id: "womennews",
+    name: "여성신문",
+    domain: "womennews.co.kr",
+    leaning: "left",
+    leaningLabel: "진보",
+  },
 ];
 
 export const OUTLET_MAP: Record<string, OutletMetadata> = Object.fromEntries(
@@ -44,30 +74,50 @@ export const OUTLET_MAP: Record<string, OutletMetadata> = Object.fromEntries(
 
 export const LEANING_GROUPS: Record<LeaningGroup, Leaning[]> = {
   conservative: ["right", "center_right"],
-  neutral:      ["center"],
-  progressive:  ["left", "center_left"],
+  neutral: ["center"],
+  progressive: ["left", "center_left"],
+};
+
+export const LEANING_GROUP_LABELS: Record<LeaningGroup, string> = {
+  conservative: "보수",
+  neutral: "중도",
+  progressive: "진보",
+};
+
+// 진보 → 중도 → 보수 (LeaningBar의 좌→우 스펙트럼과 동일한 순서)
+export const LEANING_GROUP_ORDER: LeaningGroup[] = ["progressive", "neutral", "conservative"];
+
+export const OUTLETS_BY_GROUP: Record<LeaningGroup, OutletMetadata[]> = {
+  conservative: OUTLETS.filter((o) => LEANING_GROUPS.conservative.includes(o.leaning)),
+  neutral: OUTLETS.filter((o) => LEANING_GROUPS.neutral.includes(o.leaning)),
+  progressive: OUTLETS.filter((o) => LEANING_GROUPS.progressive.includes(o.leaning)),
 };
 
 export const LEANING_LABELS: Record<Leaning, string> = {
-  left:         "진보",
-  center_left:  "중도진보",
-  center:       "중도",
+  left: "진보",
+  center_left: "중도진보",
+  center: "중도",
   center_right: "중도보수",
-  right:        "보수",
-  unknown:      "미분류",
+  right: "보수",
+  unknown: "미분류",
 };
 
 export const LEANING_COLORS: Record<Leaning, string> = {
-  left:         "#3b82f6",
-  center_left:  "#93c5fd",
-  center:       "#9ca3af",
+  left: "#3b82f6",
+  center_left: "#93c5fd",
+  center: "#9ca3af",
   center_right: "#fca5a5",
-  right:        "#ef4444",
-  unknown:      "#e5e7eb",
+  right: "#ef4444",
+  unknown: "#e5e7eb",
 };
 
 export const LEANING_ORDER: Leaning[] = [
-  "left", "center_left", "center", "center_right", "right", "unknown",
+  "left",
+  "center_left",
+  "center",
+  "center_right",
+  "right",
+  "unknown",
 ];
 
 export function emptyDistribution(): LeaningDistribution {
@@ -81,7 +131,7 @@ export function calcLeaningGroupRatios(dist: LeaningDistribution): LeaningGroupR
   const sum = (keys: Leaning[]) => keys.reduce((s, k) => s + dist[k], 0);
   return {
     conservative: sum(LEANING_GROUPS.conservative) / total,
-    neutral:      sum(LEANING_GROUPS.neutral) / total,
-    progressive:  sum(LEANING_GROUPS.progressive) / total,
+    neutral: sum(LEANING_GROUPS.neutral) / total,
+    progressive: sum(LEANING_GROUPS.progressive) / total,
   };
 }
