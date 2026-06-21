@@ -38,6 +38,14 @@
 - 함수/변수명이 충분히 설명적이면 JSDoc 불필요.
 - Prettier 설정 (`.prettierrc`): semi, double quote, tabWidth 2, trailingComma es5, printWidth 100.
 
+## 스타일링
+
+- 스타일은 **vanilla-extract** 전용. 컴포넌트 옆 `*.css.ts`에 작성하고 `import * as styles`로 사용.
+- 색·반경·폰트·레이아웃 폭은 반드시 테마 토큰(`@/shared/styles/theme.css`의 `vars`)으로. 하드코딩 금지.
+  - 예외: 데이터에서 오는 색(`LEANING_COLORS` 등)은 인라인 `style`로 칠한다.
+- 다크모드는 `theme.css.ts`가 토큰을 바꿔 자동 처리. 개별 css에 `@media (prefers-color-scheme)` 쓰지 않는다.
+- 자세한 절차는 `/add-styled-ui` 스킬 참고.
+
 ## 테스트
 
 - 단위 테스트: `*.test.ts` 파일을 테스트 대상 파일 옆에 위치.

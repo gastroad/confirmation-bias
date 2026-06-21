@@ -19,7 +19,7 @@
 
 | 영역     | 사용 기술                                                      |
 | -------- | -------------------------------------------------------------- |
-| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS 4, Recharts    |
+| Frontend | Next.js 16 (App Router), React 19, vanilla-extract, Recharts   |
 | Backend  | Node.js 파이프라인 (RSS 수집 → 임베딩 → 클러스터링)            |
 | AI       | OpenAI `text-embedding-3-small`                                |
 | Database | SQLite + Prisma 7 (`@prisma/adapter-libsql`) — Turso 전환 예정 |

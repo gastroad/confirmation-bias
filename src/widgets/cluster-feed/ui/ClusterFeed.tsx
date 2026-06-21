@@ -3,6 +3,7 @@ import { LeaningBar, GroupRatioBadges, emptyDistribution, LEANING_LABELS } from 
 import type { Leaning } from "@/entities/outlet";
 import type { ClusterSummary } from "@/entities/cluster";
 import { formatRelative } from "@/shared/lib/format";
+import * as styles from "./ClusterFeed.css";
 
 interface Props {
   clusters: ClusterSummary[];
@@ -23,20 +24,20 @@ function StatsBar({ clusters }: { clusters: ClusterSummary[] }) {
     .sort(([, a], [, b]) => b - a)[0]?.[0];
 
   return (
-    <div className="grid grid-cols-3 gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-      <div className="text-center">
-        <p className="text-2xl font-bold text-zinc-900">{clusters.length}</p>
-        <p className="text-xs text-zinc-500 mt-0.5">이슈 클러스터</p>
+    <div className={styles.stats}>
+      <div className={styles.statCell}>
+        <p className={styles.statValue}>{clusters.length}</p>
+        <p className={styles.statLabel}>이슈 클러스터</p>
       </div>
-      <div className="text-center border-x border-zinc-200">
-        <p className="text-2xl font-bold text-zinc-900">{totalArticles}</p>
-        <p className="text-xs text-zinc-500 mt-0.5">수집 기사</p>
+      <div className={styles.statCellDivided}>
+        <p className={styles.statValue}>{totalArticles}</p>
+        <p className={styles.statLabel}>수집 기사</p>
       </div>
-      <div className="text-center">
-        <p className="text-2xl font-bold text-zinc-900">
+      <div className={styles.statCell}>
+        <p className={styles.statValue}>
           {dominantLeaning ? LEANING_LABELS[dominantLeaning] : "—"}
         </p>
-        <p className="text-xs text-zinc-500 mt-0.5">최다 보도 성향</p>
+        <p className={styles.statLabel}>최다 보도 성향</p>
       </div>
     </div>
   );
@@ -45,10 +46,10 @@ function StatsBar({ clusters }: { clusters: ClusterSummary[] }) {
 export function ClusterFeed({ clusters }: Props) {
   if (clusters.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 p-10 text-center">
-        <p className="text-zinc-500 text-sm">데이터가 없습니다.</p>
-        <p className="text-zinc-400 text-xs mt-1">
-          <code className="bg-zinc-100 px-1 rounded">npm run ingest</code> 로 기사를 수집해주세요.
+      <div className={styles.emptyState}>
+        <p className={styles.emptyTitle}>데이터가 없습니다.</p>
+        <p className={styles.emptyHint}>
+          <code className={styles.code}>npm run ingest</code> 로 기사를 수집해주세요.
         </p>
       </div>
     );
@@ -59,30 +60,21 @@ export function ClusterFeed({ clusters }: Props) {
       <StatsBar clusters={clusters} />
 
       <section>
-        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide mb-3">
-          이슈 목록 ({clusters.length})
-        </h2>
-        <ul className="space-y-3">
+        <h2 className={styles.sectionTitle}>이슈 목록 ({clusters.length})</h2>
+        <ul className={styles.list}>
           {clusters.map((c) => (
             <li key={c.id}>
-              <Link
-                href={`/clusters/${c.id}`}
-                className="block rounded-xl border border-zinc-200 p-4 hover:border-zinc-400 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="font-medium text-zinc-900 leading-snug">
-                    {c.representativeTitle}
-                  </h3>
-                  <span className="shrink-0 text-xs text-zinc-400">
-                    {formatRelative(c.latestPublishedAt)}
-                  </span>
+              <Link href={`/clusters/${c.id}`} className={styles.card}>
+                <div className={styles.cardHead}>
+                  <h3 className={styles.cardTitle}>{c.representativeTitle}</h3>
+                  <span className={styles.cardTime}>{formatRelative(c.latestPublishedAt)}</span>
                 </div>
 
                 <LeaningBar distribution={c.leaningDistribution} />
 
-                <div className="mt-2 flex items-center justify-between">
+                <div className={styles.cardFooter}>
                   <GroupRatioBadges ratios={c.leaningGroupRatios} />
-                  <span className="text-xs text-zinc-400">{c.articleCount}건</span>
+                  <span className={styles.cardCount}>{c.articleCount}건</span>
                 </div>
               </Link>
             </li>

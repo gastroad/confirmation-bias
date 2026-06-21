@@ -2,6 +2,7 @@
 
 import { LEANING_ORDER, LEANING_COLORS, LEANING_LABELS } from "../model";
 import type { LeaningDistribution } from "../model";
+import * as styles from "./LeaningBar.css";
 
 interface Props {
   distribution: LeaningDistribution;
@@ -10,11 +11,11 @@ interface Props {
 
 export function LeaningBar({ distribution, showLabels = false }: Props) {
   const total = Object.values(distribution).reduce((s, n) => s + n, 0);
-  if (total === 0) return <div className="h-2 rounded bg-zinc-100" />;
+  if (total === 0) return <div className={styles.empty} />;
 
   return (
-    <div className="space-y-1">
-      <div className="flex h-3 w-full overflow-hidden rounded-full">
+    <div className={styles.root}>
+      <div className={styles.bar}>
         {LEANING_ORDER.map((leaning) => {
           const count = distribution[leaning];
           if (count === 0) return null;
@@ -29,16 +30,13 @@ export function LeaningBar({ distribution, showLabels = false }: Props) {
         })}
       </div>
       {showLabels && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className={styles.labels}>
           {LEANING_ORDER.map((leaning) => {
             const count = distribution[leaning];
             if (count === 0) return null;
             return (
-              <span key={leaning} className="flex items-center gap-1 text-xs text-zinc-500">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: LEANING_COLORS[leaning] }}
-                />
+              <span key={leaning} className={styles.labelItem}>
+                <span className={styles.dot} style={{ backgroundColor: LEANING_COLORS[leaning] }} />
                 {LEANING_LABELS[leaning]} {count}
               </span>
             );
