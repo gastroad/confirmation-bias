@@ -3,7 +3,7 @@
 confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작업 목록.
 우선순위: **P0(런칭 블로커) → P1(런칭 직후 필요) → P2(런칭 후 개선)**.
 
-현재 상태: 로컬 전용(SQLite) + 수동 파이프라인(`npm run collect && ingest`).
+현재 상태: **DB는 Supabase(Postgres)로 전환 완료(2026-06-29)** + 수동 파이프라인(`npm run collect && ingest`).
 
 ---
 
@@ -15,7 +15,7 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
       파이프라인을 GitHub Actions로 분리하기로 결정 → 웹 호스트는 Next.js 서빙만 담당하면 되어
       선택이 자유로움. Vercel 제외, **Railway / Render / Netlify** 후보. (웹 호스트 최종 미정)
       파이프라인 실행처는 더 이상 호스팅에 묶이지 않음 → 아래 "RSS 수집 스케줄링" 참조.
-- [ ] **SQLite → Postgres(Supabase) 마이그레이션** ⭐ 선행 작업
+- [x] **SQLite → Postgres(Supabase) 마이그레이션** ⭐ 선행 작업 ✅ 완료(2026-06-29)
       다른 P0/P1 인프라 항목(호스팅, 스케줄링, E2E 재활성화 등)이 모두 이걸 전제로 함.
       → 상세 실행 계획: [db-migration-supabase.md](./db-migration-supabase.md)
 - [ ] **시크릿 관리**

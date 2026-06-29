@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // CLI(db push/migrate)는 DIRECT_URL(5432 session). pgbouncer 트랜잭션 풀러(6543)는 DDL에 부적합.
+    url: process.env["DIRECT_URL"],
   },
 });

@@ -6,7 +6,7 @@
 RSS 피드
   └─▶ scripts/collect.ts       — 피드 파싱, data/new-articles.json 에 임시 저장
         └─▶ scripts/ingest.ts  — 임베딩 생성 → 클러스터 배정 → DB upsert
-              └─▶ SQLite (dev.db / Turso)
+              └─▶ Postgres (Supabase)
                     └─▶ server/queries/*  — 순수 Prisma 조회 (커서 페이지네이션/집계)
                           └─▶ API 라우트 (src/app/api/**)  — 파라미터 파싱 + 도메인 매핑
                                 └─▶ 클라이언트 (react-query)  — 무한 스크롤 피드 / 상세는 서버 컴포넌트가 server/queries 직접 호출

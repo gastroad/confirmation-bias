@@ -1,20 +1,29 @@
 # Infrastructure
 
-## 현재 상태 (로컬 개발)
+## 현재 상태
 
-| 항목   | 현재 값                                  |
-| ------ | ---------------------------------------- |
-| DB     | SQLite (`dev.db`, 프로젝트 루트)         |
-| ORM    | Prisma v7 + `@prisma/adapter-libsql`     |
-| 임베딩 | OpenAI `text-embedding-3-small`, 512차원 |
-| 호스팅 | 없음 (로컬 전용)                         |
+| 항목   | 현재 값                                    |
+| ------ | ------------------------------------------ |
+| DB     | Supabase (Postgres), region ap-northeast-2 |
+| ORM    | Prisma v7 + `@prisma/adapter-pg`           |
+| 임베딩 | OpenAI `text-embedding-3-small`, 512차원   |
+| 호스팅 | 미정 (Railway / Render / Netlify 후보)     |
+
+> SQLite → Supabase 전환 완료(2026-06-29). 롤백용 `dev.db.bak-*`는 로컬에만 보관(gitignore).
 
 ## 환경변수 (`.env`)
 
 ```
-DATABASE_URL=file:./dev.db
+DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true  # 앱 런타임(pooler)
+DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres                    # 스키마 push/migrate(direct)
 OPENAI_API_KEY=sk-...
 ```
+
+- **`DATABASE_URL`(6543, pgbouncer)** — 앱 런타임. `server/db.ts`의 `PrismaPg` 어댑터가 사용.
+- **`DIRECT_URL`(5432, session)** — `prisma db push`/migrate용. pgbouncer 트랜잭션 풀러로는 DDL이 깨져
+  `prisma.config.ts`가 이쪽을 가리킨다.
+- Supabase Connect → ORMs → Prisma 에서 두 문자열을 복사. 비밀번호 자리(`[YOUR-PASSWORD]`)의
+  **대괄호까지 함께 치환**해야 함(대괄호 잔존 시 P1000 인증 실패).
 
 `scripts/`와 `prisma/` 스크립트는 `--env-file=.env` 로 로드.  
 Next.js는 자동으로 `.env` 로드.
@@ -24,15 +33,9 @@ Next.js는 자동으로 `.env` 로드.
 - 생성된 클라이언트는 `src/generated/prisma/` (gitignore됨)
 - 코드 변경 후 반드시 `npm run db:generate` 실행 (CI에서도 자동 실행됨)
 - 스키마 파일: `prisma/schema.prisma`
-- Prisma 런타임 설정: `prisma.config.ts` (datasource URL을 여기서 주입)
+- Prisma 런타임 설정: `prisma.config.ts` (CLI용 datasource URL = `DIRECT_URL` 주입)
 
 ## 향후 인프라 계획 (미완료)
-
-### 원격 DB (Turso)
-
-- SQLite → Turso(libsql 호환) 전환 예정
-- `DATABASE_URL`을 Turso URL로 교체하면 코드 변경 없이 동작
-- CI e2e job은 Turso 연결 후 재활성화
 
 ### RSS 자동 수집 스케줄
 

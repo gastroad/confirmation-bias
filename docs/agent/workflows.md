@@ -13,12 +13,12 @@ npm run ingest
 npm run collect && npm run ingest
 ```
 
-`.env`에 `OPENAI_API_KEY`, `DATABASE_URL` 필요.
+`.env`에 `OPENAI_API_KEY`, `DATABASE_URL`(+ `DIRECT_URL`) 필요.
 
-## DB 초기화 (로컬 처음 셋업)
+## DB 초기화 (처음 셋업)
 
 ```bash
-npm run db:push      # 스키마를 dev.db에 반영
+npm run db:push      # 스키마를 Supabase에 반영 (DIRECT_URL 사용)
 npm run db:seed      # Outlet 15개 시드
 ```
 

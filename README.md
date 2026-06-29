@@ -22,7 +22,7 @@
 | Frontend | Next.js 16 (App Router), React 19, react-query, vanilla-extract, Recharts |
 | Backend  | Node.js 파이프라인 (RSS 수집 → 임베딩 → 클러스터링)                       |
 | AI       | OpenAI `text-embedding-3-small`                                           |
-| Database | SQLite + Prisma 7 (`@prisma/adapter-libsql`) — Turso 전환 예정            |
+| Database | Supabase(Postgres) + Prisma 7 (`@prisma/adapter-pg`)                      |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
 
@@ -32,7 +32,7 @@
 RSS 피드
   └─▶ scripts/collect.ts       RSS 파싱 → data/new-articles.json
         └─▶ scripts/ingest.ts  임베딩 생성 → 클러스터 배정 → DB upsert
-              └─▶ SQLite (Prisma)
+              └─▶ Postgres @ Supabase (Prisma)
                     └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
                           └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
                                 └─▶ 클라이언트 (react-query)  무한 스크롤 피드
@@ -53,7 +53,9 @@ RSS 피드
 프로젝트 루트에 `.env` 파일을 만듭니다.
 
 ```env
-DATABASE_URL=file:./dev.db
+# Supabase 연결 문자열 (Connect → ORMs → Prisma 에서 복사)
+DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true  # 앱 런타임(pooler)
+DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres                    # 스키마 push/마이그레이션(direct)
 OPENAI_API_KEY=sk-...
 ```
 
@@ -61,7 +63,7 @@ OPENAI_API_KEY=sk-...
 
 ```bash
 npm install
-npm run db:push      # 스키마를 dev.db에 반영
+npm run db:push      # 스키마를 Supabase에 반영
 npm run db:seed      # 언론사 15개 시드
 ```
 

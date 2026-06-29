@@ -116,12 +116,15 @@ npx tsc --noEmit                     # 타입 회귀 확인
 
 ---
 
-## 체크리스트
+## 체크리스트 — ✅ 완료(2026-06-29)
 
-- [ ] 1. Supabase 프로젝트 생성 + 연결 문자열 2종 확보 (사용자)
-- [ ] 2. `@prisma/adapter-pg` / `pg` 설치, libsql 제거
-- [ ] 3. `schema.prisma` provider → postgresql + directUrl
-- [ ] 4. `server/db.ts` 어댑터 교체
-- [ ] 5. `prisma.config.ts` 점검
-- [ ] 6. `db:generate` → `db:push` → `db:seed`
-- [ ] 7. 파이프라인·대시보드·테스트 검증
+- [x] 1. Supabase 프로젝트 생성 + 연결 문자열 2종 확보 (사용자)
+- [x] 2. `@prisma/adapter-pg` / `pg` / `@types/pg` 설치, libsql 제거
+- [x] 3. `schema.prisma` provider → postgresql
+- [x] 4. `server/db.ts` 어댑터 교체 (`PrismaPg`, `DATABASE_URL` pooler)
+- [x] 5. `prisma.config.ts` → CLI용 url을 `DIRECT_URL`로 변경
+- [x] 6. `db:generate` → `db:push` → `db:seed`
+- [x] 7. 파이프라인·대시보드·테스트 검증
+
+> 문서가 못 잡았던 추가 작업: `prisma/seed.ts`가 libsql 어댑터를 자체 생성하고 있어
+> `../server/db` 싱글턴 재사용으로 교체. 연결 실패 원인은 비밀번호의 `[...]` 대괄호 잔존(P1000)이었음.
