@@ -1,9 +1,10 @@
 name: Pipeline (collect + ingest)
 
 on:
-  # 매시간 자동 실행 (UTC). 토큰 사용량 보고 주기 조정 예정 — pipeline-scheduling.md 참조.
+  # 매시간 자동 실행 (UTC). 정각(:00)은 GitHub 부하로 지연·드롭이 잦아 :17로 오프셋.
+  # 토큰 사용량 보고 주기 조정 예정 — pipeline-scheduling.md 참조.
   schedule:
-    - cron: "0 * * * *"
+    - cron: "17 * * * *"
   # 수동 실행 (Actions 탭에서 Run workflow). 2차 UI 트리거 전까지 테스트/온디맨드용.
   workflow_dispatch:
 
