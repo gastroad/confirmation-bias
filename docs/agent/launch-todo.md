@@ -24,8 +24,8 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 
 ### 데이터 파이프라인 자동화
 
-- [ ] **RSS 수집 스케줄링** (배치)
-      **GitHub Actions scheduled workflow로 `collect + ingest`를 매시간 자동 실행** 결정.
+- [x] **RSS 수집 스케줄링** (배치) ✅ 가동(2026-06-29)
+      **GitHub Actions scheduled workflow로 `collect + ingest`를 매시간 자동 실행** — 동작 확인 완료.
       주기는 매시간으로 시작하되 **토큰 사용량을 보고 2~3시간 등으로 조정** 예정.
       → 상세 설계: [pipeline-scheduling.md](./pipeline-scheduling.md)
 - [ ] **파이프라인 실패 알림**
