@@ -79,6 +79,8 @@ async function main() {
     .filter(({ url }) => (seen.has(url) ? false : (seen.add(url), true)));
 
   const outPath = path.resolve(__dirname, "../data/new-articles.json");
+  // data/는 gitignore라 새 체크아웃(CI)엔 없을 수 있다. 쓰기 전에 보장한다.
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(articles, null, 2));
 
   console.log(`\n✅  ${articles.length} articles → data/new-articles.json`);
