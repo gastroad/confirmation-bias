@@ -1,31 +1,70 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { db } from "../server/db";
 import { ingestArticle } from "../server/clustering/cluster";
-import newArticles from "../data/new-articles.json";
+
+interface CollectedArticle {
+  title: string;
+  description: string | null;
+  url: string;
+  publishedAt: string;
+  outletId: string;
+}
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// 정적 import가 아니라 런타임에 읽는다. data/new-articles.json은 collect 산출물이라
+// gitignore되어 빌드/타입체크 시점(Vercel)엔 존재하지 않기 때문.
+function loadNewArticles(): CollectedArticle[] {
+  const dataPath = path.resolve(__dirname, "../data/new-articles.json");
+  return JSON.parse(fs.readFileSync(dataPath, "utf8")) as CollectedArticle[];
+}
 
 async function main() {
-  console.log(`🔍 Ingesting ${newArticles.length} new articles…\n`);
+  const articles = loadNewArticles();
 
-  for (const article of newArticles) {
+  // 이미 적재된 URL은 임베딩 전에 제외한다.
+  // 중복 재임베딩(비용·지연)과 중복발 유령 클러스터 생성을 막는다.
+  const existing = await db.article.findMany({
+    where: { url: { in: articles.map((a) => a.url) } },
+    select: { url: true },
+  });
+  const seen = new Set(existing.map((e) => e.url));
+  const fresh = articles.filter((a) => !seen.has(a.url));
+
+  console.log(`🔍 수집 ${articles.length}건 · 기존 ${seen.size}건 · 신규 ${fresh.length}건 적재\n`);
+
+  for (const article of fresh) {
     console.log(`📰 "${article.title}"`);
     const result = await ingestArticle({
-      title:       article.title,
+      title: article.title,
       description: article.description,
-      url:         article.url,
+      url: article.url,
       publishedAt: article.publishedAt,
-      outletId:    article.outletId,
+      outletId: article.outletId,
     });
 
     const icon =
-      result.action === "assigned"       ? "✅" :
-      result.action === "judge_assigned" ? "🤖✅" :
-      result.action === "judge_rejected" ? "🤖❌" : "🆕";
+      result.action === "assigned"
+        ? "✅"
+        : result.action === "judge_assigned"
+          ? "🤖✅"
+          : result.action === "judge_rejected"
+            ? "🤖❌"
+            : "🆕";
 
-    console.log(`   ${icon} action=${result.action}  score=${result.score.toFixed(3)}  clusterId=${result.clusterId}\n`);
+    console.log(
+      `   ${icon} action=${result.action}  score=${result.score.toFixed(3)}  clusterId=${result.clusterId}\n`
+    );
   }
 
   console.log("✅ Ingestion complete. Refresh the dashboard to see updates.");
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => db.$disconnect());

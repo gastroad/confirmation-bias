@@ -43,14 +43,14 @@ Next.js는 자동으로 `.env` 로드.
 - 스키마 파일: `prisma/schema.prisma`
 - Prisma 런타임 설정: `prisma.config.ts` (CLI용 datasource URL = `DIRECT_URL` 주입)
 
-## 향후 인프라 계획 (미완료)
+## RSS 자동 수집 스케줄 (가동 중)
 
-### RSS 자동 수집 스케줄
+- `.github/workflows/pipeline.yml`가 매시간 `collect → ingest` 자동 실행 (2026-06-29~).
+- `data/new-articles.json`은 collect→ingest 간 임시 중간 파일. gitignore라 ingest는
+  정적 import가 아니라 **런타임에 읽는다**(빌드/타입체크 시점엔 부재). 향후 DB 직접 append로 대체 예정.
 
-- cron 또는 GitHub Actions scheduled workflow로 `collect && ingest` 자동 실행 예정
-- `data/new-articles.json`은 임시 중간 파일. 향후 DB 직접 append로 대체 예정
+## 중복 뉴스 제거
 
-### 중복 뉴스 제거
-
-- 현재: URL 기준 `upsert`로 기본 중복 방지
+- 현재: ingest가 **임베딩 전에 기존 URL을 일괄 조회해 제외** → 신규 기사만 임베딩(비용·지연 절감).
+  추가로 `Article.url @unique` upsert로 DB 레벨 이중 방지.
 - 향후: 임베딩 유사도 기반 cross-outlet 중복 감지 추가 예정
