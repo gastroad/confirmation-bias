@@ -45,7 +45,8 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 | ----------- | ------------------------------------------------------------------------------------------------------ |
 | 역할        | Next.js 16 앱 서빙(대시보드). Supabase에서 **읽기만**.                                                 |
 | 플랜        | Hobby(무료, 비상업적). 수익화 시 Pro로 상향.                                                           |
-| Production  | https://confirmation-bias-51f8.vercel.app/                                                             |
+| Production  | https://confirmationbias.app/                                                                          |
+| 도메인      | `confirmationbias.app`(Vercel 직접 구매, DNS·SSL 자동). `www`는 apex로 리다이렉트(권장 방향)           |
 | 빌드        | `npm run build` = `prisma generate && next build` (생성물 gitignore)                                   |
 | 환경변수    | `DATABASE_URL`(pooler 6543)만. OpenAI/DIRECT_URL 불필요.                                               |
 | 배포 트리거 | GitHub `main` push 시 자동 재배포                                                                      |

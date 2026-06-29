@@ -12,7 +12,7 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 ### 인프라 / 호스팅
 
 - [x] **호스팅 배포** ✅ 라이브(2026-06-29) — **Vercel(Hobby)**.
-      production URL: https://confirmation-bias-51f8.vercel.app/ (공개, 로그인 불필요).
+      production URL: https://confirmationbias.app/ (공개, 로그인 불필요).
       `build` = `prisma generate && next build`, 환경변수는 `DATABASE_URL`(pooler) 하나.
       라이브 검증: `/api/clusters/stats` 정상(422 클러스터·601 기사), 홈 200/45ms.
       (수익화 시 Hobby→Pro. preview 배포는 Vercel Authentication으로 보호됨 — production만 공개.)

@@ -2,7 +2,7 @@
 
 > 같은 뉴스 이슈를 언론사별로 그룹핑하고, 매체 성향별 보도 비중을 시각화하는 뉴스 분석 대시보드
 
-**🔗 라이브: [confirmation-bias-51f8.vercel.app](https://confirmation-bias-51f8.vercel.app/)**
+**🔗 라이브: [confirmationbias.app](https://confirmationbias.app/)**
 
 한국 주요 언론사 15곳의 RSS를 수집해 **임베딩 기반으로 같은 이슈를 자동 클러스터링**하고,
 각 이슈가 진보·중도·보수 매체에서 어떤 비중으로 다뤄지는지 한눈에 보여줍니다.
