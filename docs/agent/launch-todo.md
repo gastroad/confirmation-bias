@@ -11,10 +11,11 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 
 ### 인프라 / 호스팅
 
-- [ ] **호스팅 결정 및 배포**
-      파이프라인을 GitHub Actions로 분리하기로 결정 → 웹 호스트는 Next.js 서빙만 담당하면 되어
-      선택이 자유로움. Vercel 제외, **Railway / Render / Netlify** 후보. (웹 호스트 최종 미정)
-      파이프라인 실행처는 더 이상 호스팅에 묶이지 않음 → 아래 "RSS 수집 스케줄링" 참조.
+- [ ] **호스팅 배포** — 호스트는 **Vercel(Hobby)로 확정**(2026-06-29).
+      Next.js 공식 플랫폼 + Supabase pooler(6543)가 serverless 연결 함정을 이미 해소.
+      빌드 설정 점검 완료: `build` = `prisma generate && next build`, 시크릿은 `DATABASE_URL` 하나.
+      남은 일: GitHub 레포 연결 → Supabase 통합으로 `DATABASE_URL` 주입 → 첫 배포.
+      (수익화 시 Hobby→Pro. 파이프라인은 호스팅과 분리되어 아래 "RSS 수집 스케줄링" 참조.)
 - [x] **SQLite → Postgres(Supabase) 마이그레이션** ⭐ 선행 작업 ✅ 완료(2026-06-29)
       다른 P0/P1 인프라 항목(호스팅, 스케줄링, E2E 재활성화 등)이 모두 이걸 전제로 함.
       → 상세 실행 계획: [db-migration-supabase.md](./db-migration-supabase.md)

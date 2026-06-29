@@ -7,7 +7,7 @@
 | DB     | Supabase (Postgres), region ap-northeast-2 |
 | ORM    | Prisma v7 + `@prisma/adapter-pg`           |
 | 임베딩 | OpenAI `text-embedding-3-small`, 512차원   |
-| 호스팅 | 미정 (Railway / Render / Netlify 후보)     |
+| 호스팅 | Vercel (Hobby) — Next.js 서빙만 담당       |
 
 > SQLite → Supabase 전환 완료(2026-06-29). 롤백용 `dev.db.bak-*`는 로컬에만 보관(gitignore).
 
@@ -28,10 +28,18 @@ OPENAI_API_KEY=sk-...
 `scripts/`와 `prisma/` 스크립트는 `--env-file=.env` 로 로드.  
 Next.js는 자동으로 `.env` 로드.
 
+### Vercel(웹 호스트)에 필요한 시크릿
+
+- **`DATABASE_URL`만 필요.** OpenAI는 `server/clustering/*`(embed·llm-judge)에서만 쓰이고
+  이는 ingest 파이프라인(GitHub Actions)만 import하므로, 웹 런타임엔 `OPENAI_API_KEY` 불필요.
+- **`DIRECT_URL`도 Vercel엔 불필요.** 마이그레이션은 GitHub Actions/로컬에서만 수행.
+
 ## Prisma 주의사항
 
 - 생성된 클라이언트는 `src/generated/prisma/` (gitignore됨)
 - 코드 변경 후 반드시 `npm run db:generate` 실행 (CI에서도 자동 실행됨)
+- **Vercel 빌드는 스텝을 못 끼우므로 `build` 스크립트가 `prisma generate && next build`.**
+  생성물이 gitignore라 이게 없으면 클라이언트 부재로 빌드 실패.
 - 스키마 파일: `prisma/schema.prisma`
 - Prisma 런타임 설정: `prisma.config.ts` (CLI용 datasource URL = `DIRECT_URL` 주입)
 
