@@ -61,12 +61,6 @@
       "name": "조선일보"
     },
     {
-      "url": "https://rss.joins.com/joins_politics_list.xml",
-      "leaning": "center_right",
-      "outletId": "joongang",
-      "name": "중앙일보"
-    },
-    {
       "url": "https://cdn.newscj.com/rss/gns_S1N1.xml",
       "leaning": "right",
       "outletId": "cheonji",
@@ -83,12 +77,6 @@
       "leaning": "left",
       "outletId": "hani",
       "name": "한겨레신문"
-    },
-    {
-      "url": "https://news.kbs.co.kr/rss/rss.do?sec=politics",
-      "leaning": "center",
-      "outletId": "kbs",
-      "name": "KBS"
     }
   ],
   "economy": [
@@ -153,12 +141,6 @@
       "name": "조선일보"
     },
     {
-      "url": "https://rss.joins.com/joins_economy_list.xml",
-      "leaning": "center_right",
-      "outletId": "joongang",
-      "name": "중앙일보"
-    },
-    {
       "url": "https://cdn.newscj.com/rss/gns_S1N2.xml",
       "leaning": "right",
       "outletId": "cheonji",
@@ -175,12 +157,6 @@
       "leaning": "left",
       "outletId": "hani",
       "name": "한겨레신문"
-    },
-    {
-      "url": "https://news.kbs.co.kr/rss/rss.do?sec=economy",
-      "leaning": "center",
-      "outletId": "kbs",
-      "name": "KBS"
     }
   ],
   "society": [
@@ -245,12 +221,6 @@
       "name": "조선일보"
     },
     {
-      "url": "https://rss.joins.com/joins_society_list.xml",
-      "leaning": "center_right",
-      "outletId": "joongang",
-      "name": "중앙일보"
-    },
-    {
       "url": "https://cdn.newscj.com/rss/gns_S1N3.xml",
       "leaning": "right",
       "outletId": "cheonji",
@@ -267,12 +237,6 @@
       "leaning": "left",
       "outletId": "hani",
       "name": "한겨레신문"
-    },
-    {
-      "url": "https://news.kbs.co.kr/rss/rss.do?sec=society",
-      "leaning": "center",
-      "outletId": "kbs",
-      "name": "KBS"
     }
   ],
   "international": [
@@ -337,12 +301,6 @@
       "name": "조선일보"
     },
     {
-      "url": "https://rss.joins.com/joins_world_list.xml",
-      "leaning": "center_right",
-      "outletId": "joongang",
-      "name": "중앙일보"
-    },
-    {
       "url": "https://cdn.newscj.com/rss/gns_S1N4.xml",
       "leaning": "right",
       "outletId": "cheonji",
@@ -359,12 +317,6 @@
       "leaning": "left",
       "outletId": "hani",
       "name": "한겨레신문"
-    },
-    {
-      "url": "https://news.kbs.co.kr/rss/rss.do?sec=world",
-      "leaning": "center",
-      "outletId": "kbs",
-      "name": "KBS"
     }
   ]
 }

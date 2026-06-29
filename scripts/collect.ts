@@ -34,7 +34,15 @@ async function fetchFeed(outletId: string, feedUrl: string): Promise<CollectedAr
 
     const xml = await res.text();
     const parsed = parser.parse(xml);
-    const raw = parsed?.rss?.channel?.item ?? [];
+
+    // 죽은 피드는 200 OK로 HTML(서비스 종료/에러 안내)을 반환하기도 한다.
+    // res.ok만으로는 못 거르므로 RSS 구조 부재를 명시적으로 경고한다.
+    if (!parsed?.rss?.channel) {
+      const snippet = xml.replace(/\s+/g, " ").trim().slice(0, 60);
+      throw new Error(`RSS 구조 아님 (응답: ${snippet}…)`);
+    }
+
+    const raw = parsed.rss.channel.item ?? [];
     const items: unknown[] = Array.isArray(raw) ? raw : [raw];
 
     return items
@@ -44,9 +52,7 @@ async function fetchFeed(outletId: string, feedUrl: string): Promise<CollectedAr
         const title = stripHtml(toText(i.title));
         const description = stripHtml(toText(i.description)) || null;
         const pubDate = toText(i.pubDate);
-        const publishedAt = pubDate
-          ? new Date(pubDate).toISOString()
-          : new Date().toISOString();
+        const publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
         return { title, description, url, publishedAt, outletId };
       })
       .filter((a) => a.title && a.url);
