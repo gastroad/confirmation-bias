@@ -1,5 +1,8 @@
 # Infrastructure
 
+> 외부 서비스(OpenAI·Vercel·Supabase·GitHub) 계정·시크릿·점검 지점은
+> [external-services.md](./external-services.md) 참고.
+
 ## 현재 상태
 
 | 항목   | 현재 값                                    |

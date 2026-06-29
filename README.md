@@ -2,6 +2,8 @@
 
 > 같은 뉴스 이슈를 언론사별로 그룹핑하고, 매체 성향별 보도 비중을 시각화하는 뉴스 분석 대시보드
 
+**🔗 라이브: [confirmation-bias-51f8.vercel.app](https://confirmation-bias-51f8.vercel.app/)**
+
 한국 주요 언론사 15곳의 RSS를 수집해 **임베딩 기반으로 같은 이슈를 자동 클러스터링**하고,
 각 이슈가 진보·중도·보수 매체에서 어떤 비중으로 다뤄지는지 한눈에 보여줍니다.
 같은 사건을 두고 진영별로 얼마나 다르게 — 혹은 비슷하게 — 보도하는지 관찰할 수 있습니다.
@@ -23,6 +25,8 @@
 | Backend  | Node.js 파이프라인 (RSS 수집 → 임베딩 → 클러스터링)                       |
 | AI       | OpenAI `text-embedding-3-small`                                           |
 | Database | Supabase(Postgres) + Prisma 7 (`@prisma/adapter-pg`)                      |
+| Hosting  | Vercel (Hobby) — Next.js 서빙                                             |
+| 자동화   | GitHub Actions — CI + 매시간 수집 파이프라인(collect→ingest)              |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
 
@@ -45,6 +49,26 @@ RSS 피드
 - `< 0.70` → 새 클러스터 생성
 
 디렉토리 구조와 FSD 레이어 규칙은 [`docs/agent/architecture.md`](docs/agent/architecture.md)를 참고하세요.
+
+## 🌐 운영 / 인프라
+
+4개 외부 서비스로 구성된 실서비스. **Supabase를 사이에 두고 쓰기(파이프라인)와 읽기(웹)가 분리**된다.
+
+```
+   GitHub Actions  ──write──▶  Supabase (Postgres)  ◀──read──  Vercel (웹)
+   매시간 collect→ingest          단일 진실 공급원              방문자 대시보드
+        │
+   OpenAI (임베딩/판정)
+```
+
+| 서비스       | 역할                                         |
+| ------------ | -------------------------------------------- |
+| **Vercel**   | Next.js 웹 호스팅 (Supabase 읽기만)          |
+| **Supabase** | Postgres DB (단일 진실 공급원)               |
+| **GitHub**   | 저장소 + Actions (CI · 매시간 파이프라인)    |
+| **OpenAI**   | 임베딩 + LLM 클러스터 판정 (파이프라인 전용) |
+
+계정·시크릿·점검 지점 등 운영 상세는 [`docs/agent/external-services.md`](docs/agent/external-services.md)를 참고하세요.
 
 ## 🚀 시작하기
 
@@ -111,7 +135,7 @@ confirmation-bias/
 │   ├── db.ts          Prisma 싱글턴
 │   ├── queries/       순수 Prisma 조회 (커서 페이지네이션·집계)
 │   └── clustering/    embed · similarity · cluster · llm-judge
-├── scripts/           collect.ts · ingest.ts (일회성 실행)
+├── scripts/           collect.ts · ingest.ts (매시간 GitHub Actions 실행)
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
 │   ├── app/           App Router (page · layout · API routes · providers)
