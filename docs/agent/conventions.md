@@ -29,17 +29,19 @@
 
 ## 파일 생성 위치 결정 기준
 
-| 추가할 것                 | 어디에                                   |
-| ------------------------- | ---------------------------------------- |
-| 새 도메인 타입            | `src/entities/<name>/model.ts`           |
-| 새 도메인 UI (props-only) | `src/entities/<name>/ui/<Component>.tsx` |
-| 페이지 수준 UI 조합       | `src/widgets/<name>/ui/<Widget>.tsx`     |
-| 날짜·문자열 유틸          | `src/shared/lib/`                        |
-| DB 쿼리 (순수 Prisma)     | `server/queries/<name>.ts`               |
-| row→DTO 도메인 매핑       | `src/entities/<name>/lib.ts`             |
-| 클라이언트 fetcher        | `src/entities/<name>/api.ts`             |
-| BE 파이프라인 로직        | `server/clustering/`                     |
-| 일회성 실행 스크립트      | `scripts/`                               |
+| 추가할 것                    | 어디에                                   |
+| ---------------------------- | ---------------------------------------- |
+| 새 도메인 타입               | `src/entities/<name>/model.ts`           |
+| 새 도메인 UI (props-only)    | `src/entities/<name>/ui/<Component>.tsx` |
+| 페이지 수준 UI 조합          | `src/widgets/<name>/ui/<Widget>.tsx`     |
+| 날짜·문자열 유틸             | `src/shared/lib/`                        |
+| DB 쿼리 (순수 Prisma)        | `server/queries/<name>.ts`               |
+| row→DTO 도메인 매핑          | `src/entities/<name>/lib.ts`             |
+| 클라이언트 fetcher           | `src/entities/<name>/api.ts`             |
+| BE 파이프라인 로직           | `server/clustering/`                     |
+| 일회성 실행 스크립트         | `scripts/`                               |
+| 사이트 전역 상수(SEO·브랜드) | `src/shared/config/site.ts`              |
+| 구조화 데이터·JSON-LD        | `src/shared/seo/`                        |
 
 ## 코드 스타일
 

@@ -41,18 +41,18 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 
 ### 2. Vercel — 웹 호스팅
 
-| 항목        | 값                                                                                                     |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| 역할        | Next.js 16 앱 서빙(대시보드). Supabase에서 **읽기만**.                                                 |
-| 플랜        | Hobby(무료, 비상업적). 수익화 시 Pro로 상향.                                                           |
-| Production  | https://confirmationbias.app/                                                                          |
-| 도메인      | `confirmationbias.app`(Vercel 직접 구매, DNS·SSL 자동). `www`는 apex로 리다이렉트(권장 방향)           |
-| 빌드        | `npm run build` = `prisma generate && next build` (생성물 gitignore)                                   |
-| 환경변수    | `DATABASE_URL`(pooler 6543)만. OpenAI/DIRECT_URL 불필요.                                               |
-| 배포 트리거 | GitHub `main` push 시 자동 재배포                                                                      |
-| Node        | `package.json` `engines.node ">=22"`를 Vercel이 읽어 정렬                                              |
-| 대시보드    | https://vercel.com/ (프로젝트 → Deployments / Settings)                                                |
-| 점검 지점   | 빌드 실패→로그 / 데이터 빈 화면→`DATABASE_URL` 환경변수 / preview 로그인벽=Deployment Protection(정상) |
+| 항목        | 값                                                                                                                         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 역할        | Next.js 16 앱 서빙(대시보드). Supabase에서 **읽기만**.                                                                     |
+| 플랜        | Hobby(무료, 비상업적). 수익화 시 Pro로 상향.                                                                               |
+| Production  | https://confirmationbias.app/                                                                                              |
+| 도메인      | `confirmationbias.app`(Vercel 직접 구매, DNS·SSL 자동). `www`는 apex로 리다이렉트(권장 방향)                               |
+| 빌드        | `npm run build` = `prisma generate && next build` (생성물 gitignore)                                                       |
+| 환경변수    | `DATABASE_URL`(pooler 6543) 필수. `NEXT_PUBLIC_SITE_URL`은 선택(미설정 시 프로덕션 도메인 폴백). OpenAI/DIRECT_URL 불필요. |
+| 배포 트리거 | GitHub `main` push 시 자동 재배포                                                                                          |
+| Node        | `package.json` `engines.node ">=22"`를 Vercel이 읽어 정렬                                                                  |
+| 대시보드    | https://vercel.com/ (프로젝트 → Deployments / Settings)                                                                    |
+| 점검 지점   | 빌드 실패→로그 / 데이터 빈 화면→`DATABASE_URL` 환경변수 / preview 로그인벽=Deployment Protection(정상)                     |
 
 ### 3. Supabase — 데이터베이스
 

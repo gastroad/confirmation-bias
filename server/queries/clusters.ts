@@ -42,6 +42,17 @@ export async function findClusterSummaryPage({ cursor, limit, outletIds }: ListP
   return { rows, nextCursor };
 }
 
+/**
+ * 사이트맵용 경량 조회. 상세 페이지가 있는 모든 클러스터의 id·updatedAt만.
+ * (id+updatedAt만 실어 egress 최소화. sitemap.ts는 revalidate로 조회 빈도를 묶는다.)
+ */
+export async function findClusterRefs() {
+  return db.cluster.findMany({
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, updatedAt: true },
+  });
+}
+
 export async function findClusterDetailRow(id: string) {
   return db.cluster.findUnique({
     where: { id },

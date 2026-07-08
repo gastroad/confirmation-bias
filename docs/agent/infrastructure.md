@@ -20,6 +20,7 @@
 DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true  # 앱 런타임(pooler)
 DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres                    # 스키마 push/migrate(direct)
 OPENAI_API_KEY=sk-...
+NEXT_PUBLIC_SITE_URL=https://confirmationbias.app  # (선택) SEO canonical/OG의 절대 URL. 미설정 시 프로덕션 도메인으로 폴백
 ```
 
 - **`DATABASE_URL`(6543, pgbouncer)** — 앱 런타임. `server/db.ts`의 `PrismaPg` 어댑터가 사용.
@@ -61,6 +62,23 @@ Next.js는 자동으로 `.env` 로드.
   로드해 메모리에서 갱신(`server/clustering/cluster.ts`), ③ ingest의 write들에 `select`를 걸어
   응답이 centroid·embeddingJson을 되싣지 않게 함.
 - **향후:** centroid를 pgvector로 옮겨 유사도를 DB에서 계산하면 벡터를 앱으로 퍼내는 egress 자체가 사라짐.
+
+## SEO
+
+Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_URL·이름·설명·키워드).
+
+| 요소                | 위치                             | 비고                                                                          |
+| ------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
+| 전역 메타데이터     | `src/app/layout.tsx`             | metadataBase·title.template·OG·Twitter·robots·canonical·viewport              |
+| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx` | `generateMetadata`(제목=대표기사, canonical, og:type=article)                 |
+| robots.txt          | `src/app/robots.ts`              | `/api/` 차단, sitemap 링크                                                    |
+| sitemap.xml         | `src/app/sitemap.ts`             | 홈 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제              |
+| OG 이미지           | `src/app/opengraph-image.tsx`    | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백 |
+| 구조화 데이터       | `src/shared/seo/`                | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                  |
+
+- **egress 주의:** 상세 페이지는 `generateMetadata`와 렌더가 `cache(findClusterDetailRow)`로
+  요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.
+- 사이트맵 URL 수가 5만을 넘기면 `generateSitemaps`로 분할 필요(현재 수천 개 수준, 여유).
 
 ## 중복 뉴스 제거
 

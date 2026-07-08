@@ -1,6 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeScript } from "@/features/theme-toggle";
+import { JsonLd } from "@/shared/seo/JsonLd";
+import { websiteSchema } from "@/shared/seo/schemas";
+import {
+  SITE_URL,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_KEYWORDS,
+} from "@/shared/config/site";
 import { Providers } from "./providers";
 import "./global.css";
 
@@ -15,8 +25,50 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "확증편향 — 언론사 성향별 뉴스 보도 분석",
-  description: "여러 언론사의 같은 이슈 보도를 매체 성향 분포로 시각화합니다.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: `%s — ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: SITE_LOCALE,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  formatDetection: { telephone: false, email: false, address: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -32,6 +84,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeScript />
+        <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
       </body>
     </html>
