@@ -48,9 +48,19 @@ Next.js는 자동으로 `.env` 로드.
 
 ## RSS 자동 수집 스케줄 (가동 중)
 
-- `.github/workflows/pipeline.yml`가 매시간 `collect → ingest` 자동 실행 (2026-06-29~).
+- `.github/workflows/pipeline.yml`가 **6시간마다** `collect → ingest` 자동 실행 (2026-06-29~,
+  2026-07-08 매시간→6시간마다 완화: Supabase egress 초과 대응. `pipeline-scheduling.md` 참조).
 - `data/new-articles.json`은 collect→ingest 간 임시 중간 파일. gitignore라 ingest는
   정적 import가 아니라 **런타임에 읽는다**(빌드/타입체크 시점엔 부재). 향후 DB 직접 append로 대체 예정.
+
+## Supabase egress 관리
+
+- **원인:** ingest가 기사마다 최근 클러스터 centroid(≈10KB/건, 512-dim JSON)를 전부 재조회해
+  `O(신규기사 × 최근클러스터)`로 egress가 폭증 → 5GB/월 한도를 크게 초과(28GB, 2026-07-08).
+- **대응:** ① cron 매시간→6시간마다 완화, ② `loadRecentClusters()`로 centroid를 **run당 1회만**
+  로드해 메모리에서 갱신(`server/clustering/cluster.ts`), ③ ingest의 write들에 `select`를 걸어
+  응답이 centroid·embeddingJson을 되싣지 않게 함.
+- **향후:** centroid를 pgvector로 옮겨 유사도를 DB에서 계산하면 벡터를 앱으로 퍼내는 egress 자체가 사라짐.
 
 ## 중복 뉴스 제거
 

@@ -12,7 +12,7 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
                       write │              │ read
         ┌───────────────────┴──┐      ┌────┴───────────────────┐
         │   GitHub Actions     │      │        Vercel          │
-        │  pipeline.yml (매시간) │      │   Next.js 웹 서빙       │
+        │ pipeline.yml (6시간마다)│      │   Next.js 웹 서빙       │
         │  collect → ingest    │      │   (방문자 대시보드)      │
         └───────────┬──────────┘      └────────────────────────┘
                     │ embeddings/judge
@@ -56,26 +56,27 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 
 ### 3. Supabase — 데이터베이스
 
-| 항목      | 값                                                                                      |
-| --------- | --------------------------------------------------------------------------------------- |
-| 역할      | Postgres. 전 서비스의 단일 진실 공급원(읽기=Vercel, 쓰기=GH Actions).                   |
-| 플랜      | Free. Region `ap-northeast-2`(서울).                                                    |
-| 연결      | `DATABASE_URL`(pooler 6543, pgbouncer)=런타임 / `DIRECT_URL`(5432 session)=마이그레이션 |
-| 시크릿    | 연결 문자열: 로컬 `.env`, GH Actions(`DATABASE_URL`), Vercel(`DATABASE_URL`)            |
-| 대시보드  | https://supabase.com/dashboard → 프로젝트 `fwvvwovmthrxfglivnhi`                        |
-| 점검 지점 | Free 티어 7일 무활동 시 일시정지(매시간 파이프라인이 막아줌) / 500MB·연결 수 한도       |
-| 주의      | 비밀번호의 `[YOUR-PASSWORD]` 자리는 **대괄호까지** 치환(잔존 시 P1000)                  |
+| 항목      | 값                                                                                             |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| 역할      | Postgres. 전 서비스의 단일 진실 공급원(읽기=Vercel, 쓰기=GH Actions).                          |
+| 플랜      | Free. Region `ap-northeast-2`(서울).                                                           |
+| 연결      | `DATABASE_URL`(pooler 6543, pgbouncer)=런타임 / `DIRECT_URL`(5432 session)=마이그레이션        |
+| 시크릿    | 연결 문자열: 로컬 `.env`, GH Actions(`DATABASE_URL`), Vercel(`DATABASE_URL`)                   |
+| 대시보드  | https://supabase.com/dashboard → 프로젝트 `fwvvwovmthrxfglivnhi`                               |
+| 점검 지점 | Free 티어 7일 무활동 시 일시정지(파이프라인이 막아줌) / 500MB·연결 수 / **egress 5GB/월**      |
+| egress    | 2026-07-08 28GB로 초과 → cron 6h 완화 + ingest centroid 인메모리화로 대응(`infrastructure.md`) |
+| 주의      | 비밀번호의 `[YOUR-PASSWORD]` 자리는 **대괄호까지** 치환(잔존 시 P1000)                         |
 
 ### 4. GitHub — 저장소 + 자동화
 
-| 항목       | 값                                                                         |
-| ---------- | -------------------------------------------------------------------------- |
-| 역할       | 소스 저장소 + GitHub Actions(CI + 매시간 수집 파이프라인)                  |
-| 저장소     | `gastroad/confirmation-bias` (**public** → Actions 무료 분 무제한)         |
-| 워크플로우 | `ci.yml`(push/PR: tsc·lint·test) / `pipeline.yml`(매시간 collect+ingest)   |
-| 시크릿     | Repo Settings → Secrets → `OPENAI_API_KEY`, `DATABASE_URL`                 |
-| 대시보드   | https://github.com/gastroad/confirmation-bias/actions                      |
-| 점검 지점  | cron 지연(부하 시 수 분) / 60일 무활동 시 schedule 비활성화 / 실패 시 로그 |
+| 항목       | 값                                                                          |
+| ---------- | --------------------------------------------------------------------------- |
+| 역할       | 소스 저장소 + GitHub Actions(CI + 6시간마다 수집 파이프라인)                |
+| 저장소     | `gastroad/confirmation-bias` (**public** → Actions 무료 분 무제한)          |
+| 워크플로우 | `ci.yml`(push/PR: tsc·lint·test) / `pipeline.yml`(6시간마다 collect+ingest) |
+| 시크릿     | Repo Settings → Secrets → `OPENAI_API_KEY`, `DATABASE_URL`                  |
+| 대시보드   | https://github.com/gastroad/confirmation-bias/actions                       |
+| 점검 지점  | cron 지연(부하 시 수 분) / 60일 무활동 시 schedule 비활성화 / 실패 시 로그  |
 
 ---
 

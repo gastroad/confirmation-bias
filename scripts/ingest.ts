@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "../server/db";
-import { ingestArticle } from "../server/clustering/cluster";
+import { ingestArticle, loadRecentClusters } from "../server/clustering/cluster";
 
 interface CollectedArticle {
   title: string;
@@ -35,15 +35,22 @@ async function main() {
 
   console.log(`🔍 수집 ${articles.length}건 · 기존 ${seen.size}건 · 신규 ${fresh.length}건 적재\n`);
 
+  // 최근 클러스터 centroid는 run당 1회만 로드하고, 배정·신규 시 메모리에서 갱신한다.
+  // (기사마다 전체 centroid를 재조회하던 egress 폭증을 제거)
+  const recent = await loadRecentClusters();
+
   for (const article of fresh) {
     console.log(`📰 "${article.title}"`);
-    const result = await ingestArticle({
-      title: article.title,
-      description: article.description,
-      url: article.url,
-      publishedAt: article.publishedAt,
-      outletId: article.outletId,
-    });
+    const result = await ingestArticle(
+      {
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        publishedAt: article.publishedAt,
+        outletId: article.outletId,
+      },
+      recent
+    );
 
     const icon =
       result.action === "assigned"
