@@ -33,7 +33,6 @@ model Article {
   id            String   @id @default(uuid())
   title         String
   description   String?
-  body          String?
   url           String   @unique
   publishedAt   DateTime
   embeddingJson String?  // JSON.stringify(number[]) — 512-dim normalized vector
