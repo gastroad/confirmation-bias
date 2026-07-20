@@ -82,6 +82,20 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
   요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.
 - 사이트맵 URL 수가 5만을 넘기면 `generateSitemaps`로 분할 필요(현재 수천 개 수준, 여유).
 
+## 수익화 (Google AdSense)
+
+| 요소             | 위치                         | 비고                                                                |
+| ---------------- | ---------------------------- | ------------------------------------------------------------------- |
+| 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT` | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유  |
+| 로더 스크립트    | `src/app/layout.tsx`         | `next/script`(afterInteractive). 이게 광고+**CMP 동의 배너**를 로드 |
+| 사이트 확인 메타 | `layout.tsx` metadata.other  | `google-adsense-account` 메타                                       |
+| ads.txt          | `public/ads.txt`             | `google.com, pub-8694059194416409, DIRECT, f08c47fec0942fa0`        |
+
+- **CMP:** EEA·영국·스위스 동의는 AdSense "개인정보 보호 및 메시지"의 Google 자체 CMP가 담당.
+  별도 스크립트 없이 위 로더가 배너를 띄운다.
+- 개인화 광고·쿠키 고지는 `src/app/privacy/`(개인정보처리방침)에 포함.
+- 광고 유닛을 특정 위치에 넣으려면 AdSense에서 유닛 생성 후 `data-ad-slot` ID로 배치(현재는 자동 광고 기준).
+
 ## 중복 뉴스 제거
 
 - 현재: ingest가 **임베딩 전에 기존 URL을 일괄 조회해 제외** → 신규 기사만 임베딩(비용·지연 절감).

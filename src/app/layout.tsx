@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import Script from "next/script";
 import { ThemeScript } from "@/features/theme-toggle";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { websiteSchema } from "@/shared/seo/schemas";
@@ -12,6 +13,7 @@ import {
   SITE_LOCALE,
   SITE_KEYWORDS,
   CONTACT_EMAIL,
+  ADSENSE_CLIENT,
 } from "@/shared/config/site";
 import * as layout from "@/shared/styles/layout.css";
 import { Providers } from "./providers";
@@ -65,6 +67,7 @@ export const metadata: Metadata = {
     },
   },
   formatDetection: { telephone: false, email: false, address: false },
+  other: { "google-adsense-account": ADSENSE_CLIENT },
 };
 
 export const viewport: Viewport = {
@@ -87,6 +90,13 @@ export default function RootLayout({
     >
       <body>
         <ThemeScript />
+        {/* AdSense 로더. 이 스크립트가 광고 게재와 EEA/UK/CH 대상 CMP 동의 배너를 함께 띄운다. */}
+        <Script
+          id="adsbygoogle-init"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+        />
         <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
         <footer className={layout.footer}>
