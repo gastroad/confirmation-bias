@@ -95,7 +95,7 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 | 증상                           | 1순위 확인                                               |
 | ------------------------------ | -------------------------------------------------------- |
 | 웹은 뜨는데 데이터가 빔        | Vercel `DATABASE_URL` 환경변수 / Supabase 일시정지 여부  |
-| 매시간 적재 안 됨              | GitHub Actions 로그 / Secrets 2종 / OpenAI 쿼터          |
+| 6시간마다 적재 안 됨           | GitHub Actions 로그 / Secrets 2종 / OpenAI 쿼터          |
 | 파이프라인이 비정상적으로 느림 | OpenAI 429/431 재시도(embed.ts) / ingest dedup 동작 여부 |
 | Vercel 빌드 실패               | 빌드 로그 / `prisma generate` 포함 여부 / Node 버전      |
 | preview URL이 로그인 요구      | 정상(Deployment Protection). production URL을 쓸 것      |

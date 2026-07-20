@@ -26,7 +26,7 @@
 | AI       | OpenAI `text-embedding-3-small`                                           |
 | Database | Supabase(Postgres) + Prisma 7 (`@prisma/adapter-pg`)                      |
 | Hosting  | Vercel (Hobby) — Next.js 서빙                                             |
-| 자동화   | GitHub Actions — CI + 매시간 수집 파이프라인(collect→ingest)              |
+| 자동화   | GitHub Actions — CI + 6시간마다 수집 파이프라인(collect→ingest)           |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
 
@@ -56,7 +56,7 @@ RSS 피드
 
 ```
    GitHub Actions  ──write──▶  Supabase (Postgres)  ◀──read──  Vercel (웹)
-   매시간 collect→ingest          단일 진실 공급원              방문자 대시보드
+   6시간마다 collect→ingest       단일 진실 공급원              방문자 대시보드
         │
    OpenAI (임베딩/판정)
 ```
@@ -65,7 +65,7 @@ RSS 피드
 | ------------ | -------------------------------------------- |
 | **Vercel**   | Next.js 웹 호스팅 (Supabase 읽기만)          |
 | **Supabase** | Postgres DB (단일 진실 공급원)               |
-| **GitHub**   | 저장소 + Actions (CI · 매시간 파이프라인)    |
+| **GitHub**   | 저장소 + Actions (CI · 6시간마다 파이프라인) |
 | **OpenAI**   | 임베딩 + LLM 클러스터 판정 (파이프라인 전용) |
 
 계정·시크릿·점검 지점 등 운영 상세는 [`docs/agent/external-services.md`](docs/agent/external-services.md)를 참고하세요.
@@ -135,7 +135,7 @@ confirmation-bias/
 │   ├── db.ts          Prisma 싱글턴
 │   ├── queries/       순수 Prisma 조회 (커서 페이지네이션·집계)
 │   └── clustering/    embed · similarity · cluster · llm-judge
-├── scripts/           collect.ts · ingest.ts (매시간 GitHub Actions 실행)
+├── scripts/           collect.ts · ingest.ts (6시간마다 GitHub Actions 실행)
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
 │   ├── app/           App Router (page · layout · API routes · providers)
