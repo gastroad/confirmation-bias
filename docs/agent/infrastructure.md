@@ -67,14 +67,16 @@ Next.js는 자동으로 `.env` 로드.
 
 Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_URL·이름·설명·키워드).
 
-| 요소                | 위치                             | 비고                                                                          |
-| ------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
-| 전역 메타데이터     | `src/app/layout.tsx`             | metadataBase·title.template·OG·Twitter·robots·canonical·viewport              |
-| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx` | `generateMetadata`(제목=대표기사, canonical, og:type=article)                 |
-| robots.txt          | `src/app/robots.ts`              | `/api/` 차단, sitemap 링크                                                    |
-| sitemap.xml         | `src/app/sitemap.ts`             | 홈 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제              |
-| OG 이미지           | `src/app/opengraph-image.tsx`    | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백 |
-| 구조화 데이터       | `src/shared/seo/`                | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                  |
+| 요소                | 위치                                         | 비고                                                                          |
+| ------------------- | -------------------------------------------- | ----------------------------------------------------------------------------- |
+| 전역 메타데이터     | `src/app/layout.tsx`                         | metadataBase·title.template·OG·Twitter·robots·canonical·viewport              |
+| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`             | `generateMetadata`(제목=대표기사, canonical, og:type=article)                 |
+| robots.txt          | `src/app/robots.ts`                          | `/api/` 차단, sitemap 링크                                                    |
+| sitemap.xml         | `src/app/sitemap.ts`                         | 홈 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제              |
+| OG 이미지           | `src/app/opengraph-image.tsx`                | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백 |
+| 구조화 데이터       | `src/shared/seo/`                            | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                  |
+| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx` | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                |
+| 개인정보처리방침    | `src/app/privacy/`                           | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                       |
 
 - **egress 주의:** 상세 페이지는 `generateMetadata`와 렌더가 `cache(findClusterDetailRow)`로
   요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.

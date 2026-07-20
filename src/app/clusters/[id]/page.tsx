@@ -7,6 +7,7 @@ import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ThemeToggle } from "@/features/theme-toggle";
+import { Logo } from "@/shared/ui";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
 import * as layout from "@/shared/styles/layout.css";
@@ -81,6 +82,7 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
             ← 목록
           </Link>
           <span className={layout.divider}>|</span>
+          <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
             <ThemeToggle />

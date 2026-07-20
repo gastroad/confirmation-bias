@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import { ThemeScript } from "@/features/theme-toggle";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { websiteSchema } from "@/shared/seo/schemas";
@@ -10,7 +11,9 @@ import {
   SITE_DESCRIPTION,
   SITE_LOCALE,
   SITE_KEYWORDS,
+  CONTACT_EMAIL,
 } from "@/shared/config/site";
+import * as layout from "@/shared/styles/layout.css";
 import { Providers } from "./providers";
 import "./global.css";
 
@@ -86,6 +89,24 @@ export default function RootLayout({
         <ThemeScript />
         <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
+        <footer className={layout.footer}>
+          <div className={layout.footerInner}>
+            <span>
+              © {new Date().getFullYear()} {SITE_NAME}
+            </span>
+            <nav className={layout.footerLinks}>
+              <Link className={layout.footerLink} href="/">
+                홈
+              </Link>
+              <Link className={layout.footerLink} href="/privacy">
+                개인정보처리방침
+              </Link>
+              <a className={layout.footerLink} href={`mailto:${CONTACT_EMAIL}`}>
+                문의
+              </a>
+            </nav>
+          </div>
+        </footer>
       </body>
     </html>
   );

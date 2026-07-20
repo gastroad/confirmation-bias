@@ -16,6 +16,10 @@ export const SITE_DESCRIPTION =
 
 export const SITE_LOCALE = "ko_KR";
 
+// 공개 문의처. 개인 이메일 노출을 피하려 도메인 주소를 쓰고 무료 포워딩으로 개인함에 전달한다.
+// (Cloudflare Email Routing / ImprovMX). 다른 주소로 바꾸려면 여기만 고친다.
+export const CONTACT_EMAIL = "contact@confirmationbias.app";
+
 export const SITE_KEYWORDS = [
   "뉴스 클러스터링",
   "언론사 성향",

@@ -39,6 +39,11 @@ export const headerActions = style({
   marginLeft: "auto",
 });
 
+export const logo = style({
+  color: vars.color.text,
+  flexShrink: 0,
+});
+
 export const brand = style({
   fontSize: 18,
   fontWeight: 700,
@@ -73,4 +78,41 @@ export const brandSmall = style({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+});
+
+export const footer = style({
+  borderTop: `1px solid ${vars.color.border}`,
+  background: vars.color.bg,
+  marginTop: 48,
+});
+
+export const footerInner = style({
+  width: "100%",
+  maxWidth: vars.layout.maxWidth,
+  margin: "0 auto",
+  padding: "24px 16px",
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: 16,
+  fontSize: 13,
+  color: vars.color.textFaint,
+});
+
+export const footerLinks = style({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: 16,
+  marginLeft: "auto",
+});
+
+export const footerLink = style({
+  color: vars.color.textSecondary,
+  transition: "color 0.15s",
+  selectors: {
+    "&:hover": {
+      color: vars.color.text,
+    },
+  },
 });
