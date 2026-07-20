@@ -58,3 +58,40 @@ npx tsc --noEmit
 npm run lint
 npm run format:check
 ```
+
+## 브랜치 전략 & 배포
+
+**GitHub Flow.** `develop` 없이 `main` 하나만 장수(long-lived) 브랜치로 둔다. `main` = 프로덕션(라이브).
+
+- `main`에는 **직접 push하지 않는다.** 모든 변경은 `feat/*`·`fix/*`·`chore/*`·`docs/*` 브랜치에서 PR로 들어온다.
+- PR을 열면 두 게이트가 돈다.
+  - **`ci.yml`** — `main` 대상 push·PR에서 `tsc --noEmit` · `lint` · 단위 테스트. (⚠️ `next build`는 하지 않음)
+  - **Vercel Preview** — 브랜치별 프리뷰 배포. `next build`가 실제로 도는 곳이라 **사실상의 빌드 게이트**. 프리뷰 URL은 Deployment Protection(로그인벽)이 걸려 소유자만 접근한다.
+- 검증되면 **squash merge** → `main` push → Vercel Production 자동 배포 = 라이브 반영.
+- `pipeline.yml`(collect+ingest)은 cron(6시간마다)·수동 트리거라 브랜치와 무관하게 항상 기본 브랜치(`main`)에서 돈다. 브랜치 작업이 프로덕션 수집에 영향을 주지 않는다.
+
+## 워크트리로 작업하기
+
+작업 하나 = 워크트리 하나 = 브랜치 하나. `main` 원본 클론은 직접 커밋하지 않고 항상 clean하게 둔다.
+
+```bash
+# 1. 형제 디렉토리에 워크트리 + 브랜치 동시 생성
+git worktree add ../confirmationbias-<slug> -b feat/<slug>
+cd ../confirmationbias-<slug>
+
+# 2. 새 워크트리엔 node_modules·.env가 없다 (둘 다 gitignore)
+cp ../confirmation-bias/.env .env    # 로컬 dev·파이프라인 실행이 필요할 때
+npm ci
+npm run db:generate                  # Prisma 클라이언트 생성 (src/generated/prisma)
+
+# 3. 작업 → 커밋 → push → PR
+git push -u origin feat/<slug>
+gh pr create --base main
+
+# 4. merge 후 정리
+git worktree remove ../confirmationbias-<slug>
+git branch -d feat/<slug>
+```
+
+- **문서만 바꾸는 워크트리**는 `npm ci`·`.env` 없이 마크다운만 편집해도 된다(빌드·실행이 없으므로).
+- 커밋·push는 diff를 확인한 뒤 수행한다.

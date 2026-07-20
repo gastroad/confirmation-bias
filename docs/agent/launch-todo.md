@@ -3,7 +3,7 @@
 confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작업 목록.
 우선순위: **P0(런칭 블로커) → P1(런칭 직후 필요) → P2(런칭 후 개선)**.
 
-현재 상태: **DB는 Supabase(Postgres)로 전환 완료(2026-06-29)** + 수동 파이프라인(`npm run collect && ingest`).
+현재 상태: **DB Supabase(Postgres) 전환 완료(2026-06-29)** + 파이프라인 자동화(GitHub Actions, 6시간마다 `collect + ingest`).
 
 ---
 
@@ -26,14 +26,14 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 ### 데이터 파이프라인 자동화
 
 - [x] **RSS 수집 스케줄링** (배치) ✅ 가동(2026-06-29)
-      **GitHub Actions scheduled workflow로 `collect + ingest`를 매시간 자동 실행** — 동작 확인 완료.
-      주기는 매시간으로 시작하되 **토큰 사용량을 보고 2~3시간 등으로 조정** 예정.
-      → 상세 설계: [pipeline-scheduling.md](./pipeline-scheduling.md)
+      **GitHub Actions scheduled workflow로 `collect + ingest`를 6시간마다 자동 실행.**
+      매시간으로 시작했으나 Supabase egress 초과로 6시간마다로 완화(2026-07-08).
+      → 상세 설계: [pipeline-scheduling.md](./pipeline-scheduling.md), egress 대응: [infrastructure.md](./infrastructure.md)
 - [ ] **파이프라인 실패 알림**
       OpenAI 쿼터 소진·DB 연결 실패 시 무음 실패 방지. 실패 시 알림(Slack/이메일).
 - [ ] **OpenAI 비용 모니터링 / 상한**
-      신규 기사에만 임베딩 호출(URL upsert로 중복 차단)되지만, 매시간 배치이므로 사용량 추적 필수.
-      매시간 주기로 운영하며 **토큰 사용량을 보고 주기/상한 결정**.
+      신규 기사에만 임베딩 호출(URL upsert로 중복 차단)되지만, 배치 주기마다 호출되므로 사용량 추적 필수.
+      6시간마다 주기로 운영하며 **토큰 사용량을 보고 주기/상한 결정**.
 
 ### 법무 (뉴스 서비스 필수)
 
@@ -42,8 +42,8 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
       (가장 큰 런칭 리스크)
 - [ ] **출처 표기 + 원문 링크**
       각 기사 카드에 언론사 명시 + 원문 클릭 이동 보장.
-- [ ] **개인정보처리방침 / 이용약관 페이지**
-      분석/쿠키 사용 시 필수.
+- [x] **개인정보처리방침 페이지** ✅ 완료(2026-07-20) — `src/app/privacy/`. AdSense·GDPR 요건 충족.
+- [ ] **이용약관 페이지** — 미작성.
 
 ---
 
@@ -74,7 +74,9 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 ### CI / 품질
 
 - [ ] **CI에 build 추가**
-      `.github/workflows/ci.yml`에 `next build` 단계 없음. 배포 전 빌드 검증 필요.
+      `.github/workflows/ci.yml`에 `next build` 단계 없음. 현재는 Vercel Preview 배포가
+      사실상의 빌드 게이트(→ [workflows.md](./workflows.md) 브랜치 전략). PR 단계에서 빌드 실패를
+      직접 잡으려면 추가 필요.
 - [ ] **E2E 재활성화**
       `home.spec.ts` 하나뿐이고 CI에서 e2e 미실행(원격 DB 대기 중).
       Supabase 전환 후 활성화 + 핵심 플로우 커버.
@@ -99,8 +101,9 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
       `leaning` 분류 기준 공개 (서비스 신뢰도).
 - [ ] **모니터링 / 분석**
       에러 추적(Sentry 등) + 사용자 분석.
-- [ ] **접근성 / SEO**
-      메타데이터, OG 태그, 시맨틱 마크업.
+- [x] **SEO** ✅ 완료(2026-07-08) — 메타데이터·robots·sitemap·OG 이미지·JSON-LD.
+      → [infrastructure.md](./infrastructure.md) SEO 절.
+- [ ] **접근성** — 시맨틱 마크업·ARIA·키보드 내비게이션 점검.
 
 ---
 
