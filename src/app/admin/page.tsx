@@ -59,6 +59,18 @@ export default async function AdminPage() {
             {/* Server Action을 클라이언트 패널에 주입한다. 패널이 server/를 직접 만지지 않게. */}
             <CollectPanel action={triggerCollectAction} />
             <ClusterPanel action={triggerClusterAction} />
+
+            <section className={styles.section}>
+              <h2 className={styles.title}>댓글 관리</h2>
+              <p className={styles.desc}>
+                전체 댓글을 최신순으로 훑어보고 삭제합니다. 신고·스팸 대응용입니다.
+              </p>
+              <div className={styles.row}>
+                <Link href="/admin/comments" className={styles.button}>
+                  댓글 관리로 이동
+                </Link>
+              </div>
+            </section>
           </>
         )}
       </main>
