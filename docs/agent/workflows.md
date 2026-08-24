@@ -60,8 +60,12 @@ npm run grant:admin -- you@example.com
 
 ## 새 언론사(Outlet) 추가
 
-1. `src/entities/outlet/model.ts`의 `OUTLETS` 배열에 항목 추가
-2. `npm run db:seed` 재실행 (upsert라 기존 데이터 안전)
+1. **피드가 살아 있는지 먼저 확인** — 응답 여부가 아니라 최신 기사 날짜를 본다
+2. `src/entities/outlet/model.ts`의 `OUTLETS` 배열에 항목 추가 (성향 균형 고려)
+3. `scripts/feed_specs.json`의 `politics`에 추가
+4. `npm run db:seed` 재실행 — upsert이며, 목록에서 빠진 **기사 0건짜리** 언론사는 정리된다
+
+→ 점검 방법과 알려진 죽은 피드는 [rss-feeds.md](./rss-feeds.md)
 
 ## 새 FSD Entity 추가
 

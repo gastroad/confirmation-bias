@@ -34,6 +34,13 @@ function stripHtml(str: string): string {
   return str.replace(/<[^>]*>/g, "").trim();
 }
 
+// RSS 2.0은 pubDate, Dublin Core는 dc:date를 쓴다. 경향·프레시안이 후자라 pubDate만 보면
+// 발행 시각을 통째로 놓쳐 수집 시각으로 대체된다(일별 버킷이 어긋날 수 있다).
+// 한겨레는 item에 날짜 태그가 아예 없어 여전히 수집 시각으로 떨어진다.
+function pickPublishedRaw(item: Record<string, unknown>): string {
+  return toText(item.pubDate) || toText(item["dc:date"]) || "";
+}
+
 function sanitizePublishedAt(raw: string, now: Date): Date {
   const t = new Date(raw).getTime();
   if (!Number.isFinite(t)) return now;
@@ -70,7 +77,7 @@ async function fetchFeed(
         const url = toText(i.link) || toText(i.guid);
         const title = stripHtml(toText(i.title));
         const description = stripHtml(toText(i.description)) || null;
-        const publishedAt = sanitizePublishedAt(toText(i.pubDate), now);
+        const publishedAt = sanitizePublishedAt(pickPublishedRaw(i), now);
         return {
           title,
           description,
