@@ -21,7 +21,6 @@ self-hosted Better Auth로 갈아타야 할 때 이 파일만 바꾸면 되도�
 | `src/app/api/auth/[...path]/route.ts` | `auth.handler()` — 로그인·가입·OAuth 콜백·세션 갱신                                      |
 | `src/app/auth/`                       | `layout.tsx`(로그인 시 홈으로) · `sign-in` · `sign-up` · `actions.ts`                    |
 | `src/features/auth-form/`             | 로그인·가입 폼 (`useActionState`)                                                        |
-| `src/features/auth-menu/`             | 헤더의 로그인/로그아웃·관리 링크                                                         |
 | `src/app/admin/`                      | 관리자 전용. 수집·클러스터링 수동 트리거                                                 |
 
 **클라이언트 SDK를 쓰지 않는다.** 로그인·가입·로그아웃 모두 Server Action이라

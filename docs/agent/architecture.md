@@ -53,13 +53,13 @@ RSS 피드
 shared/          — 프레임워크 무관 유틸 / 스타일
   lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
+  ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지)
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts, ui/, index.ts
   article/       — model.ts, index.ts
   cluster/       — model.ts, lib.ts(row→DTO 매핑), api.ts(클라이언트 fetcher), ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
-  theme-toggle/  — model.ts, ui/(ThemeToggle, ThemeScript), index.ts
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
   profile-menu/  — ui/(ProfileMenu) — 테마·로그인·관리·탈퇴를 한 드롭다운에
   date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav), index.ts
@@ -74,7 +74,9 @@ app/             — Next.js App Router
   clusters/[id]/ — 클러스터 상세
   auth/          — sign-in · sign-up · actions.ts (Server Action)
   account/       — delete(회원 탈퇴). /auth 레이아웃 밖에 둔다(로그인 상태에서 쓰는 화면)
-  admin/         — 관리자 전용(수집·클러스터링 트리거)
+  terms/         — 이용약관
+  error.tsx · loading.tsx · not-found.tsx — 상태 화면
+  admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
 proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
 ```

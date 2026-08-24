@@ -106,7 +106,7 @@ npm run cluster:day -- --all                           # 기사가 존재하는 
 | ------------------- | ------------------------------- | --------------------------------- |
 | `Article.embedding` | `embeddingJson` 문자열 ≈10KB    | **Float32 raw bytes 2,048B**      |
 | `Cluster.centroid`  | `centroidJson` ≈10KB × 11,376개 | **제거** (배치 후 다시 쓰지 않음) |
-| DB 크기             | 261MB                           | **109MB**                         |
+| DB 크기             | 261MB                           | **109MB** (현재 101MB)            |
 
 `Bytes` 인코딩은 `vector.ts`가 `DataView`로 처리한다. Buffer를 쓰지 않는 이유는 (1) 엔디안 명시
 (2) byteOffset 정렬 제약 회피 (3) Prisma 7의 `Bytes`가 `Uint8Array<ArrayBuffer>`라 `Buffer`와

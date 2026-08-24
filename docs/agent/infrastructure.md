@@ -1,6 +1,6 @@
 # Infrastructure
 
-> 외부 서비스(OpenAI·Vercel·Neon·GitHub) 계정·시크릿·점검 지점은
+> 외부 서비스(OpenAI·Vercel·Neon·Neon Auth·ImprovMX·AdSense·GitHub) 계정·시크릿·점검 지점은
 > [external-services.md](./external-services.md) 참고.
 
 ## 현재 상태
@@ -38,7 +38,7 @@ Next.js는 자동으로 `.env` 로드.
 
 - `DATABASE_URL` — DB 런타임 연결
 - `NEON_AUTH_BASE_URL` · `NEON_AUTH_COOKIE_SECRET` — 인증 (2026-08-24 추가)
-- `GITHUB_DISPATCH_TOKEN` — `/admin`의 수동 트리거 (없으면 그 버튼만 실패)
+- `GITHUB_DISPATCH_TOKEN` — `/admin`의 수동 트리거 (없으면 그 버튼만 실패, 사이트는 정상)
 - **`OPENAI_API_KEY`는 불필요.** `server/clustering/*`에서만 쓰이고 이는 파이프라인(GitHub
   Actions)만 import한다.
 - **`DIRECT_URL`도 불필요.** 마이그레이션은 로컬에서만 수행.
@@ -49,7 +49,11 @@ Next.js는 자동으로 `.env` 로드.
 ## Prisma 주의사항
 
 - 생성된 클라이언트는 `src/generated/prisma/` (gitignore됨)
-- 코드 변경 후 반드시 `npm run db:generate` 실행 (CI에서도 자동 실행됨)
+- **`postinstall`·`predev`가 `prisma generate`를 자동 실행한다**(2026-08-24 추가).
+  스키마가 바뀐 브랜치를 pull한 뒤 dev를 띄우면 생성물이 stale이라 런타임에 깨지는데,
+  이걸 막는다. husky pre-commit이 아닌 이유: 생성물이 gitignore라 커밋과 무관하고,
+  문제가 터지는 시점은 커밋할 때가 아니라 **남의 스키마 변경을 pull한 뒤**다.
+- 수동 실행이 필요하면 `npm run db:generate` (CI에서도 자동 실행됨)
 - **Vercel 빌드는 스텝을 못 끼우므로 `build` 스크립트가 `prisma generate && next build`.**
   생성물이 gitignore라 이게 없으면 클라이언트 부재로 빌드 실패.
 - 스키마 파일: `prisma/schema.prisma`
@@ -80,12 +84,14 @@ Supabase에서 목을 조르던 **egress 5GB/월** 제약은 Neon에 없다. 대
 
 | 한도    | Neon Free   | 현재                               |
 | ------- | ----------- | ---------------------------------- |
-| storage | 0.5GB       | **109MB** (Article 98 / Cluster 3) |
+| storage | 0.5GB       | **101MB** (Article 89 / Cluster 3) |
 | compute | 100 CU-h/월 | 5분 무활동 시 autosuspend          |
 
-- **storage는 2026-08-24에 261MB → 109MB로 줄였다.** `Cluster.centroidJson`을 없애고(일별 배치는
+- **storage는 2026-08-24에 261MB → 101MB로 줄였다.** `Cluster.centroidJson`을 없애고(일별 배치는
   배치가 끝나면 centroid를 다시 쓰지 않는다) `Article`의 임베딩을 JSON 문자열(~10KB)에서
   `Bytes`(2,048B)로 옮겼다. → [daily-clustering.md](./daily-clustering.md)
+  같은 날 `description`을 300자로 자르고 미사용 `body` 컬럼을 지워 89MB가 됐다
+  (저작권 대응이 주목적이었다). → [rss-feeds.md](./rss-feeds.md)
 - **autosuspend**: 5분 무활동 후 컴퓨트가 잠들고 첫 요청에 wake 지연이 붙는다.
 - Postgres는 컬럼 drop만으로 디스크를 돌려주지 않는다 → 대량 컬럼 제거 후 `VACUUM FULL` 필요.
   (마이그레이션은 트랜잭션 안에서 돌아 `VACUUM FULL`을 넣을 수 없다. 적용 후 따로 실행한다.)
@@ -108,17 +114,19 @@ DB가 싱가포르이므로 **Vercel 함수 리전을 같이 맞춰야 한다.**
 
 Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_URL·이름·설명·키워드).
 
-| 요소                | 위치                                         | 비고                                                                           |
-| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
-| 전역 메타데이터     | `src/app/layout.tsx`                         | metadataBase·title.template·OG·Twitter·robots·canonical·viewport               |
-| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`             | `generateMetadata`(제목=대표기사, canonical, og:type=article)                  |
-| 날짜별 페이지       | `src/app/d/[date]/page.tsx`                  | `/d/YYYY-MM-DD`. 기사가 없는 날짜는 `robots: noindex`로 빈 페이지 색인 방지    |
-| robots.txt          | `src/app/robots.ts`                          | `/api/` 차단, sitemap 링크                                                     |
-| sitemap.xml         | `src/app/sitemap.ts`                         | 홈 + 날짜 페이지 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제 |
-| OG 이미지           | `src/app/opengraph-image.tsx`                | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백  |
-| 구조화 데이터       | `src/shared/seo/`                            | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                   |
-| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx` | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                 |
-| 개인정보처리방침    | `src/app/privacy/`                           | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                        |
+| 요소                | 위치                                          | 비고                                                                           |
+| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| 전역 메타데이터     | `src/app/layout.tsx`                          | metadataBase·title.template·OG·Twitter·robots·canonical·viewport               |
+| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`              | `generateMetadata`(제목=대표기사, canonical, og:type=article)                  |
+| 날짜별 페이지       | `src/app/d/[date]/page.tsx`                   | `/d/YYYY-MM-DD`. 기사가 없는 날짜는 `robots: noindex`로 빈 페이지 색인 방지    |
+| robots.txt          | `src/app/robots.ts`                           | `/api/` 차단, sitemap 링크                                                     |
+| sitemap.xml         | `src/app/sitemap.ts`                          | 홈 + 날짜 페이지 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제 |
+| OG 이미지           | `src/app/opengraph-image.tsx`                 | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백  |
+| 구조화 데이터       | `src/shared/seo/`                             | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                   |
+| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx`  | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                 |
+| 이용약관            | `src/app/terms/`                              | 저작권·게시물 책임·금지행위. 푸터·sitemap에 링크                               |
+| 상태 화면           | `error.tsx` · `loading.tsx` · `not-found.tsx` | DB 장애·autosuspend wake 시 흰 화면 대신 재시도                                |
+| 개인정보처리방침    | `src/app/privacy/`                            | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                        |
 
 - **egress 주의:** 상세 페이지는 `generateMetadata`와 렌더가 `cache(findClusterDetailRow)`로
   요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.

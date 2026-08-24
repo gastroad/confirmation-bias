@@ -12,11 +12,12 @@
 
 ## ✨ 주요 기능
 
-- **🔗 이슈 클러스터링** — OpenAI 임베딩 + 코사인 유사도로 동일 이슈 기사를 자동 그룹핑 (애매한 구간은 LLM이 판정)
+- **🔗 이슈 클러스터링** — OpenAI 임베딩 기반 응집 클러스터링(HAC)으로 동일 이슈 기사를 자동 그룹핑
 - **📊 성향별 보도 비중** — 클러스터마다 진보/중도/보수 매체의 보도 분포를 막대그래프로 시각화
 - **📅 날짜별 보기** — 하루 단위로 그날의 이슈를 모아 보고, 앞뒤 날짜로 이동
 - **📈 타임라인** — 이슈가 시간에 따라 어떻게 확산되었는지 추적
-- **🏷️ 15개 언론사 분류** — 조선·중앙·동아부터 한겨레·경향·프레시안까지 5단계 성향 라벨링
+- **🏷️ 17개 언론사 분류** — 조선·동아·한국경제부터 한겨레·경향·오마이뉴스까지 5단계 성향 라벨링
+- **💬 댓글** — 회원이 이슈별로 의견을 남길 수 있습니다
 
 ## 🛠️ 기술 스택
 
@@ -26,8 +27,10 @@
 | Backend  | Node.js 파이프라인 (RSS 수집 → 임베딩 → 클러스터링)                       |
 | AI       | OpenAI `text-embedding-3-small`                                           |
 | Database | Neon(Postgres 18) + Prisma 7 (`@prisma/adapter-pg`)                       |
+| Auth     | Neon Auth (Managed Better Auth) — 회원가입·로그인·role                    |
 | Hosting  | Vercel (Hobby) — Next.js 서빙, 함수 리전 `sin1`                           |
 | 자동화   | GitHub Actions — CI + 3시간마다 RSS 수집 + 하루 1회 배치 클러스터링       |
+| 그 외    | Google AdSense(수익화) · ImprovMX(문의 메일 포워딩)                       |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
 
@@ -94,8 +97,15 @@ RSS 피드
 # Neon 연결 문자열 (Console → Connect → 스니펫 `.env` 에서 복사)
 # 두 문자열은 호스트의 `-pooler` 유무만 다르다. 값에 `&`가 있어 작은따옴표로 감싼다.
 DATABASE_URL='postgresql://neondb_owner:...@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'  # 앱 런타임(pooled)
-DIRECT_URL='postgresql://neondb_owner:...@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'           # 스키마 push/마이그레이션(direct)
+DIRECT_URL='postgresql://neondb_owner:...@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'           # 마이그레이션(direct)
 OPENAI_API_KEY='sk-...'
+
+# 인증 (Neon Console → Auth). BASE_URL은 "Auth URL"이지 JWKS URL이 아니다.
+NEON_AUTH_BASE_URL='https://ep-xxxx.neonauth.ap-southeast-1.aws.neon.tech/neondb/auth'
+NEON_AUTH_COOKIE_SECRET='...'   # openssl rand -base64 32
+
+# (선택) /admin의 수동 트리거용. 없으면 그 버튼만 실패하고 사이트는 정상.
+GITHUB_DISPATCH_TOKEN=''
 ```
 
 ### 2. 의존성 설치 & DB 초기화
@@ -103,7 +113,7 @@ OPENAI_API_KEY='sk-...'
 ```bash
 npm install
 npm run db:migrate   # 마이그레이션 적용
-npm run db:seed      # 언론사 15개 시드
+npm run db:seed      # 언론사 17개 시드 (목록에서 빠진 기사 0건짜리는 자동 정리)
 ```
 
 ### 3. 뉴스 수집 → 클러스터링
@@ -149,17 +159,18 @@ npm run test:e2e             # E2E (dev 서버 미리 실행 필요)
 
 ```
 confirmation-bias/
-├── server/            BE (DB · 클러스터링 · 조회 쿼리)
+├── server/            BE (DB · 인증 · 클러스터링 · 조회 쿼리)
 │   ├── db.ts          Prisma 싱글턴
+│   ├── auth.ts        Neon Auth 인스턴스 (SDK 의존을 여기로 격리)
 │   ├── queries/       순수 Prisma 조회 (커서 페이지네이션·집계)
 │   └── clustering/    embed · similarity · vector · bucket · hac · daily
 ├── scripts/           collect.ts(3h) · cluster-day.ts(1d) — GitHub Actions 실행
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
-│   ├── app/           App Router (/ · /d/[date] · /clusters/[id] · API routes)
-│   ├── widgets/       cluster-feed · cluster-detail
-│   ├── features/      theme-toggle · outlet-filter · date-nav (상태·인터랙션)
-│   ├── entities/      outlet · article · cluster (model · lib · api · ui)
+│   ├── app/           App Router (/ · /d/[date] · /clusters/[id] · /auth · /admin · API)
+│   ├── widgets/       cluster-feed · cluster-detail · cluster-comments
+│   ├── features/      outlet-filter · date-nav · profile-menu · auth-form (상태·인터랙션)
+│   ├── entities/      outlet · article · cluster · comment (model · lib · api · ui)
 │   └── shared/        프레임워크 무관 유틸 · 스타일(vanilla-extract)
 ├── e2e/               Playwright 테스트
 └── docs/agent/        아키텍처 · 컨벤션 · 워크플로 문서
@@ -170,15 +181,20 @@ UI 레이어는 DB에 직접 접근하지 않고 `entities/*/api.ts` 클라이�
 
 ## 📰 분류 대상 언론사
 
-| 성향     | 언론사                                    |
-| -------- | ----------------------------------------- |
-| 보수     | 조선일보, 세계일보, 천지일보              |
-| 중도보수 | 중앙일보, 동아일보                        |
-| 중도     | 연합뉴스, 뉴시스, 서울신문, 시사저널, KBS |
-| 중도진보 | 경향신문                                  |
-| 진보     | 한겨레신문, 시사인, 프레시안, 여성신문    |
+| 성향     | 언론사                                                 |
+| -------- | ------------------------------------------------------ |
+| 보수     | 조선일보, 세계일보, 천지일보, 한국경제                 |
+| 중도보수 | 동아일보, 아시아경제                                   |
+| 중도     | 연합뉴스, 뉴시스, 서울신문, 시사저널, SBS              |
+| 중도진보 | 경향신문                                               |
+| 진보     | 한겨레신문, 프레시안, 여성신문, 오마이뉴스, 미디어오늘 |
 
 > 성향 분류는 미디어 연구를 참고한 상대적 위치 표시이며, 절대적 기준이 아닙니다.
+> 시사인은 RSS 피드가 2023년 이후 갱신되지 않아 수집을 중단했습니다(과거 기사는 유지).
+
+기사는 **제목 + 300자 발췌 + 출처 + 원문 링크**만 표시하며 전문을 저장하지 않습니다.
+저작권자의 표시 중단 요청은 [이용약관](https://www.confirmationbias.app/terms)의 문의처로
+받습니다.
 
 ---
 
