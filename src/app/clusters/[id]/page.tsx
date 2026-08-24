@@ -1,8 +1,10 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
+import { CACHE_TTL } from "@server/cache";
 import { getSessionUser } from "@server/auth";
 import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
@@ -17,8 +19,21 @@ import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/s
 import { signOutAction } from "../../auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
-// generateMetadata와 페이지 렌더가 같은 행을 쓰므로 cache로 요청당 1회만 DB 조회한다(egress 절약).
-const getCluster = cache(findClusterDetailRow);
+// 두 겹으로 캐시한다.
+//  - unstable_cache: 요청 **간** 캐시. 한번 만들어진 날짜의 클러스터는 굳으므로 길게 잡는다.
+//    **DTO로 바꾼 뒤에 캐시한다** — Prisma row를 캐시하면 JSON 직렬화로 Date가 문자열이 되어
+//    도메인 매핑이 깨진다.
+//  - React cache: 요청 **안** 중복 제거. generateMetadata와 페이지 렌더가 같은 값을 쓴다.
+const getClusterDetail = unstable_cache(
+  async (id: string): Promise<ClusterDetail | null> => {
+    const row = await findClusterDetailRow(id);
+    return row ? toClusterDetail(row) : null;
+  },
+  ["cluster-detail"],
+  { revalidate: CACHE_TTL.clusterDetail, tags: ["clusters"] }
+);
+
+const getCluster = cache(getClusterDetail);
 
 function metaDescription(cluster: ClusterDetail): string {
   if (cluster.summary) return cluster.summary;
@@ -31,10 +46,9 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const row = await getCluster(id);
-  if (!row) return { title: "찾을 수 없는 이슈", robots: { index: false, follow: false } };
+  const cluster = await getCluster(id);
+  if (!cluster) return { title: "찾을 수 없는 이슈", robots: { index: false, follow: false } };
 
-  const cluster = toClusterDetail(row);
   const title = cluster.representativeTitle;
   const description = metaDescription(cluster);
   const path = `/clusters/${id}`;
@@ -56,11 +70,9 @@ export async function generateMetadata({
 
 export default async function ClusterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [row, sessionUser] = await Promise.all([getCluster(id), getSessionUser()]);
+  const [cluster, sessionUser] = await Promise.all([getCluster(id), getSessionUser()]);
 
-  if (!row) notFound();
-
-  const cluster = toClusterDetail(row);
+  if (!cluster) notFound();
 
   return (
     <div className={layout.page}>

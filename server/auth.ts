@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { createNeonAuth } from "@neondatabase/auth/next/server";
+import { hasSessionCookie } from "./session-cookie";
 
 // Neon Auth(= Managed Better Auth). **SDK에 직접 의존하는 곳은 이 파일 하나로 묶는다.**
 // 0.5.0-beta라 breaking change가 올 수 있고, self-hosted Better Auth로 갈아탈 여지도
@@ -52,9 +54,18 @@ function toSessionUser(user: {
   };
 }
 
+// SDK가 세션을 확인하려면 인증 서버를 왕복한다(실측 ~80ms). 세션 쿠키가 아예 없으면
+// 결과가 null인 게 확실하므로 왕복할 이유가 없다 — 방문자 대부분이 비로그인이라 체감이 크다.
+//
+// 판정은 session-cookie.ts (테스트 가능한 순수 함수).
+
 /** 인증 미설정이면 "비로그인"으로 취급한다(예외를 던지지 않는다). */
 export async function getSessionUser(): Promise<SessionUser | null> {
   if (!AUTH_CONFIGURED) return null;
+
+  const jar = await cookies();
+  if (!hasSessionCookie(jar.getAll().map((c) => c.name))) return null;
+
   const { data } = await getAuth().getSession();
   return data?.user ? toSessionUser(data.user) : null;
 }

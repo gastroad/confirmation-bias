@@ -1,25 +1,44 @@
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { findClusterRefs } from "@server/queries/clusters";
 import { findDaySummaries } from "@server/queries/days";
+import { CACHE_TTL } from "@server/cache";
 import { SITE_URL, absoluteUrl } from "@/shared/config/site";
 
-// 클러스터링이 하루 1회라 그에 맞춰 재생성 → 크롤러가 올 때마다 DB를 치지 않게 해 부하를 억제.
-export const revalidate = 21600;
+// 크롤러가 올 때마다 1만 건을 조회할 이유가 없다. Date를 넘기지 않도록 ISO 문자열로 뽑는다
+// (unstable_cache는 반환값을 JSON 직렬화한다).
+const getEntries = unstable_cache(
+  async () => {
+    const [clusters, days] = await Promise.all([findClusterRefs(), findDaySummaries()]);
+    return {
+      days: days.map((d) => ({
+        date: d.bucketDate.toISOString().slice(0, 10),
+        lastModified: d.bucketDate.toISOString(),
+      })),
+      clusters: clusters.map((c) => ({
+        id: c.id,
+        lastModified: c.updatedAt.toISOString(),
+      })),
+    };
+  },
+  ["sitemap-entries"],
+  { revalidate: CACHE_TTL.sitemap, tags: ["clusters", "days"] }
+);
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [clusters, days] = await Promise.all([findClusterRefs(), findDaySummaries()]);
+  const { days, clusters } = await getEntries();
 
   // 날짜 페이지는 클러스터 상세보다 상위 허브다. 최신일수록 우선순위를 높게 준다.
   const dayEntries: MetadataRoute.Sitemap = days.map((d, i) => ({
-    url: absoluteUrl(`/d/${d.bucketDate.toISOString().slice(0, 10)}`),
-    lastModified: d.bucketDate,
+    url: absoluteUrl(`/d/${d.date}`),
+    lastModified: new Date(d.lastModified),
     changeFrequency: i === 0 ? "hourly" : "monthly",
     priority: i === 0 ? 0.9 : 0.6,
   }));
 
   const clusterEntries: MetadataRoute.Sitemap = clusters.map((c) => ({
     url: absoluteUrl(`/clusters/${c.id}`),
-    lastModified: c.updatedAt,
+    lastModified: new Date(c.lastModified),
     changeFrequency: "monthly",
     priority: 0.5,
   }));

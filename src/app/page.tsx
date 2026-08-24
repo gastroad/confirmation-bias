@@ -1,9 +1,5 @@
 import { Suspense } from "react";
-import {
-  findLatestBucketDate,
-  findDaySummary,
-  findAdjacentBucketDates,
-} from "@server/queries/days";
+import { getDayNav, getLatestDate } from "./_day-nav-data";
 import { getSessionUser } from "@server/auth";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
@@ -23,13 +19,8 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
   const sessionUser = await getSessionUser();
-  const latest = await findLatestBucketDate();
-  const [summary, adjacent] = latest
-    ? await Promise.all([findDaySummary(latest), findAdjacentBucketDates(latest)])
-    : [null, { prev: null, next: null }];
-
-  const date = latest ? latest.toISOString().slice(0, 10) : null;
-  const toIso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  const date = await getLatestDate();
+  const nav = date ? await getDayNav(date) : null;
 
   return (
     <div className={layout.page}>
@@ -45,13 +36,13 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       </header>
 
       <main className={layout.container}>
-        {date && (
+        {nav && (
           <DateNav
-            date={date}
-            prevDate={toIso(adjacent.prev)}
-            nextDate={toIso(adjacent.next)}
-            clusterCount={summary?.clusterCount ?? 0}
-            articleCount={summary?.articleCount ?? 0}
+            date={nav.date}
+            prevDate={nav.prevDate}
+            nextDate={nav.nextDate}
+            clusterCount={nav.clusterCount}
+            articleCount={nav.articleCount}
             outletIds={outletIds}
           />
         )}
