@@ -71,7 +71,8 @@ export default async function TermsPage() {
           </p>
           <p className={styles.paragraph}>
             기사 전문은 각 언론사 웹사이트에서 확인하시기 바랍니다. 저작권자가 표시 중단을 요청하면
-            지체 없이 해당 기사를 제외합니다. 요청은 {CONTACT_EMAIL} 으로 보내주세요.
+            해당 기사를 지체 없이 삭제하고 이후 수집 대상에서도 제외합니다. 매체 단위의 중단 요청도
+            같은 방식으로 처리합니다. 요청은 {CONTACT_EMAIL} 으로 기사 주소와 함께 보내주세요.
           </p>
         </section>
 
