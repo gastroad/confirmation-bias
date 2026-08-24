@@ -48,3 +48,56 @@ export async function anonymizeCommentsByAuthor(authorId: string): Promise<numbe
   });
   return count;
 }
+
+export interface RecentCommentRow {
+  id: string;
+  authorId: string | null;
+  authorName: string;
+  body: string;
+  createdAt: Date;
+  clusterId: string;
+  clusterTitle: string;
+  clusterDate: Date;
+}
+
+/**
+ * 관리자용 전체 댓글. 클러스터를 넘나들며 훑어야 신고·스팸에 대응할 수 있다.
+ *
+ * 커서는 `createdAt`이 아니라 `id`다 — 같은 초에 여러 건이 들어오면 시각만으로는
+ * 경계가 흔들려 중복·누락이 난다.
+ */
+export async function findRecentComments(params: { cursor?: string; limit?: number }) {
+  const take = Math.min(Math.max(params.limit ?? 30, 1), 100);
+  const rows = await db.comment.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take,
+    ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+    select: {
+      id: true,
+      authorId: true,
+      authorName: true,
+      body: true,
+      createdAt: true,
+      clusterId: true,
+      cluster: { select: { representativeTitle: true, bucketDate: true } },
+    },
+  });
+
+  return {
+    rows: rows.map((r) => ({
+      id: r.id,
+      authorId: r.authorId,
+      authorName: r.authorName,
+      body: r.body,
+      createdAt: r.createdAt,
+      clusterId: r.clusterId,
+      clusterTitle: r.cluster.representativeTitle,
+      clusterDate: r.cluster.bucketDate,
+    })),
+    nextCursor: rows.length === take ? rows[rows.length - 1].id : null,
+  };
+}
+
+export async function countAllComments(): Promise<number> {
+  return db.comment.count();
+}
