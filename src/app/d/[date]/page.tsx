@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { findDaySummary, findAdjacentBucketDates } from "@server/queries/days";
+import { findDaySummary } from "@server/queries/days";
+import { getDayNav } from "../../_day-nav-data";
 import { getSessionUser } from "@server/auth";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
@@ -59,13 +60,7 @@ export default async function DatePage({
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
   const sessionUser = await getSessionUser();
-  const bucket = toBucket(date);
-  const [summary, adjacent] = await Promise.all([
-    findDaySummary(bucket),
-    findAdjacentBucketDates(bucket),
-  ]);
-
-  const toIso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+  const nav = await getDayNav(date);
 
   return (
     <div className={layout.page}>
@@ -85,11 +80,11 @@ export default async function DatePage({
 
       <main className={layout.container}>
         <DateNav
-          date={date}
-          prevDate={toIso(adjacent.prev)}
-          nextDate={toIso(adjacent.next)}
-          clusterCount={summary?.clusterCount ?? 0}
-          articleCount={summary?.articleCount ?? 0}
+          date={nav.date}
+          prevDate={nav.prevDate}
+          nextDate={nav.nextDate}
+          clusterCount={nav.clusterCount}
+          articleCount={nav.articleCount}
           outletIds={outletIds}
         />
 

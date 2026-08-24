@@ -71,8 +71,10 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
       Server Component가 DB를 직접 조회하므로 DB 장애 시 graceful fallback 필요.
 - [ ] **빈 상태(empty state) UI**
       클러스터/기사 없을 때 화면 처리.
-- [ ] **캐싱 / 재검증 전략**
-      Server Component DB 조회의 ISR/revalidate 정책 정의 (수집 주기에 맞춰).
+- [x] **캐싱 / 재검증 전략** ✅ 완료(2026-08-24)
+      페이지 단위 revalidate는 세션(쿠키) 때문에 무력화되므로 **DTO 경계에서 데이터를 캐시**한다.
+      세션 쿠키가 없으면 인증 서버 왕복을 건너뛴다(비로그인 85ms → 5ms).
+      → [caching.md](./caching.md)
 - [ ] **클러스터 피드 페이지네이션**
       `src/widgets/cluster-feed/ui/ClusterFeed.tsx` 전체 로드 추정.
       데이터 누적 시 무한 스크롤/페이징 필요.

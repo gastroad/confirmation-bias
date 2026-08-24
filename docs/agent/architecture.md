@@ -31,6 +31,8 @@ RSS 피드
 | --------------------------------- | --------------------------------------------------------------------------------- |
 | `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                                          |
 | `server/auth.ts`                  | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md) |
+| `server/session-cookie.ts`        | 세션 쿠키 존재 판정(순수 함수). 왕복 단축 → [caching.md](./caching.md)            |
+| `server/cache.ts`                 | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                  |
 | `server/github.ts`                | `workflow_dispatch` 호출 (관리자 수동 트리거)                                     |
 | `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                           |
 | `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)            |
