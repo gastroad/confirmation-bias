@@ -1,322 +1,89 @@
 {
   "politics": [
     {
-      "url": "https://www.khan.co.kr/rss/rssdata/politic_news.xml",
-      "leaning": "center_left",
       "outletId": "khan",
-      "name": "경향신문"
+      "name": "경향신문",
+      "url": "https://www.khan.co.kr/rss/rssdata/politic_news.xml"
     },
     {
-      "url": "https://newsis.com/RSS/politics.xml",
-      "leaning": "center",
       "outletId": "newsis",
-      "name": "뉴시스"
+      "name": "뉴시스",
+      "url": "https://newsis.com/RSS/politics.xml"
     },
     {
-      "url": "https://rss.donga.com/politics.xml",
-      "leaning": "center_right",
       "outletId": "donga",
-      "name": "동아일보"
+      "name": "동아일보",
+      "url": "https://rss.donga.com/politics.xml"
     },
     {
-      "url": "https://www.seoul.co.kr/xml/rss/rss_politics.xml",
-      "leaning": "center",
       "outletId": "seoul",
-      "name": "서울신문"
+      "name": "서울신문",
+      "url": "https://www.seoul.co.kr/xml/rss/rss_politics.xml"
     },
     {
-      "url": "http://www.segye.com/Articles/RSSList/segye_politic.xml",
-      "leaning": "right",
       "outletId": "segye",
-      "name": "세계일보"
+      "name": "세계일보",
+      "url": "http://www.segye.com/Articles/RSSList/segye_politic.xml"
     },
     {
-      "url": "https://www.sisain.co.kr/rss/S1N6.xml",
-      "leaning": "left",
-      "outletId": "sisain",
-      "name": "시사인"
-    },
-    {
-      "url": "http://www.sisajournal.com/rss/S1N58.xml",
-      "leaning": "center",
       "outletId": "sisajournal",
-      "name": "시사저널"
+      "name": "시사저널",
+      "url": "http://www.sisajournal.com/rss/S1N58.xml"
     },
     {
-      "url": "http://www.womennews.co.kr/rss/S1N1.xml",
-      "leaning": "left",
       "outletId": "womennews",
-      "name": "여성신문"
+      "name": "여성신문",
+      "url": "http://www.womennews.co.kr/rss/S1N1.xml"
     },
     {
-      "url": "https://www.yna.co.kr/rss/politics.xml",
-      "leaning": "center",
       "outletId": "yonhap",
-      "name": "연합뉴스"
+      "name": "연합뉴스",
+      "url": "https://www.yna.co.kr/rss/politics.xml"
     },
     {
-      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/politics/?outputType=xml",
-      "leaning": "right",
       "outletId": "chosun",
-      "name": "조선일보"
+      "name": "조선일보",
+      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/politics/?outputType=xml"
     },
     {
-      "url": "https://cdn.newscj.com/rss/gns_S1N1.xml",
-      "leaning": "right",
       "outletId": "cheonji",
-      "name": "천지일보"
+      "name": "천지일보",
+      "url": "https://cdn.newscj.com/rss/gns_S1N1.xml"
     },
     {
-      "url": "https://www.pressian.com/api/v3/site/rss/section/66",
-      "leaning": "left",
       "outletId": "pressian",
-      "name": "프레시안"
+      "name": "프레시안",
+      "url": "https://www.pressian.com/api/v3/site/rss/section/66"
     },
     {
-      "url": "https://www.hani.co.kr/rss/politics/",
-      "leaning": "left",
       "outletId": "hani",
-      "name": "한겨레신문"
-    }
-  ],
-  "economy": [
-    {
-      "url": "https://www.khan.co.kr/rss/rssdata/economy_news.xml",
-      "leaning": "center_left",
-      "outletId": "khan",
-      "name": "경향신문"
+      "name": "한겨레신문",
+      "url": "https://www.hani.co.kr/rss/politics/"
     },
     {
-      "url": "https://newsis.com/RSS/economy.xml",
-      "leaning": "center",
-      "outletId": "newsis",
-      "name": "뉴시스"
+      "outletId": "sbs",
+      "name": "SBS",
+      "url": "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01"
     },
     {
-      "url": "https://rss.donga.com/economy.xml",
-      "leaning": "center_right",
-      "outletId": "donga",
-      "name": "동아일보"
+      "outletId": "ohmynews",
+      "name": "오마이뉴스",
+      "url": "http://rss.ohmynews.com/rss/ohmynews.xml"
     },
     {
-      "url": "https://www.seoul.co.kr/xml/rss/rss_economy.xml",
-      "leaning": "center",
-      "outletId": "seoul",
-      "name": "서울신문"
+      "outletId": "mediatoday",
+      "name": "미디어오늘",
+      "url": "http://www.mediatoday.co.kr/rss/allArticle.xml"
     },
     {
-      "url": "http://www.segye.com/Articles/RSSList/segye_economy.xml",
-      "leaning": "right",
-      "outletId": "segye",
-      "name": "세계일보"
+      "outletId": "hankyung",
+      "name": "한국경제",
+      "url": "https://www.hankyung.com/feed/politics"
     },
     {
-      "url": "https://www.sisain.co.kr/rss/S1N7.xml",
-      "leaning": "left",
-      "outletId": "sisain",
-      "name": "시사인"
-    },
-    {
-      "url": "http://www.sisajournal.com/rss/S1N54.xml",
-      "leaning": "center",
-      "outletId": "sisajournal",
-      "name": "시사저널"
-    },
-    {
-      "url": "http://www.womennews.co.kr/rss/S1N4.xml",
-      "leaning": "left",
-      "outletId": "womennews",
-      "name": "여성신문"
-    },
-    {
-      "url": "https://www.yna.co.kr/rss/economy.xml",
-      "leaning": "center",
-      "outletId": "yonhap",
-      "name": "연합뉴스"
-    },
-    {
-      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml",
-      "leaning": "right",
-      "outletId": "chosun",
-      "name": "조선일보"
-    },
-    {
-      "url": "https://cdn.newscj.com/rss/gns_S1N2.xml",
-      "leaning": "right",
-      "outletId": "cheonji",
-      "name": "천지일보"
-    },
-    {
-      "url": "https://www.pressian.com/api/v3/site/rss/section/67",
-      "leaning": "left",
-      "outletId": "pressian",
-      "name": "프레시안"
-    },
-    {
-      "url": "https://www.hani.co.kr/rss/economy/",
-      "leaning": "left",
-      "outletId": "hani",
-      "name": "한겨레신문"
-    }
-  ],
-  "society": [
-    {
-      "url": "https://www.khan.co.kr/rss/rssdata/society_news.xml",
-      "leaning": "center_left",
-      "outletId": "khan",
-      "name": "경향신문"
-    },
-    {
-      "url": "https://newsis.com/RSS/society.xml",
-      "leaning": "center",
-      "outletId": "newsis",
-      "name": "뉴시스"
-    },
-    {
-      "url": "https://rss.donga.com/national.xml",
-      "leaning": "center_right",
-      "outletId": "donga",
-      "name": "동아일보"
-    },
-    {
-      "url": "https://www.seoul.co.kr/xml/rss/rss_society.xml",
-      "leaning": "center",
-      "outletId": "seoul",
-      "name": "서울신문"
-    },
-    {
-      "url": "http://www.segye.com/Articles/RSSList/segye_society.xml",
-      "leaning": "right",
-      "outletId": "segye",
-      "name": "세계일보"
-    },
-    {
-      "url": "https://www.sisain.co.kr/rss/S1N8.xml",
-      "leaning": "left",
-      "outletId": "sisain",
-      "name": "시사인"
-    },
-    {
-      "url": "http://www.sisajournal.com/rss/S1N47.xml",
-      "leaning": "center",
-      "outletId": "sisajournal",
-      "name": "시사저널"
-    },
-    {
-      "url": "http://www.womennews.co.kr/rss/S1N2.xml",
-      "leaning": "left",
-      "outletId": "womennews",
-      "name": "여성신문"
-    },
-    {
-      "url": "https://www.yna.co.kr/rss/society.xml",
-      "leaning": "center",
-      "outletId": "yonhap",
-      "name": "연합뉴스"
-    },
-    {
-      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/national/?outputType=xml",
-      "leaning": "right",
-      "outletId": "chosun",
-      "name": "조선일보"
-    },
-    {
-      "url": "https://cdn.newscj.com/rss/gns_S1N3.xml",
-      "leaning": "right",
-      "outletId": "cheonji",
-      "name": "천지일보"
-    },
-    {
-      "url": "https://www.pressian.com/api/v3/site/rss/section/68",
-      "leaning": "left",
-      "outletId": "pressian",
-      "name": "프레시안"
-    },
-    {
-      "url": "https://www.hani.co.kr/rss/society/",
-      "leaning": "left",
-      "outletId": "hani",
-      "name": "한겨레신문"
-    }
-  ],
-  "international": [
-    {
-      "url": "https://www.khan.co.kr/rss/rssdata/kh_world.xml",
-      "leaning": "center_left",
-      "outletId": "khan",
-      "name": "경향신문"
-    },
-    {
-      "url": "https://newsis.com/RSS/international.xml",
-      "leaning": "center",
-      "outletId": "newsis",
-      "name": "뉴시스"
-    },
-    {
-      "url": "https://rss.donga.com/international.xml",
-      "leaning": "center_right",
-      "outletId": "donga",
-      "name": "동아일보"
-    },
-    {
-      "url": "https://www.seoul.co.kr/xml/rss/rss_international.xml",
-      "leaning": "center",
-      "outletId": "seoul",
-      "name": "서울신문"
-    },
-    {
-      "url": "http://www.segye.com/Articles/RSSList/segye_international.xml",
-      "leaning": "right",
-      "outletId": "segye",
-      "name": "세계일보"
-    },
-    {
-      "url": "https://www.sisain.co.kr/rss/S1N11.xml",
-      "leaning": "left",
-      "outletId": "sisain",
-      "name": "시사인"
-    },
-    {
-      "url": "http://www.sisajournal.com/rss/S1N59.xml",
-      "leaning": "center",
-      "outletId": "sisajournal",
-      "name": "시사저널"
-    },
-    {
-      "url": "http://www.womennews.co.kr/rss/S1N3.xml",
-      "leaning": "left",
-      "outletId": "womennews",
-      "name": "여성신문"
-    },
-    {
-      "url": "https://www.yna.co.kr/rss/international.xml",
-      "leaning": "center",
-      "outletId": "yonhap",
-      "name": "연합뉴스"
-    },
-    {
-      "url": "https://www.chosun.com/arc/outboundfeeds/rss/category/international/?outputType=xml",
-      "leaning": "right",
-      "outletId": "chosun",
-      "name": "조선일보"
-    },
-    {
-      "url": "https://cdn.newscj.com/rss/gns_S1N4.xml",
-      "leaning": "right",
-      "outletId": "cheonji",
-      "name": "천지일보"
-    },
-    {
-      "url": "https://www.pressian.com/api/v3/site/rss/section/65",
-      "leaning": "left",
-      "outletId": "pressian",
-      "name": "프레시안"
-    },
-    {
-      "url": "https://www.hani.co.kr/rss/international/",
-      "leaning": "left",
-      "outletId": "hani",
-      "name": "한겨레신문"
+      "outletId": "asiae",
+      "name": "아시아경제",
+      "url": "https://www.asiae.co.kr/rss/politics.htm"
     }
   ]
 }

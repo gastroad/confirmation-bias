@@ -19,11 +19,11 @@ export const OUTLETS: OutletMetadata[] = [
   { id: "segye", name: "세계일보", domain: "segye.com", leaning: "right", leaningLabel: "보수" },
   { id: "cheonji", name: "천지일보", domain: "newscj.com", leaning: "right", leaningLabel: "보수" },
   {
-    id: "joongang",
-    name: "중앙일보",
-    domain: "joongang.co.kr",
-    leaning: "center_right",
-    leaningLabel: "중도보수",
+    id: "hankyung",
+    name: "한국경제",
+    domain: "hankyung.com",
+    leaning: "right",
+    leaningLabel: "보수",
   },
   {
     id: "donga",
@@ -32,9 +32,17 @@ export const OUTLETS: OutletMetadata[] = [
     leaning: "center_right",
     leaningLabel: "중도보수",
   },
+  {
+    id: "asiae",
+    name: "아시아경제",
+    domain: "asiae.co.kr",
+    leaning: "center_right",
+    leaningLabel: "중도보수",
+  },
   { id: "yonhap", name: "연합뉴스", domain: "yna.co.kr", leaning: "center", leaningLabel: "중도" },
   { id: "newsis", name: "뉴시스", domain: "newsis.com", leaning: "center", leaningLabel: "중도" },
   { id: "seoul", name: "서울신문", domain: "seoul.co.kr", leaning: "center", leaningLabel: "중도" },
+  { id: "sbs", name: "SBS", domain: "sbs.co.kr", leaning: "center", leaningLabel: "중도" },
   {
     id: "sisajournal",
     name: "시사저널",
@@ -42,7 +50,6 @@ export const OUTLETS: OutletMetadata[] = [
     leaning: "center",
     leaningLabel: "중도",
   },
-  { id: "kbs", name: "KBS", domain: "kbs.co.kr", leaning: "center", leaningLabel: "중도" },
   {
     id: "khan",
     name: "경향신문",
@@ -51,6 +58,20 @@ export const OUTLETS: OutletMetadata[] = [
     leaningLabel: "중도진보",
   },
   { id: "hani", name: "한겨레신문", domain: "hani.co.kr", leaning: "left", leaningLabel: "진보" },
+  {
+    id: "ohmynews",
+    name: "오마이뉴스",
+    domain: "ohmynews.com",
+    leaning: "left",
+    leaningLabel: "진보",
+  },
+  {
+    id: "mediatoday",
+    name: "미디어오늘",
+    domain: "mediatoday.co.kr",
+    leaning: "left",
+    leaningLabel: "진보",
+  },
   { id: "sisain", name: "시사인", domain: "sisain.co.kr", leaning: "left", leaningLabel: "진보" },
   {
     id: "pressian",
