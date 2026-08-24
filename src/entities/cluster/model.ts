@@ -5,6 +5,8 @@ export interface ClusterSummary {
   id: string;
   representativeTitle: string;
   summary: string | null;
+  /** 이 클러스터가 속한 KST 하루 ("YYYY-MM-DD") */
+  bucketDate: string;
   articleCount: number;
   latestPublishedAt: string;
   leaningDistribution: LeaningDistribution;
@@ -20,6 +22,14 @@ export interface ClusterDetail extends ClusterSummary {
 export interface ClustersPage {
   items: ClusterSummary[];
   nextCursor: string | null;
+}
+
+/** 날짜 내비게이션용 하루 요약 */
+export interface DaySummary {
+  /** "YYYY-MM-DD" (KST 기준일) */
+  date: string;
+  clusterCount: number;
+  articleCount: number;
 }
 
 /** 필터 적용된 목록 전체 집계 (StatsBar용) */

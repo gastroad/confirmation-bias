@@ -6,7 +6,7 @@ import {
 } from "@/entities/outlet";
 import type { Leaning } from "@/entities/outlet";
 import type { TimelinePoint } from "@/entities/article";
-import type { ClusterSummary, ClusterDetail, ClusterStats } from "./model";
+import type { ClusterSummary, ClusterDetail, ClusterStats, DaySummary } from "./model";
 
 // 서버 쿼리(server/queries/clusters.ts) 결과를 받는 입력 형태.
 // Prisma 결과가 구조적으로 호환되며, 여기(도메인 레이어)에서 DTO로 변환한다.
@@ -14,6 +14,7 @@ interface SummaryRow {
   id: string;
   representativeTitle: string;
   summary: string | null;
+  bucketDate: Date;
   createdAt: Date;
   articles: { outletId: string; publishedAt: Date }[];
 }
@@ -38,6 +39,11 @@ function latestIso(times: number[], fallback: Date): string {
   return times.length > 0 ? new Date(Math.max(...times)).toISOString() : fallback.toISOString();
 }
 
+// @db.Date 컬럼은 UTC 자정 Date로 오므로 날짜 부분만 떼면 그대로 KST 기준일이 된다.
+function toDateString(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 export function toClusterSummary(row: SummaryRow): ClusterSummary {
   const dist = emptyDistribution();
   for (const a of row.articles) {
@@ -48,6 +54,7 @@ export function toClusterSummary(row: SummaryRow): ClusterSummary {
     id: row.id,
     representativeTitle: row.representativeTitle,
     summary: row.summary,
+    bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
@@ -97,6 +104,7 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     id: row.id,
     representativeTitle: row.representativeTitle,
     summary: row.summary,
+    bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
@@ -106,6 +114,18 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     leaningGroupRatios: calcLeaningGroupRatios(dist),
     articles,
     timeline,
+  };
+}
+
+export function toDaySummary(row: {
+  bucketDate: Date;
+  clusterCount: number;
+  articleCount: number;
+}): DaySummary {
+  return {
+    date: toDateString(row.bucketDate),
+    clusterCount: row.clusterCount,
+    articleCount: row.articleCount,
   };
 }
 

@@ -1,3 +1,9 @@
-export type { ClusterSummary, ClusterDetail, ClustersPage, ClusterStats } from "./model";
-export { fetchClustersPage, fetchClusterStats } from "./api";
-export { toClusterSummary, toClusterDetail, toClusterStats } from "./lib";
+export type {
+  ClusterSummary,
+  ClusterDetail,
+  ClustersPage,
+  ClusterStats,
+  DaySummary,
+} from "./model";
+export { fetchClustersPage, fetchClusterStats, fetchDays } from "./api";
+export { toClusterSummary, toClusterDetail, toClusterStats, toDaySummary } from "./lib";

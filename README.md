@@ -14,6 +14,7 @@
 
 - **🔗 이슈 클러스터링** — OpenAI 임베딩 + 코사인 유사도로 동일 이슈 기사를 자동 그룹핑 (애매한 구간은 LLM이 판정)
 - **📊 성향별 보도 비중** — 클러스터마다 진보/중도/보수 매체의 보도 분포를 막대그래프로 시각화
+- **📅 날짜별 보기** — 하루 단위로 그날의 이슈를 모아 보고, 앞뒤 날짜로 이동
 - **📈 타임라인** — 이슈가 시간에 따라 어떻게 확산되었는지 추적
 - **🏷️ 15개 언론사 분류** — 조선·중앙·동아부터 한겨레·경향·프레시안까지 5단계 성향 라벨링
 
@@ -155,9 +156,9 @@ confirmation-bias/
 ├── scripts/           collect.ts(3h) · cluster-day.ts(1d) — GitHub Actions 실행
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
-│   ├── app/           App Router (page · layout · API routes · providers)
+│   ├── app/           App Router (/ · /d/[date] · /clusters/[id] · API routes)
 │   ├── widgets/       cluster-feed · cluster-detail
-│   ├── features/      theme-toggle · outlet-filter (상태·인터랙션)
+│   ├── features/      theme-toggle · outlet-filter · date-nav (상태·인터랙션)
 │   ├── entities/      outlet · article · cluster (model · lib · api · ui)
 │   └── shared/        프레임워크 무관 유틸 · 스타일(vanilla-extract)
 ├── e2e/               Playwright 테스트

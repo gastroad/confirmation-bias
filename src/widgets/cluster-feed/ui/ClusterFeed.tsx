@@ -13,10 +13,10 @@ import * as styles from "./ClusterFeed.css";
 
 const SKELETON_COUNT = 5;
 
-function StatsBar({ outletIds }: { outletIds: string[] }) {
+function StatsBar({ outletIds, date }: { outletIds: string[]; date?: string }) {
   const { data } = useQuery({
-    queryKey: ["cluster-stats", outletIds.join(",")],
-    queryFn: () => fetchClusterStats(outletIds),
+    queryKey: ["cluster-stats", outletIds.join(","), date ?? ""],
+    queryFn: () => fetchClusterStats(outletIds, date),
   });
 
   const dominant = data?.dominantLeaning ? LEANING_LABELS[data.dominantLeaning] : "—";
@@ -79,15 +79,20 @@ function SkeletonList() {
   );
 }
 
-export function ClusterFeed() {
+interface ClusterFeedProps {
+  /** 지정하면 그 KST 하루만 보여준다. 없으면 전 기간 최신순. */
+  date?: string;
+}
+
+export function ClusterFeed({ date }: ClusterFeedProps = {}) {
   const searchParams = useSearchParams();
   const outletIds = parseOutletParam(searchParams.get(OUTLETS_PARAM));
   const isFiltered = outletIds.length > 0;
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: ["clusters", outletIds.join(",")],
-      queryFn: ({ pageParam }) => fetchClustersPage({ cursor: pageParam, outletIds }),
+      queryKey: ["clusters", outletIds.join(","), date ?? ""],
+      queryFn: ({ pageParam }) => fetchClustersPage({ cursor: pageParam, outletIds, date }),
       initialPageParam: null as string | null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
@@ -101,7 +106,7 @@ export function ClusterFeed() {
 
   return (
     <>
-      <StatsBar outletIds={outletIds} />
+      <StatsBar outletIds={outletIds} date={date} />
 
       <section>
         <h2 className={styles.sectionTitle}>이슈 목록</h2>
@@ -122,11 +127,16 @@ export function ClusterFeed() {
                 <p className={styles.emptyTitle}>선택한 언론사가 보도한 이슈가 없습니다.</p>
                 <p className={styles.emptyHint}>필터를 조정해 보세요.</p>
               </>
+            ) : date ? (
+              <>
+                <p className={styles.emptyTitle}>이 날짜에는 수집된 이슈가 없습니다.</p>
+                <p className={styles.emptyHint}>다른 날짜를 선택해 보세요.</p>
+              </>
             ) : (
               <>
                 <p className={styles.emptyTitle}>데이터가 없습니다.</p>
                 <p className={styles.emptyHint}>
-                  <code className={styles.code}>npm run ingest</code> 로 기사를 수집해주세요.
+                  <code className={styles.code}>npm run collect</code> 로 기사를 수집해주세요.
                 </p>
               </>
             )}

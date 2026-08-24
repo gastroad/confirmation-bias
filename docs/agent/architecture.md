@@ -47,7 +47,7 @@ RSS 피드
 
 ```
 shared/          — 프레임워크 무관 유틸 / 스타일
-  lib/           — format.ts 등
+  lib/           — format.ts, bucket-date.ts(날짜 문자열 유틸), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts, ui/, index.ts
@@ -55,10 +55,16 @@ entities/        — 도메인 모델 + dumb UI
   cluster/       — model.ts, lib.ts(row→DTO 매핑), api.ts(클라이언트 fetcher), ui/, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   theme-toggle/  — model.ts, ui/(ThemeToggle, ThemeScript), index.ts
+  outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
+  date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
   cluster-detail/
-app/             — Next.js App Router (page.tsx, layout.tsx, API routes)
+app/             — Next.js App Router
+  page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
+  d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
+  clusters/[id]/ — 클러스터 상세
+  api/           — clusters · clusters/[id] · clusters/stats · days
 ```
 
 **레이어 의존 방향:** `app → widgets → features → entities → shared` (단방향)
