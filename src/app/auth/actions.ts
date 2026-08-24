@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@server/auth";
+import { AUTH_CONFIGURED, getAuth } from "@server/auth";
 import type { AuthFormState } from "@/features/auth-form";
 
 // SDK 에러 메시지는 영문이라 사용자에게 그대로 보이면 곤란하다. 흔한 경우만 우리말로 바꾸고
@@ -23,7 +23,9 @@ export async function signInAction(
   const password = String(formData.get("password") ?? "");
   if (!email || !password) return { error: "이메일과 비밀번호를 입력해주세요." };
 
-  const { error } = await auth.signIn.email({ email, password });
+  if (!AUTH_CONFIGURED) return { error: "인증이 설정되지 않았습니다." };
+
+  const { error } = await getAuth().signIn.email({ email, password });
   if (error) return { error: toMessage(error.message) };
 
   redirect("/");
@@ -40,13 +42,15 @@ export async function signUpAction(
   if (!email || !password) return { error: "이메일과 비밀번호를 입력해주세요." };
   if (password.length < 8) return { error: "비밀번호는 8자 이상이어야 합니다." };
 
-  const { error } = await auth.signUp.email({ email, password, name: name || email });
+  if (!AUTH_CONFIGURED) return { error: "인증이 설정되지 않았습니다." };
+
+  const { error } = await getAuth().signUp.email({ email, password, name: name || email });
   if (error) return { error: toMessage(error.message) };
 
   redirect("/");
 }
 
 export async function signOutAction(): Promise<void> {
-  await auth.signOut();
+  if (AUTH_CONFIGURED) await getAuth().signOut();
   redirect("/");
 }
