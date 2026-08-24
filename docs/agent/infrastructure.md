@@ -102,20 +102,23 @@ DB가 싱가포르이므로 **Vercel 함수 리전을 같이 맞춰야 한다.**
 
 Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_URL·이름·설명·키워드).
 
-| 요소                | 위치                                         | 비고                                                                          |
-| ------------------- | -------------------------------------------- | ----------------------------------------------------------------------------- |
-| 전역 메타데이터     | `src/app/layout.tsx`                         | metadataBase·title.template·OG·Twitter·robots·canonical·viewport              |
-| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`             | `generateMetadata`(제목=대표기사, canonical, og:type=article)                 |
-| robots.txt          | `src/app/robots.ts`                          | `/api/` 차단, sitemap 링크                                                    |
-| sitemap.xml         | `src/app/sitemap.ts`                         | 홈 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제              |
-| OG 이미지           | `src/app/opengraph-image.tsx`                | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백 |
-| 구조화 데이터       | `src/shared/seo/`                            | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                  |
-| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx` | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                |
-| 개인정보처리방침    | `src/app/privacy/`                           | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                       |
+| 요소                | 위치                                         | 비고                                                                           |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
+| 전역 메타데이터     | `src/app/layout.tsx`                         | metadataBase·title.template·OG·Twitter·robots·canonical·viewport               |
+| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`             | `generateMetadata`(제목=대표기사, canonical, og:type=article)                  |
+| 날짜별 페이지       | `src/app/d/[date]/page.tsx`                  | `/d/YYYY-MM-DD`. 기사가 없는 날짜는 `robots: noindex`로 빈 페이지 색인 방지    |
+| robots.txt          | `src/app/robots.ts`                          | `/api/` 차단, sitemap 링크                                                     |
+| sitemap.xml         | `src/app/sitemap.ts`                         | 홈 + 날짜 페이지 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제 |
+| OG 이미지           | `src/app/opengraph-image.tsx`                | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백  |
+| 구조화 데이터       | `src/shared/seo/`                            | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                   |
+| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx` | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                 |
+| 개인정보처리방침    | `src/app/privacy/`                           | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                        |
 
 - **egress 주의:** 상세 페이지는 `generateMetadata`와 렌더가 `cache(findClusterDetailRow)`로
   요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.
-- 사이트맵 URL 수가 5만을 넘기면 `generateSitemaps`로 분할 필요(현재 수천 개 수준, 여유).
+- **날짜 페이지가 클러스터 상세보다 상위 허브다.** sitemap에서 최신 날짜에 우선순위 0.9를 주고
+  클러스터는 0.5로 낮췄다. 클러스터 id는 재클러스터링 때마다 바뀌지만 날짜 URL은 안정적이다.
+- 사이트맵 URL 수가 5만을 넘기면 `generateSitemaps`로 분할 필요(현재 약 1만 개, 여유).
 
 ## 수익화 (Google AdSense)
 

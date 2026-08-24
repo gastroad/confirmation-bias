@@ -7,7 +7,9 @@ import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ThemeToggle } from "@/features/theme-toggle";
+import { datePath } from "@/features/date-nav";
 import { Logo } from "@/shared/ui";
+import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
 import * as layout from "@/shared/styles/layout.css";
@@ -78,8 +80,9 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
 
       <header className={layout.header}>
         <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 목록
+          {/* 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다. */}
+          <Link href={datePath(cluster.bucketDate)} className={layout.backLink}>
+            ← {formatBucketDateShort(cluster.bucketDate)}
           </Link>
           <span className={layout.divider}>|</span>
           <Logo size={20} className={layout.logo} />
