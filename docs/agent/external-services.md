@@ -12,8 +12,8 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
                       write │              │ read
         ┌───────────────────┴──┐      ┌────┴───────────────────┐
         │   GitHub Actions     │      │        Vercel          │
-        │ pipeline.yml (6시간마다)│      │   Next.js 웹 서빙       │
-        │  collect → ingest    │      │   (방문자 대시보드)      │
+        │ collect.yml    (3시간) │      │   Next.js 웹 서빙       │
+        │ cluster-daily.yml (1일)│      │   (방문자 대시보드)      │
         └───────────┬──────────┘      └────────────────────────┘
                     │ embeddings/judge
               ┌─────▼─────┐
@@ -30,14 +30,14 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 
 ### 1. OpenAI — 임베딩 / LLM 판정
 
-| 항목      | 값                                                                            |
-| --------- | ----------------------------------------------------------------------------- |
-| 역할      | `text-embedding-3-small`(512차원) 임베딩 + 0.70~0.85 구간 LLM 클러스터 판정   |
-| 사용처    | `server/clustering/embed.ts`, `llm-judge.ts` → **ingest 파이프라인 전용**     |
-| 시크릿    | `OPENAI_API_KEY` (GitHub Actions Secrets + 로컬 `.env`)                       |
-| 대시보드  | https://platform.openai.com/usage                                             |
-| 과금      | 사용량 기반. 임베딩은 신규 기사에만(ingest dedup) → 비용 거의 신규분 한정     |
-| 점검 지점 | 401/403=키 문제, 429=레이트리밋, 431=Cloudflare 커넥션(embed.ts가 5회 재시도) |
+| 항목      | 값                                                                                  |
+| --------- | ----------------------------------------------------------------------------------- |
+| 역할      | `text-embedding-3-small`(512차원) **배치 임베딩** (100건/request)                   |
+| 사용처    | `server/clustering/embed.ts` → **cluster-daily 워크플로우 전용** (collect는 미사용) |
+| 시크릿    | `OPENAI_API_KEY` (GitHub Actions Secrets + 로컬 `.env`)                             |
+| 대시보드  | https://platform.openai.com/usage                                                   |
+| 과금      | 사용량 기반. 임베딩이 없는 기사에만 발생 → 새 기사가 없으면 0                       |
+| 점검 지점 | 401/403=키 문제, 429=레이트리밋, 431=Cloudflare 커넥션(embed.ts가 5회 재시도)       |
 
 ### 2. Vercel — 웹 호스팅
 
@@ -74,40 +74,41 @@ confirmation-bias 실서비스는 **4개 외부 서비스**로 구성된다. 이
 
 ### 4. GitHub — 저장소 + 자동화
 
-| 항목       | 값                                                                          |
-| ---------- | --------------------------------------------------------------------------- |
-| 역할       | 소스 저장소 + GitHub Actions(CI + 6시간마다 수집 파이프라인)                |
-| 저장소     | `gastroad/confirmation-bias` (**public** → Actions 무료 분 무제한)          |
-| 워크플로우 | `ci.yml`(push/PR: tsc·lint·test) / `pipeline.yml`(6시간마다 collect+ingest) |
-| 시크릿     | Repo Settings → Secrets → `OPENAI_API_KEY`, `DATABASE_URL`                  |
-| 대시보드   | https://github.com/gastroad/confirmation-bias/actions                       |
-| 점검 지점  | cron 지연(부하 시 수 분) / 60일 무활동 시 schedule 비활성화 / 실패 시 로그  |
+| 항목       | 값                                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 역할       | 소스 저장소 + GitHub Actions(CI + 수집 3시간 + 클러스터링 1일)                           |
+| 저장소     | `gastroad/confirmation-bias` (**public** → Actions 무료 분 무제한)                       |
+| 워크플로우 | `ci.yml`(push/PR: tsc·lint·test) / `collect.yml`(3시간) / `cluster-daily.yml`(KST 05:00) |
+| 시크릿     | Repo Settings → Secrets → `OPENAI_API_KEY`, `DATABASE_URL`                               |
+| 대시보드   | https://github.com/gastroad/confirmation-bias/actions                                    |
+| 점검 지점  | cron 지연(부하 시 수 분) / 60일 무활동 시 schedule 비활성화 / 실패 시 로그               |
 
 ---
 
 ## 시크릿 위치 매트릭스
 
-| 시크릿           | 로컬 `.env` | GitHub Actions | Vercel | 용도                     |
-| ---------------- | ----------- | -------------- | ------ | ------------------------ |
-| `OPENAI_API_KEY` | ✅          | ✅             | ❌     | 임베딩/판정 (파이프라인) |
-| `DATABASE_URL`   | ✅          | ✅             | ✅     | DB 런타임 연결 (pooler)  |
-| `DIRECT_URL`     | ✅          | ❌             | ❌     | 마이그레이션 (로컬 전용) |
+| 시크릿           | 로컬 `.env` | GitHub Actions | Vercel | 용도                             |
+| ---------------- | ----------- | -------------- | ------ | -------------------------------- |
+| `OPENAI_API_KEY` | ✅          | ✅             | ❌     | 배치 임베딩 (cluster-daily 전용) |
+| `DATABASE_URL`   | ✅          | ✅             | ✅     | DB 런타임 연결 (pooler)          |
+| `DIRECT_URL`     | ✅          | ❌             | ❌     | 마이그레이션 (로컬 전용)         |
 
 > 한 곳에서 값을 바꾸면(예: Neon 비밀번호 재발급) **위 ✅ 칸 전부**를 갱신해야 한다.
 
 ## 장애 시 빠른 점검
 
-| 증상                           | 1순위 확인                                                     |
-| ------------------------------ | -------------------------------------------------------------- |
-| 웹은 뜨는데 데이터가 빔        | Vercel `DATABASE_URL` 환경변수 / Neon compute 한도 소진 여부   |
-| 6시간마다 적재 안 됨           | GitHub Actions 로그 / Secrets 2종 / OpenAI 쿼터                |
-| 파이프라인이 비정상적으로 느림 | OpenAI 429/431 재시도(embed.ts) / ingest dedup 동작 여부       |
-| 웹 TTFB가 수백 ms              | `x-vercel-id`의 함수 리전이 `sin1`인지 (불일치 시 태평양 왕복) |
-| 첫 요청만 유독 느림            | Neon autosuspend wake (5분 무활동 후 정상 동작)                |
-| Vercel 빌드 실패               | 빌드 로그 / `prisma generate` 포함 여부 / Node 버전            |
-| preview URL이 로그인 요구      | 정상(Deployment Protection). production URL을 쓸 것            |
+| 증상                             | 1순위 확인                                                     |
+| -------------------------------- | -------------------------------------------------------------- |
+| 웹은 뜨는데 데이터가 빔          | Vercel `DATABASE_URL` 환경변수 / Neon compute 한도 소진 여부   |
+| 새 기사가 안 들어옴              | `collect.yml` Actions 로그 / `DATABASE_URL` Secret             |
+| 기사는 있는데 클러스터가 안 생김 | `cluster-daily.yml` 로그 / `OPENAI_API_KEY` 쿼터               |
+| 파이프라인이 비정상적으로 느림   | OpenAI 429/431 재시도(embed.ts) / 배치 크기                    |
+| 웹 TTFB가 수백 ms                | `x-vercel-id`의 함수 리전이 `sin1`인지 (불일치 시 태평양 왕복) |
+| 첫 요청만 유독 느림              | Neon autosuspend wake (5분 무활동 후 정상 동작)                |
+| Vercel 빌드 실패                 | 빌드 로그 / `prisma generate` 포함 여부 / Node 버전            |
+| preview URL이 로그인 요구        | 정상(Deployment Protection). production URL을 쓸 것            |
 
 ## 비용 요약 (현재)
 
-- **전부 무료 티어**로 운영 중. OpenAI만 사용량 과금이며, ingest dedup으로 신규 기사에만 발생.
+- **전부 무료 티어**로 운영 중. OpenAI만 사용량 과금이며, 임베딩이 없는 기사에만 발생.
 - 향후 비용 발생 트리거: 수익화 시 Vercel Pro($20/월), **Neon storage 0.5GB 초과**(현재 261MB), OpenAI 사용량.

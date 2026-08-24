@@ -1,0 +1,49 @@
+name: Cluster daily (KST 하루 마감)
+
+on:
+  # UTC 20:00 = KST 05:00. 전날 KST 하루가 끝나고 5시간 뒤에 돌아
+  # 늦게 들어온 기사까지 포섭한 뒤 그 하루를 통째로 클러스터링한다.
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "클러스터링할 KST 날짜 (YYYY-MM-DD). 비우면 어제."
+        required: false
+        type: string
+
+concurrency:
+  group: cluster-daily
+  cancel-in-progress: false
+
+jobs:
+  cluster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      # 입력을 env로 받아 셸에 넘긴다. 템플릿을 run에 직접 펼치면 스크립트 인젝션 경로가 된다.
+      - name: Cluster
+        env:
+          TARGET_DATE: ${{ inputs.date }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -n "$TARGET_DATE" ]; then
+            npm run cluster:day -- --date="$TARGET_DATE"
+          else
+            npm run cluster:day
+          fi

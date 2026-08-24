@@ -2,27 +2,48 @@
 
 ## 뉴스 수집 → 클러스터링 파이프라인
 
+수집과 클러스터링은 **분리**되어 있다(주기가 다르다).
+
 ```bash
-# 1. RSS 수집 (data/new-articles.json 에 저장)
+# 1. RSS 수집 → Article 직접 적재. 임베딩하지 않으므로 OPENAI_API_KEY 불필요
 npm run collect
 
-# 2. 임베딩 + 클러스터 배정 + DB upsert
-npm run ingest
-
-# 둘을 이어서
-npm run collect && npm run ingest
+# 2. KST 하루치를 통째로 클러스터링. 멱등하므로 몇 번 돌려도 결과가 같다
+npm run cluster:day                                    # 어제(KST)
+npm run cluster:day -- --date=2026-08-23
+npm run cluster:day -- --from=2026-06-01 --to=2026-08-23
+npm run cluster:day -- --all                           # 기사가 존재하는 모든 날짜
+npm run cluster:day -- --date=2026-08-20 --dry-run --threshold=0.65   # 임계값 튜닝
 ```
 
 `.env`에 `OPENAI_API_KEY`, `DATABASE_URL`(+ `DIRECT_URL`) 필요.
+설계·임계값 근거는 [daily-clustering.md](./daily-clustering.md).
 
 ## DB 초기화 (처음 셋업)
 
 ```bash
-npm run db:push      # 스키마를 Neon에 반영 (DIRECT_URL 사용)
+npm run db:migrate   # 마이그레이션 적용 (DIRECT_URL 사용)
 npm run db:seed      # Outlet 15개 시드
 ```
 
-스키마 변경 후에도 `db:push` → 재실행.
+**스키마 변경은 `db:push`가 아니라 마이그레이션으로 한다**(2026-08-24 전환).
+
+```bash
+# 1. prisma/schema.prisma 수정 후 SQL 생성
+mkdir -p prisma/migrations/<YYYYMMDD>_<name>
+npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script \
+  2>/dev/null > prisma/migrations/<YYYYMMDD>_<name>/migration.sql
+
+# 2. 데이터 이관이 필요하면 그 SQL을 손으로 끼워 넣는다
+# 3. 적용
+npm run db:migrate && npm run db:generate
+```
+
+- `migrate diff`의 로그가 stdout에 섞이므로 **`2>/dev/null`을 반드시 붙인다**(안 붙이면
+  "Loaded Prisma config…"가 SQL 첫 줄로 들어가 syntax error).
+- 실패한 마이그레이션은 `npx prisma migrate resolve --rolled-back <name>` 후 재시도.
+- **자동 적용은 없다.** 배포 파이프라인에 마이그레이션 스텝이 없으므로 로컬에서 수행한 뒤
+  코드를 머지한다(pooled 연결로는 Prisma의 advisory lock이 깨져 `DIRECT_URL`이 필요하다).
 
 ## 새 언론사(Outlet) 추가
 
@@ -68,7 +89,7 @@ npm run format:check
   - **`ci.yml`** — `main` 대상 push·PR에서 `tsc --noEmit` · `lint` · 단위 테스트. (⚠️ `next build`는 하지 않음)
   - **Vercel Preview** — 브랜치별 프리뷰 배포. `next build`가 실제로 도는 곳이라 **사실상의 빌드 게이트**. 프리뷰 URL은 Deployment Protection(로그인벽)이 걸려 소유자만 접근한다.
 - 검증되면 **squash merge** → `main` push → Vercel Production 자동 배포 = 라이브 반영.
-- `pipeline.yml`(collect+ingest)은 cron(6시간마다)·수동 트리거라 브랜치와 무관하게 항상 기본 브랜치(`main`)에서 돈다. 브랜치 작업이 프로덕션 수집에 영향을 주지 않는다.
+- `collect.yml`(3시간마다)·`cluster-daily.yml`(KST 05:00)은 cron·수동 트리거라 브랜치와 무관하게 항상 기본 브랜치(`main`)에서 돈다. 브랜치 작업이 프로덕션 수집에 영향을 주지 않는다.
 
 ## 워크트리로 작업하기
 

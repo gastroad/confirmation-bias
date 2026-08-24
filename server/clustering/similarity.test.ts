@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cosineSimilarity, normalizeVector, updateCentroid } from "./similarity";
+import { cosineSimilarity, normalizeVector, dot } from "./similarity";
 
 describe("cosineSimilarity", () => {
   it("동일한 벡터는 1.0을 반환한다", () => {
@@ -36,12 +36,16 @@ describe("normalizeVector", () => {
   });
 });
 
-describe("updateCentroid", () => {
-  it("새 벡터를 가중 평균으로 통합한다", () => {
-    const centroid = [1, 0];
-    const newVec = [0, 1];
-    const result = updateCentroid(centroid, newVec, 1); // existingCount=1, 총 2개
-    // 가중 평균 후 정규화 → [0.5, 0.5] normalized = [~0.707, ~0.707]
-    expect(result[0]).toBeCloseTo(result[1], 5);
+describe("dot", () => {
+  it("정규화된 벡터에서 코사인 유사도와 일치한다", () => {
+    const a = [0.6, 0.8];
+    const b = [0.8, 0.6];
+    expect(dot(a, b)).toBeCloseTo(cosineSimilarity(a, b), 6);
+  });
+
+  it("Float32Array를 받는다", () => {
+    const a = new Float32Array([1, 0]);
+    const b = new Float32Array([0, 1]);
+    expect(dot(a, b)).toBeCloseTo(0);
   });
 });

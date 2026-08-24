@@ -8,34 +8,42 @@ datasource db {
 }
 
 model Outlet {
-  id      String  @id
+  id      String @id
   name    String
   domain  String
-  leaning String  // "left" | "center_left" | "center" | "center_right" | "right" | "unknown"
+  leaning String // "left" | "center_left" | "center" | "center_right" | "right" | "unknown"
 
   articles Article[]
 }
 
 model Cluster {
   id                  String   @id @default(uuid())
+  // KST 기준 하루. 클러스터링은 이 버킷 안에서만 일어난다(날짜 간 격리).
+  bucketDate          DateTime @db.Date
   representativeTitle String
   summary             String?
-  centroidJson        String?  // JSON.stringify(number[]) — 512-dim normalized vector
+  // 비정규화. 날짜별 목록이 크기순 정렬 + 키셋 페이지네이션을 하므로 매번 세지 않는다.
+  articleCount        Int      @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   articles Article[]
 
-  @@index([updatedAt]) // 목록 커서 페이지네이션(orderBy updatedAt desc)
+  @@index([updatedAt])
+  @@index([bucketDate, articleCount(sort: Desc), id(sort: Desc)])
 }
 
 model Article {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?
-  url           String   @unique
-  publishedAt   DateTime
-  embeddingJson String?  // JSON.stringify(number[]) — 512-dim normalized vector
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  body        String?
+  url         String   @unique
+  publishedAt DateTime
+  // publishedAt의 KST 날짜. 일별 배치가 이 컬럼으로 대상을 고른다.
+  bucketDate  DateTime @db.Date
+  // Float32 raw bytes 512개 = 2,048B. JSON 문자열(≈10KB)에서 옮겨 왔다(storage 5배 절감).
+  embedding   Bytes?
 
   outletId  String
   outlet    Outlet   @relation(fields: [outletId], references: [id])
@@ -44,7 +52,9 @@ model Article {
 
   createdAt DateTime @default(now())
 
-  @@index([clusterId])            // 클러스터별 기사 로드
-  @@index([outletId])             // 언론사 필터(some outletId in) · stats groupBy
-  @@index([clusterId, outletId])  // 필터 + 집계 복합
+  @@index([clusterId])
+  @@index([outletId])
+  @@index([clusterId, outletId])
+  @@index([bucketDate])
+  @@index([bucketDate, clusterId])
 }
