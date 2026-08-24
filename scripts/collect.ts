@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { db } from "../server/db";
 import { toBucketDate } from "../server/clustering/bucket";
+import { findBlockedUrlSet } from "../server/queries/blocked-urls";
 import feedSpecs from "./feed_specs.json";
 
 // RSS를 긁어 Article로 바로 적재한다. 임베딩·클러스터링은 하지 않는다
@@ -122,16 +123,24 @@ async function main() {
 
   const results = await Promise.all(feeds.map((feed) => fetchFeed(feed.outletId, feed.url, now)));
 
+  // 저작권자 요청으로 차단한 기사는 다시 들이지 않는다. 지우기만 하면 여기서 재수집된다.
+  const blocked = await findBlockedUrlSet();
   const seen = new Set<string>();
-  const articles = results
-    .flat()
-    .filter(({ url }) => (seen.has(url) ? false : (seen.add(url), true)));
+  const collected = results.flat();
+  const articles = collected.filter(({ url }) => {
+    if (blocked.has(url) || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
 
   // url @unique + skipDuplicates로 이미 적재된 기사는 건너뛴다.
   // 기존 행을 갱신하지 않는 이유: 클러스터 배정과 임베딩이 이미 붙어 있을 수 있다.
   const { count } = await db.article.createMany({ data: articles, skipDuplicates: true });
 
-  console.log(`\n✅  수집 ${articles.length}건 · 신규 ${count}건 적재`);
+  console.log(
+    `\n✅  수집 ${articles.length}건 · 신규 ${count}건 적재` +
+      (blocked.size > 0 ? ` · 차단 목록 ${blocked.size}건 적용` : "")
+  );
 }
 
 main()

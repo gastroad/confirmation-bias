@@ -82,3 +82,18 @@ model Comment {
   @@index([clusterId, createdAt])
   @@index([authorId])
 }
+
+/// 저작권자의 표시 중단 요청으로 차단한 기사.
+///
+/// 기사를 지우기만 하면 3시간 뒤 RSS에서 그대로 재수집된다(collect는 url 중복만 막는다).
+/// 차단 목록에 남겨 두어야 다시 들어오지 않는다.
+model BlockedUrl {
+  url       String   @id
+  /// 요청자·사유 메모. 나중에 왜 막았는지 추적하려면 필요하다.
+  reason    String?
+  /// 차단을 등록한 관리자(neon_auth."user".id). 스키마가 달라 FK는 걸 수 없다.
+  blockedBy String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

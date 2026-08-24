@@ -61,6 +61,19 @@ export default async function AdminPage() {
             <ClusterPanel action={triggerClusterAction} />
 
             <section className={styles.section}>
+              <h2 className={styles.title}>차단 기사</h2>
+              <p className={styles.desc}>
+                저작권자의 표시 중단 요청을 처리합니다. 등록하면 수집된 기사가 삭제되고 이후
+                수집에서도 제외됩니다.
+              </p>
+              <div className={styles.row}>
+                <Link href="/admin/blocked" className={styles.button}>
+                  차단 기사 관리로 이동
+                </Link>
+              </div>
+            </section>
+
+            <section className={styles.section}>
               <h2 className={styles.title}>댓글 관리</h2>
               <p className={styles.desc}>
                 전체 댓글을 최신순으로 훑어보고 삭제합니다. 신고·스팸 대응용입니다.
