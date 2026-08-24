@@ -4,11 +4,14 @@ import {
   findDaySummary,
   findAdjacentBucketDates,
 } from "@server/queries/days";
+import { getSessionUser } from "@server/auth";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
 import { ThemeToggle } from "@/features/theme-toggle";
+import { AuthMenu } from "@/features/auth-menu";
 import { Logo } from "@/shared/ui";
+import { signOutAction } from "./auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +23,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const outletsParam = sp[OUTLETS_PARAM];
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
+  const sessionUser = await getSessionUser();
   const latest = await findLatestBucketDate();
   const [summary, adjacent] = latest
     ? await Promise.all([findDaySummary(latest), findAdjacentBucketDates(latest)])
@@ -36,6 +40,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
           <h1 className={layout.brand}>확증편향</h1>
           <p className={layout.brandSub}>언론사 성향별 뉴스 보도 분석</p>
           <div className={layout.headerActions}>
+            <AuthMenu user={sessionUser} signOut={signOutAction} />
             <ThemeToggle />
           </div>
         </div>

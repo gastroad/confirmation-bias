@@ -49,11 +49,20 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
 - [ ] **출처 표기 + 원문 링크**
       각 기사 카드에 언론사 명시 + 원문 클릭 이동 보장.
 - [x] **개인정보처리방침 페이지** ✅ 완료(2026-07-20) — `src/app/privacy/`. AdSense·GDPR 요건 충족.
-- [ ] **이용약관 페이지** — 미작성.
+- [ ] **이용약관 페이지** — 미작성. ⚠️ 회원가입이 생겨(2026-08-24) 실질적으로 필요해졌다.
 
 ---
 
 ## P1 — 런칭 직후 필요 (있어야 안정적)
+
+### 인증 (2026-08-24 도입)
+
+- [x] **회원가입·로그인** ✅ Neon Auth(Managed Better Auth). → [auth.md](./auth.md)
+- [x] **관리자 role 게이팅** ✅ `npm run grant:admin`으로 부트스트랩
+- [ ] **회원 탈퇴 UI** — `auth.deleteUser()`는 있으나 화면 없음.
+      개인정보처리방침에 "탈퇴 요청 시 파기"로 적었으므로 UI가 필요하다.
+- [ ] **이메일 인증** — 현재 `emailVerified: false`로 가입되며 강제하지 않는다.
+- [ ] **`@neondatabase/auth` 안정화 추적** — 0.5.0-beta로 도입. GA 전환 시 재검토.
 
 ### 앱 견고성
 
@@ -91,10 +100,9 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
 
 ## P2 — 런칭 후 개선
 
-- [ ] **수동 UI 수집 트리거** (런칭 후 + 회원가입 기능과 함께)
-      UI "지금 수집" 버튼 → API route → GitHub Actions `workflow_dispatch` 호출로 같은
-      배치 워크플로우 실행. **관리자 전용 게이팅 필수**(공개 시 OpenAI 비용 어뷰징 경로).
-      회원가입/인증 도입 이후 추가. → 설계 메모: [pipeline-scheduling.md](./pipeline-scheduling.md)
+- [x] **수동 UI 수집 트리거** ✅ 완료(2026-08-24)
+      `/admin`에서 collect·cluster-daily를 `workflow_dispatch`로 실행. 관리자 전용 게이팅은
+      proxy와 Server Action 양쪽에서 이중 확인. → [auth.md](./auth.md)
 - [x] **중복 뉴스 제거 고도화** ✅ 사실상 해소(2026-08-24)
       일별 배치가 임베딩 유사도로 cross-outlet 보도를 한 클러스터로 묶는다(threshold 0.62).
 - [x] **`new-articles.json` 중간파일 제거** ✅ 완료(2026-08-24) — collect가 DB에 직접 적재.

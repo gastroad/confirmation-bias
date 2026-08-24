@@ -3,15 +3,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
+import { getSessionUser } from "@server/auth";
 import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ThemeToggle } from "@/features/theme-toggle";
+import { AuthMenu } from "@/features/auth-menu";
 import { datePath } from "@/features/date-nav";
 import { Logo } from "@/shared/ui";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
+import { signOutAction } from "../../auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
 // generateMetadata와 페이지 렌더가 같은 행을 쓰므로 cache로 요청당 1회만 DB 조회한다(egress 절약).
@@ -53,7 +56,7 @@ export async function generateMetadata({
 
 export default async function ClusterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = await getCluster(id);
+  const [row, sessionUser] = await Promise.all([getCluster(id), getSessionUser()]);
 
   if (!row) notFound();
 
@@ -88,6 +91,7 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
+            <AuthMenu user={sessionUser} signOut={signOutAction} />
             <ThemeToggle />
           </div>
         </div>

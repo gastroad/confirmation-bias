@@ -37,6 +37,9 @@ export const container = style({
 
 export const headerActions = style({
   marginLeft: "auto",
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
 });
 
 export const logo = style({

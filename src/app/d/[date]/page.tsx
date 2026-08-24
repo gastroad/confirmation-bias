@@ -3,12 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findDaySummary, findAdjacentBucketDates } from "@server/queries/days";
+import { getSessionUser } from "@server/auth";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
 import { ThemeToggle } from "@/features/theme-toggle";
+import { AuthMenu } from "@/features/auth-menu";
 import { Logo } from "@/shared/ui";
 import { formatBucketDateLabel, isValidBucketDate } from "@/shared/lib/bucket-date";
+import { signOutAction } from "../../auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
 type Params = Promise<{ date: string }>;
@@ -56,6 +59,7 @@ export default async function DatePage({
   const outletsParam = sp[OUTLETS_PARAM];
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
+  const sessionUser = await getSessionUser();
   const bucket = toBucket(date);
   const [summary, adjacent] = await Promise.all([
     findDaySummary(bucket),
@@ -75,6 +79,7 @@ export default async function DatePage({
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
+            <AuthMenu user={sessionUser} signOut={signOutAction} />
             <ThemeToggle />
           </div>
         </div>
