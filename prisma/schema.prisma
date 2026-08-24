@@ -38,7 +38,6 @@ model Article {
   id          String   @id @default(uuid())
   title       String
   description String?
-  body        String?
   url         String   @unique
   publishedAt DateTime
   // publishedAt의 KST 날짜. 일별 배치가 이 컬럼으로 대상을 고른다.

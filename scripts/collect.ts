@@ -17,6 +17,27 @@ interface CollectedArticle {
   outletId: string;
 }
 
+/**
+ * RSS `description`을 저장할 최대 길이.
+ *
+ * 일부 언론사(뉴시스·서울신문·천지일보)는 요약이 아니라 **본문 전문**을 실어 보낸다
+ * (실측 최대 7,681자). 그대로 저장·표시하면 저작권 문제가 된다. 우리는 "어느 매체가 이 이슈를
+ * 어떻게 다뤘는가"를 보여주는 서비스이므로 발췌면 충분하고, 전문은 원문 링크로 보낸다.
+ *
+ * 300자는 RSS 관행이기도 하다 — 동아·여성신문·시사저널·미디어오늘이 이 길이로 잘라 보낸다.
+ * 부수 효과로 임베딩 입력 길이가 매체 간에 고르게 맞춰진다(전에는 300~7,681자로 들쭉날쭉해
+ * 긴 요약을 주는 매체가 더 많은 정보로 임베딩됐다).
+ */
+const MAX_DESCRIPTION_LENGTH = 300;
+
+function toExcerpt(text: string): string | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  return trimmed.length <= MAX_DESCRIPTION_LENGTH
+    ? trimmed
+    : `${trimmed.slice(0, MAX_DESCRIPTION_LENGTH)}…`;
+}
+
 // RSS pubDate는 신뢰할 수 없다. 실제로 2023-03 날짜를 달고 오는 기사가 20건 섞여 있었고,
 // 그대로 두면 일별 버킷이 엉뚱한 날짜에 만들어진다.
 const MAX_PAST_DAYS = 30;
@@ -76,7 +97,7 @@ async function fetchFeed(
         const i = item as Record<string, unknown>;
         const url = toText(i.link) || toText(i.guid);
         const title = stripHtml(toText(i.title));
-        const description = stripHtml(toText(i.description)) || null;
+        const description = toExcerpt(stripHtml(toText(i.description)));
         const publishedAt = sanitizePublishedAt(pickPublishedRaw(i), now);
         return {
           title,
