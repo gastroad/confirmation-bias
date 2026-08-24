@@ -1,5 +1,8 @@
 # DB 마이그레이션: SQLite → Postgres (Supabase)
 
+> ⚠️ **이력 문서.** 이 이관은 2026-06-29에 끝났고, DB는 이후 **Neon으로 다시 옮겼다(2026-08-24)**.
+> 현재 인프라는 [db-migration-neon.md](./db-migration-neon.md)와 [infrastructure.md](./infrastructure.md)를 볼 것.
+
 `launch-todo.md` P0 항목 **"SQLite → 원격 DB 마이그레이션"**의 실행 계획.
 원래 계획은 Turso였으나, 포트폴리오 가치·생태계·기존 MySQL 경험 전이를 고려해
 **Supabase(Postgres)** 로 결정.

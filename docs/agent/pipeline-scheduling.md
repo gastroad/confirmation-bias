@@ -5,12 +5,12 @@ RSS 수집 + 임베딩/클러스터 적재(`collect + ingest`)를 **배치로 �
 
 ## 결정 사항
 
-| 항목        | 결정                                                                 |
-| ----------- | -------------------------------------------------------------------- |
-| 실행 방식   | **GitHub Actions scheduled workflow** (배치)                         |
-| 주기        | 매시간 시작 → **6시간마다로 완화(2026-07-08, Supabase egress 초과)** |
-| 실행처      | GitHub Actions (웹 호스팅과 분리)                                    |
-| 수동 트리거 | **런칭 후** 회원가입/인증 기능과 함께 추가 (P2)                      |
+| 항목        | 결정                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| 실행 방식   | **GitHub Actions scheduled workflow** (배치)                                                                |
+| 주기        | 매시간 → **6시간마다(2026-07-08, Supabase egress 초과)**. Neon 이관(2026-08-24)으로 제약 해소 → 재단축 예정 |
+| 실행처      | GitHub Actions (웹 호스팅과 분리)                                                                           |
+| 수동 트리거 | **런칭 후** 회원가입/인증 기능과 함께 추가 (P2)                                                             |
 
 ## 왜 GitHub Actions 배치인가
 
@@ -42,7 +42,7 @@ RSS 수집 + 임베딩/클러스터 적재(`collect + ingest`)를 **배치로 �
 ### 필요한 GitHub Secrets
 
 - `OPENAI_API_KEY`
-- `DATABASE_URL` — Supabase 연결 문자열 (pooler 6543). 마이그레이션 완료(2026-06-29).
+- `DATABASE_URL` — Neon 연결 문자열 (pooled, 호스트에 `-pooler`). Neon 이관 완료(2026-08-24).
   - `DIRECT_URL`은 불필요(ingest는 데이터 upsert만, DDL 없음).
 
 > **env 로딩:** npm 스크립트는 `tsx --env-file-if-exists=.env`라 로컬은 `.env`를 읽고,
@@ -54,8 +54,9 @@ RSS 수집 + 임베딩/클러스터 적재(`collect + ingest`)를 **배치로 �
 - 현재 `cron: "17 */6 * * *"` (UTC, 6시간마다). **정각(:00)은 GitHub 부하로 지연·드롭이 잦아** 피한다(공식 권장).
   - 실제로 `"0 * * * *"`로 두니 매시 실행이 통째로 스킵됨 → `:17`로 오프셋 후 해소.
   - **2026-07-08 매시간→6시간마다 완화**: Supabase egress 5GB/월 한도를 크게 초과(28GB).
-    ingest centroid 인메모리 로딩 리팩터로 건당 egress를 크게 줄였으니, RSS 드롭이 우려되면
-    주기를 다시 좁혀도 됨(1~3시간). 트레이드오프: 주기가 길수록 빠르게 밀려나는 RSS 항목을 놓칠 수 있음.
+  - **2026-08-24 Neon 이관으로 egress 제약이 사라졌다.** 6시간 주기는 RSS 항목이 밀려 나가
+    수집을 놓치는 트레이드오프였으므로, 이제 되돌릴 수 있다(3시간 목표).
+    일별 배치 클러스터링 전환에서 `collect`와 클러스터링을 분리하며 함께 반영한다.
 - 실제 작성은 Next.js/Prisma 버전 주의와 별개로 Actions YAML 표준 문법 사용.
 
 ## 알아둘 GitHub Actions 제약
@@ -87,6 +88,7 @@ RSS 수집 + 임베딩/클러스터 적재(`collect + ingest`)를 **배치로 �
 ### 1차 (지금)
 
 - [x] Supabase 마이그레이션 선행 완료 (`DATABASE_URL` 확보) — 2026-06-29
+      → **Neon으로 재이관 완료 — 2026-08-24** ([db-migration-neon.md](./db-migration-neon.md))
 - [x] 레포 visibility 확인 → **public이라 Actions 무료 분 무제한**, 주기 제약 없음
 - [x] `.github/workflows/pipeline.yml` 작성 (schedule + workflow_dispatch, concurrency 가드)
 - [x] GitHub Secrets에 `OPENAI_API_KEY`, `DATABASE_URL` 등록

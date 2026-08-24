@@ -3,7 +3,7 @@
 confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작업 목록.
 우선순위: **P0(런칭 블로커) → P1(런칭 직후 필요) → P2(런칭 후 개선)**.
 
-현재 상태: **DB Supabase(Postgres) 전환 완료(2026-06-29)** + 파이프라인 자동화(GitHub Actions, 6시간마다 `collect + ingest`).
+현재 상태: **DB Neon(Postgres 18) 전환 완료(2026-08-24)** + 파이프라인 자동화(GitHub Actions, 6시간마다 `collect + ingest`).
 
 ---
 
@@ -19,6 +19,10 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 - [x] **SQLite → Postgres(Supabase) 마이그레이션** ⭐ 선행 작업 ✅ 완료(2026-06-29)
       다른 P0/P1 인프라 항목(호스팅, 스케줄링, E2E 재활성화 등)이 모두 이걸 전제로 함.
       → 상세 실행 계획: [db-migration-supabase.md](./db-migration-supabase.md)
+- [x] **Supabase → Neon 재이관** ✅ 완료(2026-08-24)
+      egress 5GB/월 한도가 수집 주기를 6시간으로 묶고 있던 걸 해소. 이관 중 Vercel 함수 리전이
+      `iad1`(워싱턴)인 걸 발견해 `sin1`로 고정(TTFB 500~725ms의 주원인).
+      → [db-migration-neon.md](./db-migration-neon.md)
 - [x] **시크릿 관리** ✅ (2026-06-29)
       GitHub Actions Secrets(`OPENAI_API_KEY`+`DATABASE_URL`), Vercel 환경변수(`DATABASE_URL`).
       `.env`는 gitignore 유지(로컬 전용).
@@ -28,6 +32,7 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 - [x] **RSS 수집 스케줄링** (배치) ✅ 가동(2026-06-29)
       **GitHub Actions scheduled workflow로 `collect + ingest`를 6시간마다 자동 실행.**
       매시간으로 시작했으나 Supabase egress 초과로 6시간마다로 완화(2026-07-08).
+      Neon 이관으로 제약이 사라져 3시간으로 재단축 예정.
       → 상세 설계: [pipeline-scheduling.md](./pipeline-scheduling.md), egress 대응: [infrastructure.md](./infrastructure.md)
 - [ ] **파이프라인 실패 알림**
       OpenAI 쿼터 소진·DB 연결 실패 시 무음 실패 방지. 실패 시 알림(Slack/이메일).
@@ -68,9 +73,9 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 - [ ] **인덱스 추가**
       `prisma/schema.prisma`의 `Article`에 `url @unique`만 존재.
       조회 패턴인 `clusterId`, `publishedAt`, `outletId`에 `@@index` 필요.
-- [ ] **임베딩 저장 방식 스케일 검토**
-      centroid/embedding을 JSON 문자열로 저장. ingest 시 전체 클러스터 centroid를
-      메모리 로드하는 구조라면 데이터 증가 시 O(n) 병목 → 벡터 검색 대안 검토.
+- [ ] **임베딩 저장 방식 스케일 검토** ⚠️ 시급
+      centroid/embedding을 JSON 문자열(~10KB/건)로 저장 중 → **Neon free 0.5GB 중 261MB 소진.**
+      일별 배치 클러스터링 전환에서 centroid 제거 + 임베딩을 `Bytes`(2,048B)로 바꿔 ~60MB 목표.
 
 ### CI / 품질
 
@@ -80,7 +85,7 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
       직접 잡으려면 추가 필요.
 - [ ] **E2E 재활성화**
       `home.spec.ts` 하나뿐이고 CI에서 e2e 미실행(원격 DB 대기 중).
-      Supabase 전환 후 활성화 + 핵심 플로우 커버.
+      원격 DB 전환은 끝났으므로(Neon) 활성화 가능 + 핵심 플로우 커버.
 
 ---
 

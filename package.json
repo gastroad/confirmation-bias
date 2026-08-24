@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx --env-file-if-exists=.env prisma/seed.ts",
+    "db:verify": "npx tsx --env-file-if-exists=.env scripts/verify-db.ts",
     "collect": "npx tsx --env-file-if-exists=.env scripts/collect.ts",
     "ingest": "npx tsx --env-file-if-exists=.env scripts/ingest.ts",
     "test:unit": "vitest",
