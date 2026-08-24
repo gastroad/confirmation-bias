@@ -86,7 +86,7 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
       `Cluster`에 `(bucketDate, articleCount desc, id desc)` 목록 인덱스.
 - [x] **임베딩 저장 방식 스케일 검토** ✅ 완료(2026-08-24)
       `Cluster.centroidJson` 제거 + `Article` 임베딩을 JSON(~10KB) → `Bytes`(2,048B)로 전환.
-      **DB 261MB → 109MB.** → [daily-clustering.md](./daily-clustering.md)
+      **DB 261MB → 109MB**(이후 저작권 대응으로 101MB). → [daily-clustering.md](./daily-clustering.md)
 
 ### CI / 품질
 
