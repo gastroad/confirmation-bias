@@ -27,21 +27,23 @@ RSS 피드
 
 ## 디렉토리 역할
 
-| 경로                              | 역할                                                                   |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                               |
-| `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                |
-| `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어) |
-| `server/clustering/similarity.ts` | 내적·코사인 유사도 순수 함수                                           |
-| `server/clustering/vector.ts`     | 임베딩 Float32 bytes 인코딩·정규화·centroid                            |
-| `server/clustering/bucket.ts`     | KST 날짜 버킷 변환 (`toBucketDate` 등)                                 |
-| `server/clustering/hac.ts`        | 응집 클러스터링 (average linkage, 순수 함수)                           |
-| `server/clustering/daily.ts`      | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                |
-| `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                        |
-| `scripts/collect.ts`              | RSS 수집 → Article 직접 적재                                           |
-| `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)   |
-| `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                        |
-| `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                   |
+| 경로                              | 역할                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                                          |
+| `server/auth.ts`                  | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md) |
+| `server/github.ts`                | `workflow_dispatch` 호출 (관리자 수동 트리거)                                     |
+| `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                           |
+| `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)            |
+| `server/clustering/similarity.ts` | 내적·코사인 유사도 순수 함수                                                      |
+| `server/clustering/vector.ts`     | 임베딩 Float32 bytes 인코딩·정규화·centroid                                       |
+| `server/clustering/bucket.ts`     | KST 날짜 버킷 변환 (`toBucketDate` 등)                                            |
+| `server/clustering/hac.ts`        | 응집 클러스터링 (average linkage, 순수 함수)                                      |
+| `server/clustering/daily.ts`      | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                           |
+| `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                   |
+| `scripts/collect.ts`              | RSS 수집 → Article 직접 적재                                                      |
+| `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)              |
+| `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                                   |
+| `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                              |
 
 ## FSD 레이어 (src/)
 
@@ -57,6 +59,8 @@ features/        — 사용자 인터랙션 (상태 가능)
   theme-toggle/  — model.ts, ui/(ThemeToggle, ThemeScript), index.ts
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
   date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav), index.ts
+  auth-form/     — model.ts(AuthFormState), ui/(AuthForm), index.ts
+  auth-menu/     — ui/(AuthMenu), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
   cluster-detail/
@@ -64,7 +68,10 @@ app/             — Next.js App Router
   page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
   d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
   clusters/[id]/ — 클러스터 상세
-  api/           — clusters · clusters/[id] · clusters/stats · days
+  auth/          — sign-in · sign-up · actions.ts (Server Action)
+  admin/         — 관리자 전용(수집·클러스터링 트리거)
+  api/           — clusters · clusters/[id] · clusters/stats · days · auth/[...path]
+proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
 ```
 
 **레이어 의존 방향:** `app → widgets → features → entities → shared` (단방향)

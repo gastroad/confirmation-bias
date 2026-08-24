@@ -36,9 +36,15 @@ Next.js는 자동으로 `.env` 로드.
 
 ### Vercel(웹 호스트)에 필요한 시크릿
 
-- **`DATABASE_URL`만 필요.** OpenAI는 `server/clustering/*`(embed·llm-judge)에서만 쓰이고
-  이는 파이프라인(GitHub Actions)만 import하므로, 웹 런타임엔 `OPENAI_API_KEY` 불필요.
-- **`DIRECT_URL`도 Vercel엔 불필요.** 마이그레이션은 GitHub Actions/로컬에서만 수행.
+- `DATABASE_URL` — DB 런타임 연결
+- `NEON_AUTH_BASE_URL` · `NEON_AUTH_COOKIE_SECRET` — 인증 (2026-08-24 추가)
+- `GITHUB_DISPATCH_TOKEN` — `/admin`의 수동 트리거 (없으면 그 버튼만 실패)
+- **`OPENAI_API_KEY`는 불필요.** `server/clustering/*`에서만 쓰이고 이는 파이프라인(GitHub
+  Actions)만 import한다.
+- **`DIRECT_URL`도 불필요.** 마이그레이션은 로컬에서만 수행.
+
+> 2026-08-24 이전까지 웹 런타임 시크릿은 `DATABASE_URL` 하나였다. 인증 도입으로 그 전제가
+> 깨졌으므로 배포 시 누락에 주의한다(**프로덕션에서만 터진다**).
 
 ## Prisma 주의사항
 

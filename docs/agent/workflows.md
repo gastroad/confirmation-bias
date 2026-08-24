@@ -45,6 +45,19 @@ npm run db:migrate && npm run db:generate
 - **자동 적용은 없다.** 배포 파이프라인에 마이그레이션 스텝이 없으므로 로컬에서 수행한 뒤
   코드를 머지한다(pooled 연결로는 Prisma의 advisory lock이 깨져 `DIRECT_URL`이 필요하다).
 
+## 관리자 계정 만들기
+
+회원가입은 누구나 할 수 있고, 관리자만 `/admin`(수집·클러스터링 수동 트리거)에 접근한다.
+
+```bash
+# 1. /auth/sign-up 에서 가입한 뒤
+npm run grant:admin -- you@example.com
+# 2. 이미 로그인 중이라면 다시 로그인해야 세션에 반영된다
+```
+
+`auth.admin.setRole()`은 호출자가 이미 admin이어야 해서 최초 1명은 이 스크립트로 만든다.
+→ [auth.md](./auth.md)
+
 ## 새 언론사(Outlet) 추가
 
 1. `src/entities/outlet/model.ts`의 `OUTLETS` 배열에 항목 추가

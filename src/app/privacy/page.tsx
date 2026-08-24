@@ -46,17 +46,28 @@ export default function PrivacyPage() {
         <section className={styles.section}>
           <h2 className={styles.heading}>1. 수집하는 정보</h2>
           <p className={styles.paragraph}>
-            서비스는 <strong>회원가입·로그인 기능이 없으며</strong>, 이용자가 이름·연락처 등
-            개인식별정보를 직접 입력하도록 요구하지 않습니다. 다만 다음 정보가 자동으로 수집·처리될
-            수 있습니다.
+            서비스의 뉴스 열람 기능은 <strong>로그인 없이</strong> 이용할 수 있습니다. 다음 정보가
+            수집·처리됩니다.
           </p>
           <ul className={styles.list}>
+            <li>
+              <strong>회원가입 시(선택적 이용)</strong>: 이메일 주소(필수), 이름(선택), 비밀번호.
+              비밀번호는 단방향 암호화되어 저장되며 서비스 운영자가 원문을 알 수 없습니다.
+            </li>
+            <li>
+              <strong>로그인 세션</strong>: 세션 식별자, 접속 IP 주소, 브라우저·기기
+              정보(User-Agent), 로그인 시각·만료 시각 (계정 보안 및 세션 관리 목적)
+            </li>
             <li>
               접속 로그: IP 주소, 브라우저·기기 정보(User-Agent), 방문 페이지·시각 (호스팅 및 보안
               목적)
             </li>
             <li>쿠키 및 유사 기술: 아래 &ldquo;쿠키와 광고&rdquo; 참조</li>
           </ul>
+          <p className={styles.paragraph}>
+            회원가입은 <strong>선택 사항</strong>이며, 가입하지 않아도 뉴스 클러스터 열람 등 주요
+            기능을 모두 이용할 수 있습니다.
+          </p>
         </section>
 
         <section className={styles.section}>
@@ -113,7 +124,8 @@ export default function PrivacyPage() {
           <ul className={styles.list}>
             <li>Google AdSense — 광고 게재 및 관련 쿠키</li>
             <li>Vercel — 웹 호스팅 및 접속 로그 처리</li>
-            <li>Supabase — 뉴스 기사·클러스터 데이터 저장(개인정보 아님)</li>
+            <li>Neon — 뉴스 기사·클러스터 데이터 저장(개인정보 아님) 및 계정·세션 정보 저장</li>
+            <li>OpenAI — 뉴스 기사 본문의 임베딩 생성(개인정보 미포함)</li>
           </ul>
           <p className={styles.paragraph}>
             서비스가 표시하는 뉴스 기사 링크는 각 언론사의 외부 사이트로 연결되며, 해당 사이트의
@@ -124,8 +136,16 @@ export default function PrivacyPage() {
         <section className={styles.section}>
           <h2 className={styles.heading}>5. 데이터 보관 및 국외 이전</h2>
           <p className={styles.paragraph}>
-            접속 로그 및 쿠키 데이터는 위 제3자 서비스가 각자의 정책에 따라 보관합니다. 이 과정에서
-            데이터가 국외 서버에 저장·처리될 수 있습니다.
+            계정 정보(이메일·이름·비밀번호 해시)는 <strong>회원 탈퇴 시까지</strong> 보관하며, 탈퇴
+            요청 시 지체 없이 파기합니다. 로그인 세션 정보는 세션 만료(최대 7일) 후 삭제됩니다.
+          </p>
+          <p className={styles.paragraph}>
+            접속 로그 및 쿠키 데이터는 위 제3자 서비스가 각자의 정책에 따라 보관합니다.
+          </p>
+          <p className={styles.paragraph}>
+            <strong>국외 이전</strong>: 서비스의 데이터베이스와 인증 서버는 Neon(미국 Neon Inc.)의
+            싱가포르 리전에 위치하며, 계정·세션 정보가 해당 서버에 저장·처리됩니다. 웹 호스팅은
+            Vercel(미국)을 이용합니다.
           </p>
         </section>
 
