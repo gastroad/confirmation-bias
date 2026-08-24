@@ -12,6 +12,8 @@ RSS 수집(3시간마다) → KST 하루치 배치 클러스터링(하루 1회) 
 - 데이터 흐름: 클라이언트(react-query) → API 라우트 → `server/queries` → DB. 클라이언트는 파라미터만 보낸다.
 - 인증을 만질 때 `@neondatabase/auth`를 **직접 import하지 않는다.** SDK 의존은 `server/auth.ts`
   한 파일로 가둬 두었다(베타 버전이라 교체 여지를 남긴다). → `docs/agent/auth.md`
+- 클러스터링을 재실행하면 클러스터 id가 바뀐다. 댓글은 `successorByOldCluster`가 승계한다 —
+  `clusterDay`의 트랜잭션 순서(생성 → 이관 → 삭제)를 바꾸지 않는다. → `docs/agent/comments.md`
 - 클러스터링(`server/clustering/`)을 만지기 전에 `docs/agent/daily-clustering.md`를 읽는다.
   임계값 근거와 "최대 클러스터 크기는 품질 지표가 아니다"라는 판단 기준이 거기 있다.
 - 새 코드를 작성하기 전에 아래 세부 문서를 먼저 읽는다.

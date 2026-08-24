@@ -75,3 +75,20 @@ export function ChevronRightIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function UserIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" />
+      <circle cx="12" cy="7" r="4" />
+    </Svg>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}

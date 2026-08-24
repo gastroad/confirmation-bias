@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import Script from "next/script";
-import { ThemeScript } from "@/features/theme-toggle";
+
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { websiteSchema } from "@/shared/seo/schemas";
 import {
@@ -15,6 +15,7 @@ import {
   CONTACT_EMAIL,
   ADSENSE_CLIENT,
 } from "@/shared/config/site";
+import { ThemeScript } from "@/shared/ui";
 import * as layout from "@/shared/styles/layout.css";
 import { Providers } from "./providers";
 import "./global.css";

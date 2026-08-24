@@ -34,6 +34,8 @@ interface Loaded {
   ids: string[];
   titles: string[];
   vectors: Float32Array[];
+  /** 재클러스터링 전 배정. 댓글 승계에 쓴다. */
+  previousClusterByArticle: Map<string, string>;
 }
 
 /** 임베딩이 없는 기사는 여기서 채운다. collect는 임베딩을 만들지 않는다. */
@@ -41,7 +43,7 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
   const { start, end } = bucketRange(bucket);
   const rows = await db.article.findMany({
     where: { publishedAt: { gte: start, lt: end } },
-    select: { id: true, title: true, description: true, embedding: true },
+    select: { id: true, title: true, description: true, embedding: true, clusterId: true },
     orderBy: { publishedAt: "asc" },
   });
 
@@ -65,6 +67,7 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
   const ids: string[] = [];
   const titles: string[] = [];
   const vectors: Float32Array[] = [];
+  const previousClusterByArticle = new Map<string, string>();
 
   for (const r of rows) {
     const raw = r.embedding
@@ -76,12 +79,62 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
 
     ids.push(r.id);
     titles.push(r.title);
+    if (r.clusterId) previousClusterByArticle.set(r.id, r.clusterId);
     // 512차원으로 자르면서 생긴 노름 오차(0.99933~1.00058)를 여기서 흡수한다.
     // 이후 hac은 유사도를 내적으로만 계산한다.
     vectors.push(normalizeInPlace(raw));
   }
 
-  return { ids, titles, vectors, embedded: dryRun ? 0 : missing.length };
+  return {
+    ids,
+    titles,
+    vectors,
+    previousClusterByArticle,
+    embedded: dryRun ? 0 : missing.length,
+  };
+}
+
+/**
+ * 옛 클러스터 → 새 클러스터 승계 매핑.
+ *
+ * 평상시에는 쓰이지 않는다 — 클러스터링은 하루 1회 전날에 대해서만 돌아 한번 만들어진 날짜는
+ * 고정된다. **관리자 재실행이나 백필로 같은 날짜를 다시 돌릴 때** 클러스터가 새 id로 재생성되며,
+ * 그때 댓글이 유실되지 않도록 옛 클러스터에 속했던 기사들이 **어느 새 클러스터로 가장 많이
+ * 갔는지**로 후계자를 정한다.
+ * 동수면 새 클러스터 id가 작은 쪽(결정적).
+ */
+export function successorByOldCluster(
+  previousClusterByArticle: Map<string, string>,
+  ids: readonly string[],
+  groups: readonly (readonly number[])[],
+  clusterIds: readonly string[]
+): Map<string, string> {
+  // oldClusterId -> newClusterId -> 물려받은 기사 수
+  const tally = new Map<string, Map<string, number>>();
+
+  groups.forEach((group, gi) => {
+    for (const i of group) {
+      const oldId = previousClusterByArticle.get(ids[i]);
+      if (!oldId) continue;
+      const perOld = tally.get(oldId) ?? new Map<string, number>();
+      perOld.set(clusterIds[gi], (perOld.get(clusterIds[gi]) ?? 0) + 1);
+      tally.set(oldId, perOld);
+    }
+  });
+
+  const successor = new Map<string, string>();
+  for (const [oldId, perOld] of tally) {
+    let bestId = "";
+    let bestCount = -1;
+    for (const [newId, count] of perOld) {
+      if (count > bestCount || (count === bestCount && newId < bestId)) {
+        bestCount = count;
+        bestId = newId;
+      }
+    }
+    successor.set(oldId, bestId);
+  }
+  return successor;
 }
 
 /** 그룹 centroid에 가장 가까운 기사의 제목. LLM 호출 없이 대표성을 얻는다. */
@@ -105,7 +158,10 @@ export async function clusterDay(
   { threshold = DEFAULT_THRESHOLD, dryRun = false }: ClusterDayOptions = {}
 ): Promise<ClusterDayResult> {
   const bucketDate = formatBucketDate(bucket);
-  const { ids, titles, vectors, embedded } = await loadDay(bucket, dryRun);
+  const { ids, titles, vectors, previousClusterByArticle, embedded } = await loadDay(
+    bucket,
+    dryRun
+  );
 
   if (vectors.length === 0) {
     return { bucketDate, articles: 0, clusters: 0, largest: 0, singletons: 0, embedded };
@@ -136,13 +192,14 @@ export async function clusterDay(
     }
   });
 
+  const successor = successorByOldCluster(previousClusterByArticle, ids, groups, clusterIds);
+
+  // **삭제를 마지막에 한다.** 옛 클러스터를 먼저 지우면 Comment의 ON DELETE CASCADE가
+  // 댓글까지 가져가 버린다(재실행 시에만 해당). 새 클러스터를 만들고 댓글을 옮긴 뒤에 지운다.
   await db.$transaction(async (tx) => {
-    // 재실행 시 이전 결과를 걷어낸다. 먼저 참조를 끊어야 클러스터를 지울 수 있다.
-    await tx.article.updateMany({
-      where: { id: { in: ids } },
-      data: { clusterId: null },
-    });
-    await tx.cluster.deleteMany({ where: { bucketDate: bucket } });
+    const staleClusterIds = (
+      await tx.cluster.findMany({ where: { bucketDate: bucket }, select: { id: true } })
+    ).map((c) => c.id);
 
     await tx.cluster.createMany({
       data: groups.map((group, gi) => ({
@@ -160,6 +217,20 @@ export async function clusterDay(
       articleIds,
       assignedClusterIds
     );
+
+    if (successor.size > 0) {
+      await tx.$executeRawUnsafe(
+        `UPDATE "Comment" AS c SET "clusterId" = v.new_id
+         FROM (SELECT unnest($1::text[]) AS old_id, unnest($2::text[]) AS new_id) v
+         WHERE c."clusterId" = v.old_id`,
+        [...successor.keys()],
+        [...successor.values()]
+      );
+    }
+
+    if (staleClusterIds.length > 0) {
+      await tx.cluster.deleteMany({ where: { id: { in: staleClusterIds } } });
+    }
   });
 
   return result;

@@ -109,6 +109,23 @@ account · invitation · jwks · member · organization · project_config · ses
 가입 → 세션 발급(쿠키 `neon-auth.session_token`) → `grant:admin` → 재로그인 →
 세션 role=admin → `/admin` 200. 비로그인 `/admin` 접근은 307 리다이렉트.
 
+## 프로필 메뉴 · 탈퇴
+
+헤더 우상단은 프로필 아이콘 하나다(로그인 시 이니셜, 비로그인 시 사람 아이콘).
+드롭다운 안에 **테마 선택·관리(admin)·로그아웃·회원 탈퇴**가 모두 들어간다.
+
+테마 로직은 `src/shared/lib/theme.ts`에 있다. **features 간 import를 피하려고 shared로 내렸다** —
+프로필 메뉴가 테마를 품게 되면서 `theme-toggle`·`auth-menu` 슬라이스는 사라졌다.
+
+**탈퇴 화면은 `/account/delete`이지 `/auth/*`가 아니다.** `/auth` 레이아웃은 "로그인되어 있으면
+홈으로" 보내므로 로그인 상태에서 쓰는 화면을 거기 두면 접근할 수 없다.
+
+탈퇴는 되돌릴 수 없으므로 확인 문구("탈퇴")를 입력해야 버튼이 열린다.
+**댓글은 지우지 않고 익명화한다**(`anonymizeCommentsByAuthor`) — 자세한 이유는
+[comments.md](./comments.md).
+
+순서가 중요하다: **계정을 먼저 지우면 세션이 사라져 어떤 댓글을 익명화할지 알 수 없다.**
+
 ## 남은 것
 
 - 소셜 로그인(`auth.signIn.social`) — SDK는 지원. Neon Console에서 프로바이더 설정 필요

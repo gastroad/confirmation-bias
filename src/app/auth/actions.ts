@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { AUTH_CONFIGURED, getAuth } from "@server/auth";
+import { AUTH_CONFIGURED, getAuth, getSessionUser } from "@server/auth";
+import { anonymizeCommentsByAuthor } from "@server/queries/comments";
 import type { AuthFormState } from "@/features/auth-form";
 
 // SDK 에러 메시지는 영문이라 사용자에게 그대로 보이면 곤란하다. 흔한 경우만 우리말로 바꾸고
@@ -52,5 +53,27 @@ export async function signUpAction(
 
 export async function signOutAction(): Promise<void> {
   if (AUTH_CONFIGURED) await getAuth().signOut();
+  redirect("/");
+}
+
+/**
+ * 회원 탈퇴.
+ *
+ * **댓글은 지우지 않고 익명화한다** — 본문을 지우면 다른 사람의 대화 맥락이 끊긴다.
+ * 개인정보처리방침의 "탈퇴 시 파기"와도 일관된다(식별자와 표시명이 사라진다).
+ *
+ * 순서가 중요하다: 계정을 먼저 지우면 세션이 사라져 어떤 댓글을 익명화할지 알 수 없다.
+ */
+export async function deleteAccountAction(): Promise<AuthFormState> {
+  if (!AUTH_CONFIGURED) return { error: "인증이 설정되지 않았습니다." };
+
+  const user = await getSessionUser();
+  if (!user) redirect("/");
+
+  await anonymizeCommentsByAuthor(user.id);
+
+  const { error } = await getAuth().deleteUser();
+  if (error) return { error: toMessage(error.message) };
+
   redirect("/");
 }

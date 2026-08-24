@@ -49,28 +49,31 @@ RSS 피드
 
 ```
 shared/          — 프레임워크 무관 유틸 / 스타일
-  lib/           — format.ts, bucket-date.ts(날짜 문자열 유틸), useInfiniteScroll.ts
+  lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts, ui/, index.ts
   article/       — model.ts, index.ts
   cluster/       — model.ts, lib.ts(row→DTO 매핑), api.ts(클라이언트 fetcher), ui/, index.ts
+  comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   theme-toggle/  — model.ts, ui/(ThemeToggle, ThemeScript), index.ts
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
+  profile-menu/  — ui/(ProfileMenu) — 테마·로그인·관리·탈퇴를 한 드롭다운에
   date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav), index.ts
   auth-form/     — model.ts(AuthFormState), ui/(AuthForm), index.ts
-  auth-menu/     — ui/(AuthMenu), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
   cluster-detail/
+  cluster-comments/
 app/             — Next.js App Router
   page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
   d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
   clusters/[id]/ — 클러스터 상세
   auth/          — sign-in · sign-up · actions.ts (Server Action)
+  account/       — delete(회원 탈퇴). /auth 레이아웃 밖에 둔다(로그인 상태에서 쓰는 화면)
   admin/         — 관리자 전용(수집·클러스터링 트리거)
-  api/           — clusters · clusters/[id] · clusters/stats · days · auth/[...path]
+  api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
 proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
 ```
 

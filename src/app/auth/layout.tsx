@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@server/auth";
-import { ThemeToggle } from "@/features/theme-toggle";
+import { ProfileMenu } from "@/features/profile-menu";
+import { signOutAction } from "./actions";
 import { Logo } from "@/shared/ui";
 import * as layout from "@/shared/styles/layout.css";
 
@@ -17,6 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   // 이미 로그인한 사용자가 로그인 화면에 머무를 이유가 없다.
+  // (탈퇴처럼 '로그인 상태에서 쓰는' 화면은 이 레이아웃 밖 /account/* 에 둔다.)
   if (await getSessionUser()) redirect("/");
 
   return (
@@ -30,7 +32,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
-            <ThemeToggle />
+            <ProfileMenu user={null} signOut={signOutAction} />
           </div>
         </div>
       </header>
