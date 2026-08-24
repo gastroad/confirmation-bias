@@ -136,6 +136,9 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 
 ## 수익화 (Google AdSense)
 
+> ⚠️ **2026-08-25 심사에서 정책 위반 2건(복제된 콘텐츠 · 가치가 별로 없는 콘텐츠)을 통보받았다.**
+> 광고 게재 전에 해결해야 한다. 진단과 작업 목록 → [adsense-compliance.md](./adsense-compliance.md)
+
 | 요소             | 위치                         | 비고                                                                |
 | ---------------- | ---------------------------- | ------------------------------------------------------------------- |
 | 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT` | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유  |
