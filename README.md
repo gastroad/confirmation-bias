@@ -24,8 +24,8 @@
 | Frontend | Next.js 16 (App Router), React 19, react-query, vanilla-extract, Recharts |
 | Backend  | Node.js 파이프라인 (RSS 수집 → 임베딩 → 클러스터링)                       |
 | AI       | OpenAI `text-embedding-3-small`                                           |
-| Database | Supabase(Postgres) + Prisma 7 (`@prisma/adapter-pg`)                      |
-| Hosting  | Vercel (Hobby) — Next.js 서빙                                             |
+| Database | Neon(Postgres 18) + Prisma 7 (`@prisma/adapter-pg`)                       |
+| Hosting  | Vercel (Hobby) — Next.js 서빙, 함수 리전 `sin1`                           |
 | 자동화   | GitHub Actions — CI + 6시간마다 수집 파이프라인(collect→ingest)           |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
@@ -36,7 +36,7 @@
 RSS 피드
   └─▶ scripts/collect.ts       RSS 파싱 → data/new-articles.json
         └─▶ scripts/ingest.ts  임베딩 생성 → 클러스터 배정 → DB upsert
-              └─▶ Postgres @ Supabase (Prisma)
+              └─▶ Postgres @ Neon (Prisma)
                     └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
                           └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
                                 └─▶ 클라이언트 (react-query)  무한 스크롤 피드
@@ -52,21 +52,24 @@ RSS 피드
 
 ## 🌐 운영 / 인프라
 
-4개 외부 서비스로 구성된 실서비스. **Supabase를 사이에 두고 쓰기(파이프라인)와 읽기(웹)가 분리**된다.
+4개 외부 서비스로 구성된 실서비스. **DB를 사이에 두고 쓰기(파이프라인)와 읽기(웹)가 분리**된다.
 
 ```
-   GitHub Actions  ──write──▶  Supabase (Postgres)  ◀──read──  Vercel (웹)
+   GitHub Actions  ──write──▶    Neon (Postgres)    ◀──read──  Vercel (웹)
    6시간마다 collect→ingest       단일 진실 공급원              방문자 대시보드
-        │
+        │                       ap-southeast-1(SG)              함수 리전 sin1
    OpenAI (임베딩/판정)
 ```
 
-| 서비스       | 역할                                         |
-| ------------ | -------------------------------------------- |
-| **Vercel**   | Next.js 웹 호스팅 (Supabase 읽기만)          |
-| **Supabase** | Postgres DB (단일 진실 공급원)               |
-| **GitHub**   | 저장소 + Actions (CI · 6시간마다 파이프라인) |
-| **OpenAI**   | 임베딩 + LLM 클러스터 판정 (파이프라인 전용) |
+| 서비스     | 역할                                         |
+| ---------- | -------------------------------------------- |
+| **Vercel** | Next.js 웹 호스팅 (Neon 읽기만)              |
+| **Neon**   | Postgres DB (단일 진실 공급원)               |
+| **GitHub** | 저장소 + Actions (CI · 6시간마다 파이프라인) |
+| **OpenAI** | 임베딩 + LLM 클러스터 판정 (파이프라인 전용) |
+
+> Vercel 함수 리전(`vercel.json`의 `sin1`)은 Neon 리전과 반드시 같아야 한다.
+> 어긋나면 쿼리마다 대륙을 왕복해 TTFB가 수백 ms 늘어난다.
 
 계정·시크릿·점검 지점 등 운영 상세는 [`docs/agent/external-services.md`](docs/agent/external-services.md)를 참고하세요.
 
@@ -77,17 +80,18 @@ RSS 피드
 프로젝트 루트에 `.env` 파일을 만듭니다.
 
 ```env
-# Supabase 연결 문자열 (Connect → ORMs → Prisma 에서 복사)
-DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true  # 앱 런타임(pooler)
-DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres                    # 스키마 push/마이그레이션(direct)
-OPENAI_API_KEY=sk-...
+# Neon 연결 문자열 (Console → Connect → 스니펫 `.env` 에서 복사)
+# 두 문자열은 호스트의 `-pooler` 유무만 다르다. 값에 `&`가 있어 작은따옴표로 감싼다.
+DATABASE_URL='postgresql://neondb_owner:...@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'  # 앱 런타임(pooled)
+DIRECT_URL='postgresql://neondb_owner:...@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'           # 스키마 push/마이그레이션(direct)
+OPENAI_API_KEY='sk-...'
 ```
 
 ### 2. 의존성 설치 & DB 초기화
 
 ```bash
 npm install
-npm run db:push      # 스키마를 Supabase에 반영
+npm run db:push      # 스키마를 Neon에 반영
 npm run db:seed      # 언론사 15개 시드
 ```
 
@@ -115,6 +119,7 @@ npm run dev          # http://localhost:3000
 | `npm run collect`             | RSS 수집                      |
 | `npm run ingest`              | 임베딩 + 클러스터링 + DB 저장 |
 | `npm run db:push` / `db:seed` | 스키마 반영 / 언론사 시드     |
+| `npm run db:verify`           | DB 지문 출력 (이관 전후 대조) |
 | `npm run test:unit`           | 단위 테스트 (Vitest)          |
 | `npm run test:e2e`            | E2E 테스트 (Playwright)       |
 | `npm run lint`                | ESLint                        |

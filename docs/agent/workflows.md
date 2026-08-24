@@ -18,7 +18,7 @@ npm run collect && npm run ingest
 ## DB 초기화 (처음 셋업)
 
 ```bash
-npm run db:push      # 스키마를 Supabase에 반영 (DIRECT_URL 사용)
+npm run db:push      # 스키마를 Neon에 반영 (DIRECT_URL 사용)
 npm run db:seed      # Outlet 15개 시드
 ```
 

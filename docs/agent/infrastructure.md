@@ -1,41 +1,43 @@
 # Infrastructure
 
-> 외부 서비스(OpenAI·Vercel·Supabase·GitHub) 계정·시크릿·점검 지점은
+> 외부 서비스(OpenAI·Vercel·Neon·GitHub) 계정·시크릿·점검 지점은
 > [external-services.md](./external-services.md) 참고.
 
 ## 현재 상태
 
-| 항목   | 현재 값                                    |
-| ------ | ------------------------------------------ |
-| DB     | Supabase (Postgres), region ap-northeast-2 |
-| ORM    | Prisma v7 + `@prisma/adapter-pg`           |
-| 임베딩 | OpenAI `text-embedding-3-small`, 512차원   |
-| 호스팅 | Vercel (Hobby) — Next.js 서빙만 담당       |
+| 항목   | 현재 값                                                     |
+| ------ | ----------------------------------------------------------- |
+| DB     | Neon (Postgres 18.6), region `ap-southeast-1`(싱가포르)     |
+| ORM    | Prisma v7 + `@prisma/adapter-pg`                            |
+| 임베딩 | OpenAI `text-embedding-3-small`, 512차원                    |
+| 호스팅 | Vercel (Hobby) — Next.js 서빙만. 함수 리전 `sin1`(싱가포르) |
 
-> SQLite → Supabase 전환 완료(2026-06-29). 롤백용 `dev.db.bak-*`는 로컬에만 보관(gitignore).
+> SQLite → Supabase(2026-06-29) → **Neon(2026-08-24)**. 이관 경위·검증 절차는
+> [db-migration-neon.md](./db-migration-neon.md) 참고. 롤백용 Supabase 프로젝트는 2026-09-07까지 유지.
 
 ## 환경변수 (`.env`)
 
 ```
-DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres?pgbouncer=true  # 앱 런타임(pooler)
-DIRECT_URL=postgresql://...pooler.supabase.com:5432/postgres                    # 스키마 push/migrate(direct)
-OPENAI_API_KEY=sk-...
-NEXT_PUBLIC_SITE_URL=https://confirmationbias.app  # (선택) SEO canonical/OG의 절대 URL. 미설정 시 프로덕션 도메인으로 폴백
+DATABASE_URL='postgresql://neondb_owner:...@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+DIRECT_URL='postgresql://neondb_owner:...@ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+OPENAI_API_KEY='sk-...'
+NEXT_PUBLIC_SITE_URL=https://www.confirmationbias.app  # (선택) SEO canonical/OG의 절대 URL. 미설정 시 프로덕션 도메인으로 폴백
 ```
 
-- **`DATABASE_URL`(6543, pgbouncer)** — 앱 런타임. `server/db.ts`의 `PrismaPg` 어댑터가 사용.
-- **`DIRECT_URL`(5432, session)** — `prisma db push`/migrate용. pgbouncer 트랜잭션 풀러로는 DDL이 깨져
-  `prisma.config.ts`가 이쪽을 가리킨다.
-- Supabase Connect → ORMs → Prisma 에서 두 문자열을 복사. 비밀번호 자리(`[YOUR-PASSWORD]`)의
-  **대괄호까지 함께 치환**해야 함(대괄호 잔존 시 P1000 인증 실패).
+- **값을 작은따옴표로 감싼다.** Neon 문자열엔 `&`(쿼리 파라미터 구분자)가 있어 셸에서 `. ./.env`
+  할 때 파싱이 깨진다. 큰따옴표는 비밀번호의 `$`가 확장될 수 있어 작은따옴표를 쓴다.
+- **`DATABASE_URL`(pooled — 호스트에 `-pooler`)** — 앱 런타임. `server/db.ts`의 `PrismaPg` 어댑터가 사용.
+- **`DIRECT_URL`(direct — `-pooler` 없음)** — `prisma db push`/migrate용. `prisma.config.ts`가 이쪽을 가리킨다.
+- Neon Console → **Connect** → 스니펫 드롭다운 `.env` 에서 복사. Neon은 pooled를 `DATABASE_URL`,
+  direct를 `DATABASE_URL_UNPOOLED`라는 이름으로 준다. **두 문자열은 호스트의 `-pooler` 유무만 다르다.**
 
-`scripts/`와 `prisma/` 스크립트는 `--env-file=.env` 로 로드.  
+`scripts/`와 `prisma/` 스크립트는 `--env-file-if-exists=.env` 로 로드.
 Next.js는 자동으로 `.env` 로드.
 
 ### Vercel(웹 호스트)에 필요한 시크릿
 
 - **`DATABASE_URL`만 필요.** OpenAI는 `server/clustering/*`(embed·llm-judge)에서만 쓰이고
-  이는 ingest 파이프라인(GitHub Actions)만 import하므로, 웹 런타임엔 `OPENAI_API_KEY` 불필요.
+  이는 파이프라인(GitHub Actions)만 import하므로, 웹 런타임엔 `OPENAI_API_KEY` 불필요.
 - **`DIRECT_URL`도 Vercel엔 불필요.** 마이그레이션은 GitHub Actions/로컬에서만 수행.
 
 ## Prisma 주의사항
@@ -46,22 +48,46 @@ Next.js는 자동으로 `.env` 로드.
   생성물이 gitignore라 이게 없으면 클라이언트 부재로 빌드 실패.
 - 스키마 파일: `prisma/schema.prisma`
 - Prisma 런타임 설정: `prisma.config.ts` (CLI용 datasource URL = `DIRECT_URL` 주입)
+- **Prisma 7에서 `prisma db push --skip-generate` 옵션이 제거됐다.** 남은 플래그는
+  `--accept-data-loss` / `--force-reset` / `--url` / `--schema` / `--config`.
 
 ## RSS 자동 수집 스케줄 (가동 중)
 
-- `.github/workflows/pipeline.yml`가 **6시간마다** `collect → ingest` 자동 실행 (2026-06-29~,
-  2026-07-08 매시간→6시간마다 완화: Supabase egress 초과 대응. `pipeline-scheduling.md` 참조).
+- `.github/workflows/pipeline.yml`가 **6시간마다** `collect → ingest` 자동 실행 (2026-06-29~).
+  매시간→6시간마다 완화는 Supabase egress 대응이었는데(2026-07-08), **Neon 이관으로 그 제약이
+  사라져 주기를 다시 좁힐 수 있다**(일별 배치 클러스터링 전환에서 반영 예정).
+  → `pipeline-scheduling.md` 참조.
 - `data/new-articles.json`은 collect→ingest 간 임시 중간 파일. gitignore라 ingest는
   정적 import가 아니라 **런타임에 읽는다**(빌드/타입체크 시점엔 부재). 향후 DB 직접 append로 대체 예정.
 
-## Supabase egress 관리
+## Neon 리소스 관리
 
-- **원인:** ingest가 기사마다 최근 클러스터 centroid(≈10KB/건, 512-dim JSON)를 전부 재조회해
-  `O(신규기사 × 최근클러스터)`로 egress가 폭증 → 5GB/월 한도를 크게 초과(28GB, 2026-07-08).
-- **대응:** ① cron 매시간→6시간마다 완화, ② `loadRecentClusters()`로 centroid를 **run당 1회만**
-  로드해 메모리에서 갱신(`server/clustering/cluster.ts`), ③ ingest의 write들에 `select`를 걸어
-  응답이 centroid·embeddingJson을 되싣지 않게 함.
-- **향후:** centroid를 pgvector로 옮겨 유사도를 DB에서 계산하면 벡터를 앱으로 퍼내는 egress 자체가 사라짐.
+Supabase에서 목을 조르던 **egress 5GB/월** 제약은 Neon에 없다. 대신 다른 축이 걸린다.
+
+| 한도    | Neon Free   | 현재                                 |
+| ------- | ----------- | ------------------------------------ |
+| storage | 0.5GB       | **261MB** (Article 159 / Cluster 93) |
+| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend            |
+
+- **storage가 임박해 있다.** 261MB의 대부분이 `Article.embeddingJson`(~10KB/건 × 23,861)과
+  `Cluster.centroidJson`(~10KB × 11,376)이다. 일별 배치 클러스터링 전환에서 centroid를 없애고
+  임베딩을 `Bytes`(2,048B)로 바꿔 ~60MB로 줄이는 게 예정된 대응.
+- **autosuspend**: 5분 무활동 후 컴퓨트가 잠들고 첫 요청에 wake 지연이 붙는다.
+- Postgres는 컬럼 drop만으로 디스크를 돌려주지 않는다 → 대량 컬럼 제거 후 `VACUUM FULL` 필요.
+- **collation이 Supabase와 다르다**: `en_US.UTF-8`(ICU) → `C.UTF-8`(builtin). 데이터는 동일하고
+  텍스트 정렬 규칙만 다르다. 우리가 텍스트로 정렬하는 건 `id`(uuid)뿐이라 영향이 없고,
+  바이트 비교라 인덱스는 오히려 빠르다. (이관 검증 시 `order by url` 해시만 갈렸던 원인)
+
+### 지연(latency) 구조
+
+DB가 싱가포르이므로 **Vercel 함수 리전을 같이 맞춰야 한다.** `vercel.json`의 `regions: ["sin1"]`이 그것.
+
+- **이관 전 문제**: `vercel.json`이 없어 함수가 기본값 `iad1`(워싱턴)에서 돌았고 DB는 서울이라
+  프로덕션 TTFB가 **500~725ms**였다. DB 위치보다 함수 리전 불일치가 지배적이었다.
+- 응답 헤더 `x-vercel-id: <edge>::<function-region>::...` 의 **두 번째 값이 실제 함수 리전**이다.
+  `curl -sSI https://www.confirmationbias.app/ | grep x-vercel-id` 로 확인.
+- 참고 실측: 로컬(서울) → Neon(싱가포르) 쿼리 왕복 ~75ms, 새 커넥션 수립까지 포함하면 ~600ms.
+  dev 서버 워밍 후 `/api/clusters/stats` TTFB ~95ms.
 
 ## SEO
 
