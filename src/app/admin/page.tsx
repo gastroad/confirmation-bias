@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser, isAdmin } from "@server/auth";
-import { AuthMenu } from "@/features/auth-menu";
-import { ThemeToggle } from "@/features/theme-toggle";
+import { ProfileMenu } from "@/features/profile-menu";
 import { Logo } from "@/shared/ui";
 import { signOutAction } from "../auth/actions";
 import { triggerCollectAction, triggerClusterAction } from "./actions";
@@ -38,8 +37,7 @@ export default async function AdminPage() {
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>관리</h1>
           <div className={layout.headerActions}>
-            <AuthMenu user={sessionUser} signOut={signOutAction} />
-            <ThemeToggle />
+            <ProfileMenu user={sessionUser} signOut={signOutAction} />
           </div>
         </div>
       </header>

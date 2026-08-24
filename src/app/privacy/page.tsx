@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ThemeToggle } from "@/features/theme-toggle";
+import { getSessionUser } from "@server/auth";
+import { ProfileMenu } from "@/features/profile-menu";
+import { signOutAction } from "../auth/actions";
 import { Logo } from "@/shared/ui";
 import { SITE_NAME, CONTACT_EMAIL } from "@/shared/config/site";
 import * as layout from "@/shared/styles/layout.css";
@@ -16,7 +18,13 @@ export const metadata: Metadata = {
   openGraph: { type: "article", url: "/privacy", title: `개인정보처리방침 — ${SITE_NAME}` },
 };
 
-export default function PrivacyPage() {
+// 헤더 프로필 메뉴가 세션(쿠키)을 읽어 어차피 동적이다. 명시하지 않으면 빌드가 정적 렌더를
+// 시도하다 실패하며 로그를 남긴다. (내용 자체는 정적이라 캐싱 여지가 있다 — 별도 과제)
+export const dynamic = "force-dynamic";
+
+export default async function PrivacyPage() {
+  const sessionUser = await getSessionUser();
+
   return (
     <div className={layout.page}>
       <header className={layout.header}>
@@ -28,7 +36,7 @@ export default function PrivacyPage() {
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
-            <ThemeToggle />
+            <ProfileMenu user={sessionUser} signOut={signOutAction} />
           </div>
         </div>
       </header>
@@ -57,6 +65,10 @@ export default function PrivacyPage() {
             <li>
               <strong>로그인 세션</strong>: 세션 식별자, 접속 IP 주소, 브라우저·기기
               정보(User-Agent), 로그인 시각·만료 시각 (계정 보안 및 세션 관리 목적)
+            </li>
+            <li>
+              <strong>댓글 작성 시</strong>: 댓글 본문, 작성 시점의 표시명(이름 또는 이메일 아이디),
+              작성 시각. 이메일 주소 전체는 댓글에 저장되지 않습니다.
             </li>
             <li>
               접속 로그: IP 주소, 브라우저·기기 정보(User-Agent), 방문 페이지·시각 (호스팅 및 보안
@@ -137,7 +149,14 @@ export default function PrivacyPage() {
           <h2 className={styles.heading}>5. 데이터 보관 및 국외 이전</h2>
           <p className={styles.paragraph}>
             계정 정보(이메일·이름·비밀번호 해시)는 <strong>회원 탈퇴 시까지</strong> 보관하며, 탈퇴
-            요청 시 지체 없이 파기합니다. 로그인 세션 정보는 세션 만료(최대 7일) 후 삭제됩니다.
+            시 지체 없이 파기합니다. 로그인 세션 정보는 세션 만료(최대 7일) 후 삭제됩니다.
+          </p>
+          <p className={styles.paragraph}>
+            <strong>탈퇴 시 댓글 처리</strong>: 작성하신 댓글의 <strong>본문은 남고</strong>, 이를
+            식별하는 정보(계정 식별자·표시명)는 삭제되어 &ldquo;탈퇴한 사용자&rdquo;로 표시됩니다.
+            다른 이용자가 남긴 대화의 맥락을 보존하기 위한 처리이며, 탈퇴 후에는 해당 댓글을
+            회원님과 연결할 수 없습니다. 본문까지 삭제를 원하시면 탈퇴 전 직접 삭제하시거나 아래
+            문의처로 요청해 주세요.
           </p>
           <p className={styles.paragraph}>
             접속 로그 및 쿠키 데이터는 위 제3자 서비스가 각자의 정책에 따라 보관합니다.

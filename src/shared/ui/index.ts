@@ -1,5 +1,6 @@
 export { Skeleton } from "./Skeleton";
 export { Logo } from "./Logo";
+export { ThemeScript } from "./ThemeScript";
 export {
   SunIcon,
   MoonIcon,
@@ -7,4 +8,6 @@ export {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  UserIcon,
+  CheckIcon,
 } from "./icons";

@@ -1,4 +1,4 @@
-import { THEME_STORAGE_KEY } from "../model";
+import { THEME_STORAGE_KEY } from "@/shared/lib/theme";
 
 /**
  * 페인트 전에 localStorage 값을 읽어 <html data-theme>를 세팅한다.

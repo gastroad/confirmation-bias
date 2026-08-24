@@ -7,8 +7,8 @@ import { getSessionUser } from "@server/auth";
 import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
-import { ThemeToggle } from "@/features/theme-toggle";
-import { AuthMenu } from "@/features/auth-menu";
+import { ClusterComments } from "@/widgets/cluster-comments";
+import { ProfileMenu } from "@/features/profile-menu";
 import { datePath } from "@/features/date-nav";
 import { Logo } from "@/shared/ui";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
@@ -91,13 +91,16 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
-            <AuthMenu user={sessionUser} signOut={signOutAction} />
-            <ThemeToggle />
+            <ProfileMenu user={sessionUser} signOut={signOutAction} />
           </div>
         </div>
       </header>
 
       <ClusterDetailView cluster={cluster} />
+
+      <div className={layout.container}>
+        <ClusterComments clusterId={cluster.id} signedIn={Boolean(sessionUser)} />
+      </div>
     </div>
   );
 }

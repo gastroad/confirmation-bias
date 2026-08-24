@@ -28,6 +28,7 @@ model Cluster {
   updatedAt           DateTime @updatedAt
 
   articles Article[]
+  comments Comment[]
 
   @@index([updatedAt])
   @@index([bucketDate, articleCount(sort: Desc), id(sort: Desc)])
@@ -57,4 +58,28 @@ model Article {
   @@index([clusterId, outletId])
   @@index([bucketDate])
   @@index([bucketDate, clusterId])
+}
+
+model Comment {
+  id String @id @default(uuid())
+
+  clusterId String
+  // 클러스터링은 하루 1회 고정 시점에 돌고, 한번 만들어진 날짜는 그대로 굳는다.
+  // 다만 관리자 재실행·백필로 같은 날짜를 다시 돌리면 클러스터가 새 id로 재생성되므로,
+  // clusterDay가 옛 클러스터 → 새 클러스터로 댓글을 승계한다(server/clustering/daily.ts).
+  // Cascade는 승계할 후계자가 없을 때 고아 행이 남지 않게 하는 최후 방어선이다.
+  cluster   Cluster @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+
+  // neon_auth."user".id. 그 스키마는 Neon Auth가 관리하고 Prisma 밖이라 FK를 걸 수 없다.
+  // 탈퇴하면 null이 되고(개인정보 파기) 댓글 본문은 남는다.
+  authorId   String?
+  // 작성 시점의 표시명. neon_auth와 join할 수 없어 비정규화한다. 이메일은 저장하지 않는다.
+  authorName String
+
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clusterId, createdAt])
+  @@index([authorId])
 }

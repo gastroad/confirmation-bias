@@ -7,8 +7,7 @@ import { getSessionUser } from "@server/auth";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
-import { ThemeToggle } from "@/features/theme-toggle";
-import { AuthMenu } from "@/features/auth-menu";
+import { ProfileMenu } from "@/features/profile-menu";
 import { Logo } from "@/shared/ui";
 import { formatBucketDateLabel, isValidBucketDate } from "@/shared/lib/bucket-date";
 import { signOutAction } from "../../auth/actions";
@@ -79,8 +78,7 @@ export default async function DatePage({
           <Logo size={20} className={layout.logo} />
           <h1 className={layout.brandSmall}>확증편향</h1>
           <div className={layout.headerActions}>
-            <AuthMenu user={sessionUser} signOut={signOutAction} />
-            <ThemeToggle />
+            <ProfileMenu user={sessionUser} signOut={signOutAction} />
           </div>
         </div>
       </header>
