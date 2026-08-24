@@ -122,12 +122,21 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 | robots.txt          | `src/app/robots.ts`                           | `/api/` 차단, sitemap 링크                                                     |
 | sitemap.xml         | `src/app/sitemap.ts`                          | 홈 + 날짜 페이지 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제 |
 | OG 이미지           | `src/app/opengraph-image.tsx`                 | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백  |
+| 크롤러 메타데이터   | `next.config.ts`의 `htmlLimitedBots`          | JS 미실행 봇에 메타데이터를 head로 blocking 전송. 기본 목록 + 카카오톡·다음    |
 | 구조화 데이터       | `src/shared/seo/`                             | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                   |
 | 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx`  | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                 |
 | 이용약관            | `src/app/terms/`                              | 저작권·게시물 책임·금지행위. 푸터·sitemap에 링크                               |
 | 상태 화면           | `error.tsx` · `loading.tsx` · `not-found.tsx` | DB 장애·autosuspend wake 시 흰 화면 대신 재시도                                |
 | 개인정보처리방침    | `src/app/privacy/`                            | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                        |
 
+- **`generateMetadata`가 async면 메타데이터는 body 끝으로 스트리밍된다.** 인라인 스크립트가 head로
+  옮기므로 브라우저와 Googlebot(JS 실행)은 문제없지만, JS를 실행하지 않는 크롤러는 못 읽는다.
+  Next는 `htmlLimitedBots`에 걸린 UA에만 head로 blocking 전송하는데 **기본 목록에 카카오톡이 없어**
+  카톡 공유 시 OG가 비었다. `next.config.ts`에서 기본 목록에 `kakaotalk-scrap`·`daumoa`를 덧붙였다.
+  이 옵션은 기본 목록을 **대체**하므로, Next 업그레이드 시
+  `node_modules/next/dist/shared/lib/router/utils/html-bots.js`와 대조해야 한다.
+  - Lighthouse를 DevTools 패널에서 돌리면 UA에 `Chrome-Lighthouse`가 없어 스트리밍 경로를 타고
+    `meta-description` 감사가 실패한다. **측정 아티팩트이며 CLI(`npx lighthouse`)로는 통과한다.**
 - **egress 주의:** 상세 페이지는 `generateMetadata`와 렌더가 `cache(findClusterDetailRow)`로
   요청당 1회만 DB를 조회한다. sitemap은 `revalidate`로 조회 빈도를 6시간에 묶는다.
 - **날짜 페이지가 클러스터 상세보다 상위 허브다.** sitemap에서 최신 날짜에 우선순위 0.9를 주고
