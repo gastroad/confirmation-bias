@@ -19,20 +19,24 @@ function clusterWhere(outletIds?: string[]) {
 
 /**
  * 커서 기반 클러스터 페이지 조회.
- * 정렬은 updatedAt desc, 동률은 id desc로 결정적. 커서는 마지막 항목의 id.
+ *
+ * 정렬은 **최신 날짜 → 그날의 큰 이슈 순**(bucketDate desc, articleCount desc), 동률은 id desc로
+ * 결정적. 일별 배치로 바꾸면서 updatedAt은 "배치가 돈 시각"이 되어 정렬 기준으로서 의미를 잃었다.
+ * 커서는 마지막 항목의 id이며, orderBy에 unique 컬럼(id)이 포함되어 있어야 유효하다.
  */
 export async function findClusterSummaryPage({ cursor, limit, outletIds }: ListParams) {
   const take = Math.min(Math.max(limit ?? DEFAULT_PAGE_LIMIT, 1), MAX_PAGE_LIMIT);
 
   const rows = await db.cluster.findMany({
     where: clusterWhere(outletIds),
-    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    orderBy: [{ bucketDate: "desc" }, { articleCount: "desc" }, { id: "desc" }],
     take,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     select: {
       id: true,
       representativeTitle: true,
       summary: true,
+      bucketDate: true,
       createdAt: true,
       articles: { select: { outletId: true, publishedAt: true } },
     },

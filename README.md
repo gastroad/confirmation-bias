@@ -26,27 +26,37 @@
 | AI       | OpenAI `text-embedding-3-small`                                           |
 | Database | Neon(Postgres 18) + Prisma 7 (`@prisma/adapter-pg`)                       |
 | Hosting  | Vercel (Hobby) — Next.js 서빙, 함수 리전 `sin1`                           |
-| 자동화   | GitHub Actions — CI + 6시간마다 수집 파이프라인(collect→ingest)           |
+| 자동화   | GitHub Actions — CI + 3시간마다 RSS 수집 + 하루 1회 배치 클러스터링       |
 | Tooling  | TypeScript, Vitest, Playwright, ESLint, Prettier                          |
 | Arch     | FSD (Feature-Sliced Design)                                               |
 
 ## 🧭 아키텍처
 
+수집과 클러스터링이 분리되어 있습니다. RSS는 항목이 빠르게 밀려 나가 자주 긁어야 하지만,
+클러스터링은 하루가 닫힌 뒤 한 번만 하면 됩니다.
+
 ```
 RSS 피드
-  └─▶ scripts/collect.ts       RSS 파싱 → data/new-articles.json
-        └─▶ scripts/ingest.ts  임베딩 생성 → 클러스터 배정 → DB upsert
-              └─▶ Postgres @ Neon (Prisma)
-                    └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
-                          └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
-                                └─▶ 클라이언트 (react-query)  무한 스크롤 피드
+  └─▶ scripts/collect.ts      3시간마다 · 피드 파싱 → Article 직접 적재
+        └─▶ Postgres @ Neon (Prisma)
+              ▲
+  scripts/cluster-day.ts      하루 1회(KST 05:00) · 그날 기사를 통째로 다시 클러스터링
+    └─ 배치 임베딩(100건/req) → 응집 클러스터링 → 트랜잭션으로 재생성 (멱등)
+              │
+              └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
+                    └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
+                          └─▶ 클라이언트 (react-query)  무한 스크롤 피드
 ```
 
-**클러스터 배정 로직** — 코사인 유사도 기준:
+**클러스터링** — KST 하루치를 모아 **average linkage 응집 클러스터링(HAC)** 을 한 번 돌립니다.
 
-- `≥ 0.85` → 기존 클러스터에 즉시 합류
-- `0.70 ~ 0.85` → LLM이 같은 이슈인지 판정
-- `< 0.70` → 새 클러스터 생성
+- 클러스터링 단위는 **KST 기준 하루**이고 날짜 간 격리입니다
+- 코사인 유사도 임계값 **0.62** (세 날짜 실측으로 결정)
+- 같은 날짜를 몇 번 돌려도 결과가 같습니다 (**멱등**)
+
+이전에는 기사가 도착할 때마다 기존 클러스터에 붙이는 증분 방식이었는데, 활발한 클러스터가
+계속 커지며 무관한 기사까지 흡수해 **최대 253건짜리 블랙홀 클러스터**가 생겼습니다.
+자세한 배경과 임계값 근거는 [`docs/agent/daily-clustering.md`](docs/agent/daily-clustering.md).
 
 디렉토리 구조와 FSD 레이어 규칙은 [`docs/agent/architecture.md`](docs/agent/architecture.md)를 참고하세요.
 
@@ -56,17 +66,17 @@ RSS 피드
 
 ```
    GitHub Actions  ──write──▶    Neon (Postgres)    ◀──read──  Vercel (웹)
-   6시간마다 collect→ingest       단일 진실 공급원              방문자 대시보드
+   collect 3h / cluster 1d        단일 진실 공급원              방문자 대시보드
         │                       ap-southeast-1(SG)              함수 리전 sin1
-   OpenAI (임베딩/판정)
+   OpenAI (배치 임베딩)
 ```
 
-| 서비스     | 역할                                         |
-| ---------- | -------------------------------------------- |
-| **Vercel** | Next.js 웹 호스팅 (Neon 읽기만)              |
-| **Neon**   | Postgres DB (단일 진실 공급원)               |
-| **GitHub** | 저장소 + Actions (CI · 6시간마다 파이프라인) |
-| **OpenAI** | 임베딩 + LLM 클러스터 판정 (파이프라인 전용) |
+| 서비스     | 역할                                                |
+| ---------- | --------------------------------------------------- |
+| **Vercel** | Next.js 웹 호스팅 (Neon 읽기만)                     |
+| **Neon**   | Postgres DB (단일 진실 공급원)                      |
+| **GitHub** | 저장소 + Actions (CI · 수집 3시간 · 클러스터링 1일) |
+| **OpenAI** | 배치 임베딩 (클러스터링 배치 전용. 수집엔 불필요)   |
 
 > Vercel 함수 리전(`vercel.json`의 `sin1`)은 Neon 리전과 반드시 같아야 한다.
 > 어긋나면 쿼리마다 대륙을 왕복해 TTFB가 수백 ms 늘어난다.
@@ -91,17 +101,19 @@ OPENAI_API_KEY='sk-...'
 
 ```bash
 npm install
-npm run db:push      # 스키마를 Neon에 반영
+npm run db:migrate   # 마이그레이션 적용
 npm run db:seed      # 언론사 15개 시드
 ```
 
 ### 3. 뉴스 수집 → 클러스터링
 
 ```bash
-npm run collect      # RSS 수집 → data/new-articles.json
-npm run ingest       # 임베딩 + 클러스터 배정 + DB 저장
-# 또는 한 번에
-npm run collect && npm run ingest
+npm run collect      # RSS 수집 → Article 직접 적재
+npm run cluster:day  # 어제(KST) 하루치 클러스터링
+
+# 특정 날짜 / 기간 / 전체
+npm run cluster:day -- --date=2026-08-23
+npm run cluster:day -- --all
 ```
 
 ### 4. 개발 서버 실행
@@ -112,18 +124,18 @@ npm run dev          # http://localhost:3000
 
 ## 📜 npm 스크립트
 
-| 스크립트                      | 설명                          |
-| ----------------------------- | ----------------------------- |
-| `npm run dev`                 | 개발 서버 (localhost:3000)    |
-| `npm run build` / `start`     | 프로덕션 빌드 / 실행          |
-| `npm run collect`             | RSS 수집                      |
-| `npm run ingest`              | 임베딩 + 클러스터링 + DB 저장 |
-| `npm run db:push` / `db:seed` | 스키마 반영 / 언론사 시드     |
-| `npm run db:verify`           | DB 지문 출력 (이관 전후 대조) |
-| `npm run test:unit`           | 단위 테스트 (Vitest)          |
-| `npm run test:e2e`            | E2E 테스트 (Playwright)       |
-| `npm run lint`                | ESLint                        |
-| `npm run format`              | Prettier 포맷팅               |
+| 스크립트                         | 설명                          |
+| -------------------------------- | ----------------------------- |
+| `npm run dev`                    | 개발 서버 (localhost:3000)    |
+| `npm run build` / `start`        | 프로덕션 빌드 / 실행          |
+| `npm run collect`                | RSS 수집                      |
+| `npm run cluster:day`            | 하루치 배치 클러스터링        |
+| `npm run db:migrate` / `db:seed` | 마이그레이션 / 언론사 시드    |
+| `npm run db:verify`              | DB 지문 출력 (이관 전후 대조) |
+| `npm run test:unit`              | 단위 테스트 (Vitest)          |
+| `npm run test:e2e`               | E2E 테스트 (Playwright)       |
+| `npm run lint`                   | ESLint                        |
+| `npm run format`                 | Prettier 포맷팅               |
 
 ## 🧪 테스트
 
@@ -139,8 +151,8 @@ confirmation-bias/
 ├── server/            BE (DB · 클러스터링 · 조회 쿼리)
 │   ├── db.ts          Prisma 싱글턴
 │   ├── queries/       순수 Prisma 조회 (커서 페이지네이션·집계)
-│   └── clustering/    embed · similarity · cluster · llm-judge
-├── scripts/           collect.ts · ingest.ts (6시간마다 GitHub Actions 실행)
+│   └── clustering/    embed · similarity · vector · bucket · hac · daily
+├── scripts/           collect.ts(3h) · cluster-day.ts(1d) — GitHub Actions 실행
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
 │   ├── app/           App Router (page · layout · API routes · providers)

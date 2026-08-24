@@ -1,18 +1,25 @@
 import { XMLParser } from "fast-xml-parser";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { db } from "../server/db";
+import { toBucketDate } from "../server/clustering/bucket";
 import feedSpecs from "./feed_specs.json";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// RSS를 긁어 Article로 바로 적재한다. 임베딩·클러스터링은 하지 않는다
+// (하루치를 모아 cluster-day가 한 번에 처리한다).
+//
+//   npm run collect
 
 interface CollectedArticle {
   title: string;
   description: string | null;
   url: string;
-  publishedAt: string;
+  publishedAt: Date;
+  bucketDate: Date;
   outletId: string;
 }
+
+// RSS pubDate는 신뢰할 수 없다. 실제로 2023-03 날짜를 달고 오는 기사가 20건 섞여 있었고,
+// 그대로 두면 일별 버킷이 엉뚱한 날짜에 만들어진다.
+const MAX_PAST_DAYS = 30;
 
 const parser = new XMLParser({ cdataPropName: "__cdata" });
 
@@ -27,7 +34,19 @@ function stripHtml(str: string): string {
   return str.replace(/<[^>]*>/g, "").trim();
 }
 
-async function fetchFeed(outletId: string, feedUrl: string): Promise<CollectedArticle[]> {
+function sanitizePublishedAt(raw: string, now: Date): Date {
+  const t = new Date(raw).getTime();
+  if (!Number.isFinite(t)) return now;
+  if (t > now.getTime()) return now;
+  if (t < now.getTime() - MAX_PAST_DAYS * 24 * 60 * 60 * 1000) return now;
+  return new Date(t);
+}
+
+async function fetchFeed(
+  outletId: string,
+  feedUrl: string,
+  now: Date
+): Promise<CollectedArticle[]> {
   try {
     const res = await fetch(feedUrl, { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -51,9 +70,15 @@ async function fetchFeed(outletId: string, feedUrl: string): Promise<CollectedAr
         const url = toText(i.link) || toText(i.guid);
         const title = stripHtml(toText(i.title));
         const description = stripHtml(toText(i.description)) || null;
-        const pubDate = toText(i.pubDate);
-        const publishedAt = pubDate ? new Date(pubDate).toISOString() : new Date().toISOString();
-        return { title, description, url, publishedAt, outletId };
+        const publishedAt = sanitizePublishedAt(toText(i.pubDate), now);
+        return {
+          title,
+          description,
+          url,
+          publishedAt,
+          bucketDate: toBucketDate(publishedAt),
+          outletId,
+        };
       })
       .filter((a) => a.title && a.url);
   } catch (e) {
@@ -64,29 +89,26 @@ async function fetchFeed(outletId: string, feedUrl: string): Promise<CollectedAr
 
 async function main() {
   const feeds = feedSpecs.politics;
+  const now = new Date();
   console.log(`Fetching ${feeds.length} feeds in parallel…\n`);
 
-  const results = await Promise.all(
-    feeds.map((feed) => {
-      process.stdout.write(`  → ${feed.name} (${feed.outletId})\n`);
-      return fetchFeed(feed.outletId, feed.url);
-    })
-  );
+  const results = await Promise.all(feeds.map((feed) => fetchFeed(feed.outletId, feed.url, now)));
 
   const seen = new Set<string>();
   const articles = results
     .flat()
     .filter(({ url }) => (seen.has(url) ? false : (seen.add(url), true)));
 
-  const outPath = path.resolve(__dirname, "../data/new-articles.json");
-  // data/는 gitignore라 새 체크아웃(CI)엔 없을 수 있다. 쓰기 전에 보장한다.
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(articles, null, 2));
+  // url @unique + skipDuplicates로 이미 적재된 기사는 건너뛴다.
+  // 기존 행을 갱신하지 않는 이유: 클러스터 배정과 임베딩이 이미 붙어 있을 수 있다.
+  const { count } = await db.article.createMany({ data: articles, skipDuplicates: true });
 
-  console.log(`\n✅  ${articles.length} articles → data/new-articles.json`);
+  console.log(`\n✅  수집 ${articles.length}건 · 신규 ${count}건 적재`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => db.$disconnect());

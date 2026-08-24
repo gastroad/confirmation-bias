@@ -3,7 +3,8 @@
 confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작업 목록.
 우선순위: **P0(런칭 블로커) → P1(런칭 직후 필요) → P2(런칭 후 개선)**.
 
-현재 상태: **DB Neon(Postgres 18) 전환 완료(2026-08-24)** + 파이프라인 자동화(GitHub Actions, 6시간마다 `collect + ingest`).
+현재 상태: **DB Neon(Postgres 18) 전환 + 일별 배치 클러스터링 전환 완료(2026-08-24)**.
+GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 실행.
 
 ---
 
@@ -30,9 +31,8 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 ### 데이터 파이프라인 자동화
 
 - [x] **RSS 수집 스케줄링** (배치) ✅ 가동(2026-06-29)
-      **GitHub Actions scheduled workflow로 `collect + ingest`를 6시간마다 자동 실행.**
-      매시간으로 시작했으나 Supabase egress 초과로 6시간마다로 완화(2026-07-08).
-      Neon 이관으로 제약이 사라져 3시간으로 재단축 예정.
+      **GitHub Actions로 `collect.yml`(3시간) + `cluster-daily.yml`(KST 05:00) 자동 실행.**
+      매시간 → 6시간(Supabase egress, 2026-07-08) → **3시간 + 클러스터링 분리(2026-08-24)**.
       → 상세 설계: [pipeline-scheduling.md](./pipeline-scheduling.md), egress 대응: [infrastructure.md](./infrastructure.md)
 - [ ] **파이프라인 실패 알림**
       OpenAI 쿼터 소진·DB 연결 실패 시 무음 실패 방지. 실패 시 알림(Slack/이메일).
@@ -70,12 +70,12 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
 
 ### DB / 성능
 
-- [ ] **인덱스 추가**
-      `prisma/schema.prisma`의 `Article`에 `url @unique`만 존재.
-      조회 패턴인 `clusterId`, `publishedAt`, `outletId`에 `@@index` 필요.
-- [ ] **임베딩 저장 방식 스케일 검토** ⚠️ 시급
-      centroid/embedding을 JSON 문자열(~10KB/건)로 저장 중 → **Neon free 0.5GB 중 261MB 소진.**
-      일별 배치 클러스터링 전환에서 centroid 제거 + 임베딩을 `Bytes`(2,048B)로 바꿔 ~60MB 목표.
+- [x] **인덱스 추가** ✅ 완료
+      `Article`에 `clusterId`·`outletId`·`bucketDate` 복합 인덱스,
+      `Cluster`에 `(bucketDate, articleCount desc, id desc)` 목록 인덱스.
+- [x] **임베딩 저장 방식 스케일 검토** ✅ 완료(2026-08-24)
+      `Cluster.centroidJson` 제거 + `Article` 임베딩을 JSON(~10KB) → `Bytes`(2,048B)로 전환.
+      **DB 261MB → 109MB.** → [daily-clustering.md](./daily-clustering.md)
 
 ### CI / 품질
 
@@ -95,12 +95,12 @@ confirmation-bias를 로컬 전용에서 실서비스로 런칭하기 위한 작
       UI "지금 수집" 버튼 → API route → GitHub Actions `workflow_dispatch` 호출로 같은
       배치 워크플로우 실행. **관리자 전용 게이팅 필수**(공개 시 OpenAI 비용 어뷰징 경로).
       회원가입/인증 도입 이후 추가. → 설계 메모: [pipeline-scheduling.md](./pipeline-scheduling.md)
-- [ ] **중복 뉴스 제거 고도화**
-      현재 URL 기준 upsert만. 임베딩 유사도 기반 cross-outlet 중복 감지.
-- [ ] **`new-articles.json` 중간파일 제거**
-      collect가 DB에 직접 append하도록 변경.
-- [ ] **클러스터 품질 튜닝 / 검증**
-      임계값(0.85/0.70) 정확도 측정, judge_rejected 케이스 리뷰.
+- [x] **중복 뉴스 제거 고도화** ✅ 사실상 해소(2026-08-24)
+      일별 배치가 임베딩 유사도로 cross-outlet 보도를 한 클러스터로 묶는다(threshold 0.62).
+- [x] **`new-articles.json` 중간파일 제거** ✅ 완료(2026-08-24) — collect가 DB에 직접 적재.
+- [x] **클러스터 품질 튜닝 / 검증** ✅ 1차 완료(2026-08-24)
+      증분 배정 → 일별 배치 HAC로 전환. **최대 클러스터 253건 → 85건**(그마저 실제 대형 이슈).
+      임계값 0.62는 세 날짜 실측 + 육안 검증으로 결정. → [daily-clustering.md](./daily-clustering.md)
 - [ ] **오래된 클러스터 아카이빙 / 정리**
       무한 누적 방지.
 - [ ] **언론사 성향 분류 근거 투명성**

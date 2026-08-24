@@ -48,32 +48,41 @@ Next.js는 자동으로 `.env` 로드.
   생성물이 gitignore라 이게 없으면 클라이언트 부재로 빌드 실패.
 - 스키마 파일: `prisma/schema.prisma`
 - Prisma 런타임 설정: `prisma.config.ts` (CLI용 datasource URL = `DIRECT_URL` 주입)
-- **Prisma 7에서 `prisma db push --skip-generate` 옵션이 제거됐다.** 남은 플래그는
-  `--accept-data-loss` / `--force-reset` / `--url` / `--schema` / `--config`.
+- **스키마 변경은 `db push`가 아니라 마이그레이션으로 한다**(2026-08-24 전환).
+  절차는 [workflows.md](./workflows.md) "DB 초기화" 절. 배포 파이프라인에 자동 적용 스텝이
+  없으므로 **로컬에서 `npm run db:migrate` 후 코드를 머지**한다.
+- **Prisma 7 CLI 변경점** (구 문서·구 습관과 어긋나는 것들):
+  - `prisma db push --skip-generate` 옵션 제거
+  - `migrate diff --to-schema-datamodel` → **`--to-schema`**, `--from-schema-datasource` → **`--from-config-datasource`**
+  - `migrate diff`는 로그를 stdout에 섞으므로 SQL로 뽑을 때 **`2>/dev/null`** 필수
 
-## RSS 자동 수집 스케줄 (가동 중)
+## 자동 파이프라인 (가동 중)
 
-- `.github/workflows/pipeline.yml`가 **6시간마다** `collect → ingest` 자동 실행 (2026-06-29~).
-  매시간→6시간마다 완화는 Supabase egress 대응이었는데(2026-07-08), **Neon 이관으로 그 제약이
-  사라져 주기를 다시 좁힐 수 있다**(일별 배치 클러스터링 전환에서 반영 예정).
-  → `pipeline-scheduling.md` 참조.
-- `data/new-articles.json`은 collect→ingest 간 임시 중간 파일. gitignore라 ingest는
-  정적 import가 아니라 **런타임에 읽는다**(빌드/타입체크 시점엔 부재). 향후 DB 직접 append로 대체 예정.
+| 워크플로우          | 주기                       | 하는 일                                    |
+| ------------------- | -------------------------- | ------------------------------------------ |
+| `collect.yml`       | 3시간마다 (`17 */3 * * *`) | RSS → `Article` 직접 적재. OpenAI 미사용   |
+| `cluster-daily.yml` | KST 05:00 (`0 20 * * *`)   | 전날 KST 하루를 통째로 재클러스터링 (멱등) |
+
+- 2026-08-24에 하나였던 `pipeline.yml`을 둘로 쪼갰다. RSS는 항목이 빠르게 밀려 나가 자주
+  긁어야 하지만 클러스터링은 하루가 닫힌 뒤 한 번이면 된다.
+- **`data/new-articles.json` 중간 파일은 제거됐다.** collect가 DB에 직접 쓴다.
+- 설계·임계값 근거: [daily-clustering.md](./daily-clustering.md)
 
 ## Neon 리소스 관리
 
 Supabase에서 목을 조르던 **egress 5GB/월** 제약은 Neon에 없다. 대신 다른 축이 걸린다.
 
-| 한도    | Neon Free   | 현재                                 |
-| ------- | ----------- | ------------------------------------ |
-| storage | 0.5GB       | **261MB** (Article 159 / Cluster 93) |
-| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend            |
+| 한도    | Neon Free   | 현재                               |
+| ------- | ----------- | ---------------------------------- |
+| storage | 0.5GB       | **109MB** (Article 98 / Cluster 3) |
+| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend          |
 
-- **storage가 임박해 있다.** 261MB의 대부분이 `Article.embeddingJson`(~10KB/건 × 23,861)과
-  `Cluster.centroidJson`(~10KB × 11,376)이다. 일별 배치 클러스터링 전환에서 centroid를 없애고
-  임베딩을 `Bytes`(2,048B)로 바꿔 ~60MB로 줄이는 게 예정된 대응.
+- **storage는 2026-08-24에 261MB → 109MB로 줄였다.** `Cluster.centroidJson`을 없애고(일별 배치는
+  배치가 끝나면 centroid를 다시 쓰지 않는다) `Article`의 임베딩을 JSON 문자열(~10KB)에서
+  `Bytes`(2,048B)로 옮겼다. → [daily-clustering.md](./daily-clustering.md)
 - **autosuspend**: 5분 무활동 후 컴퓨트가 잠들고 첫 요청에 wake 지연이 붙는다.
 - Postgres는 컬럼 drop만으로 디스크를 돌려주지 않는다 → 대량 컬럼 제거 후 `VACUUM FULL` 필요.
+  (마이그레이션은 트랜잭션 안에서 돌아 `VACUUM FULL`을 넣을 수 없다. 적용 후 따로 실행한다.)
 - **collation이 Supabase와 다르다**: `en_US.UTF-8`(ICU) → `C.UTF-8`(builtin). 데이터는 동일하고
   텍스트 정렬 규칙만 다르다. 우리가 텍스트로 정렬하는 건 `id`(uuid)뿐이라 영향이 없고,
   바이트 비교라 인덱스는 오히려 빠르다. (이관 검증 시 `order by url` 해시만 갈렸던 원인)
@@ -124,6 +133,6 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 
 ## 중복 뉴스 제거
 
-- 현재: ingest가 **임베딩 전에 기존 URL을 일괄 조회해 제외** → 신규 기사만 임베딩(비용·지연 절감).
-  추가로 `Article.url @unique` upsert로 DB 레벨 이중 방지.
+- 현재: collect가 `Article.url @unique` + `createMany({ skipDuplicates })`로 URL 중복을 막고,
+  cluster-day는 `embedding IS NULL`인 기사만 임베딩한다(비용·지연 절감).
 - 향후: 임베딩 유사도 기반 cross-outlet 중복 감지 추가 예정
