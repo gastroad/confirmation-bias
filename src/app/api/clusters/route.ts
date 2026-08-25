@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { findClusterSummaryPage } from "@server/queries/clusters";
-import { CACHE_TTL } from "@server/cache";
+import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { toClusterSummary } from "@/entities/cluster";
 import { parseOutletParam } from "@/features/outlet-filter";
 import { DATE_PARAM, parseDateParam } from "@/features/date-nav";
@@ -23,7 +23,7 @@ const getPage = unstable_cache(
     });
     return { items: rows.map(toClusterSummary), nextCursor };
   },
-  ["clusters-page"],
+  ["clusters-page", DTO_VERSION],
   { revalidate: CACHE_TTL.clusterList, tags: ["clusters"] }
 );
 

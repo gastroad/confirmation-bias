@@ -4,7 +4,7 @@ import {
   findDaySummary,
   findAdjacentBucketDates,
 } from "@server/queries/days";
-import { CACHE_TTL } from "@server/cache";
+import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 
 /**
  * 날짜 내비게이션이 쓰는 값들. 홈과 `/d/[date]`가 공유한다.
@@ -37,13 +37,13 @@ export const getDayNav = unstable_cache(
       articleCount: summary?.articleCount ?? 0,
     };
   },
-  ["day-nav"],
+  ["day-nav", DTO_VERSION],
   { revalidate: CACHE_TTL.days, tags: ["days"] }
 );
 
 /** 데이터가 있는 가장 최근 날짜("YYYY-MM-DD"). 없으면 null. */
 export const getLatestDate = unstable_cache(
   async (): Promise<string | null> => toIso(await findLatestBucketDate()),
-  ["latest-date"],
+  ["latest-date", DTO_VERSION],
   { revalidate: CACHE_TTL.days, tags: ["days"] }
 );
