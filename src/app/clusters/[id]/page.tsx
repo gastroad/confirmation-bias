@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
-import { CACHE_TTL } from "@server/cache";
+import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { getSessionUser } from "@server/auth";
 import { toClusterDetail } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
@@ -29,7 +29,7 @@ const getClusterDetail = unstable_cache(
     const row = await findClusterDetailRow(id);
     return row ? toClusterDetail(row) : null;
   },
-  ["cluster-detail"],
+  ["cluster-detail", DTO_VERSION],
   { revalidate: CACHE_TTL.clusterDetail, tags: ["clusters"] }
 );
 

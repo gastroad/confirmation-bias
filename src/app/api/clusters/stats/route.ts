@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { findClusterStats } from "@server/queries/clusters";
-import { CACHE_TTL } from "@server/cache";
+import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { toClusterStats } from "@/entities/cluster";
 import { parseOutletParam } from "@/features/outlet-filter";
 import { DATE_PARAM, parseDateParam } from "@/features/date-nav";
@@ -13,7 +13,7 @@ const getStats = unstable_cache(
     );
     return toClusterStats(raw);
   },
-  ["clusters-stats"],
+  ["clusters-stats", DTO_VERSION],
   { revalidate: CACHE_TTL.clusterList, tags: ["clusters"] }
 );
 

@@ -22,6 +22,31 @@ DTO(`toClusterSummary` 등)는 이미 ISO 문자열이라 직렬화가 안전하
 
 `Date`를 주고받아야 하면 ISO 문자열로 바꿔 경계를 넘긴다(`src/app/_day-nav-data.ts` 참고).
 
+## DTO 모양이 바뀌면 `DTO_VERSION`을 올린다
+
+**캐시 키에는 인자만 들어가고 반환 타입은 들어가지 않는다.** DTO에 필드를 추가·삭제해도 키가
+그대로면 배포 후에도 **옛 모양의 응답이 TTL이 끝날 때까지 서빙된다.** 새 클라이언트가 없는
+필드를 읽어 `undefined`가 되고, 화면에는 `NaN`이나 빈칸이 뜬다.
+
+`server/cache.ts`의 `DTO_VERSION`을 모든 `unstable_cache` 키에 넣어 뒀다. DTO를 바꾸는 PR은
+이 값을 함께 올린다.
+
+```ts
+export const DTO_VERSION = "v2";
+// ...
+unstable_cache(fn, ["clusters-page", DTO_VERSION], { ... });
+```
+
+### 2026-08-25 사고
+
+`ClusterSummary`에 `tilt`·`outletCount`를 추가하면서 키를 올리지 않아 프로덕션 목록이
+`보수 +NaN`으로 떴다. 배포 검증 때 `/api/clusters`만 확인했는데 **홈이 실제로 부르는 건
+`/api/clusters?date=YYYY-MM-DD`였고, 인자가 다르면 캐시 항목도 다르다.** 앞의 것은 아무도
+채운 적이 없어 새로 계산돼 멀쩡했고, 뒤의 것만 옛 모양이었다.
+
+- 배포 후에는 **화면이 실제로 부르는 URL**로 확인한다. 파라미터 없는 요청은 다른 캐시 항목이다.
+- TTL이 목록 1시간·상세 6시간이라 그냥 두면 그 시간 내내 깨진 화면이 보인다.
+
 ## 어디에 무엇을
 
 | 위치                                  | 캐시 대상     | TTL |
