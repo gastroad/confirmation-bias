@@ -123,15 +123,6 @@ export const LEANING_LABELS: Record<Leaning, string> = {
   unknown: "미분류",
 };
 
-export const LEANING_COLORS: Record<Leaning, string> = {
-  left: "#3b82f6",
-  center_left: "#93c5fd",
-  center: "#9ca3af",
-  center_right: "#fca5a5",
-  right: "#ef4444",
-  unknown: "#e5e7eb",
-};
-
 export const LEANING_ORDER: Leaning[] = [
   "left",
   "center_left",
@@ -155,4 +146,25 @@ export function calcLeaningGroupRatios(dist: LeaningDistribution): LeaningGroupR
     neutral: sum(LEANING_GROUPS.neutral) / total,
     progressive: sum(LEANING_GROUPS.progressive) / total,
   };
+}
+
+/**
+ * 진보 비율 − 보수 비율 (백분율 포인트). 양수면 진보 쪽으로 더 많이 보도됐다는 뜻.
+ * 중심선 기준 막대가 어느 쪽으로 튀어나왔는지를 수치로 옮긴 값이다.
+ */
+export function calcTilt(ratios: LeaningGroupRatios): number {
+  return (ratios.progressive - ratios.conservative) * 100;
+}
+
+/**
+ * 이 폭 안이면 "균형"으로 본다. 디자인이 아니라 서비스의 주장이므로 한 곳에만 둔다.
+ * 화면에도 이 기준을 그대로 노출한다(클러스터 목록 헤더).
+ */
+export const TILT_BALANCE_THRESHOLD = 5;
+
+export type TiltSide = "progressive" | "conservative" | "balanced";
+
+export function tiltSide(tilt: number): TiltSide {
+  if (Math.abs(tilt) < TILT_BALANCE_THRESHOLD) return "balanced";
+  return tilt > 0 ? "progressive" : "conservative";
 }

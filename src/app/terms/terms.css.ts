@@ -57,9 +57,10 @@ export const list = style({
 });
 
 export const link = style({
-  color: vars.color.accent,
+  textDecoration: "underline",
   textUnderlineOffset: 2,
+  color: vars.color.accent,
   selectors: {
-    "&:hover": { textDecoration: "underline" },
+    "&:hover": { color: vars.color.textSecondary },
   },
 });

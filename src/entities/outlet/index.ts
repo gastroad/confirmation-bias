@@ -4,6 +4,7 @@ export type {
   LeaningDistribution,
   LeaningGroupRatios,
   OutletMetadata,
+  TiltSide,
 } from "./model";
 
 export {
@@ -11,14 +12,16 @@ export {
   OUTLET_MAP,
   LEANING_GROUPS,
   LEANING_LABELS,
-  LEANING_COLORS,
   LEANING_ORDER,
   LEANING_GROUP_LABELS,
   LEANING_GROUP_ORDER,
   OUTLETS_BY_GROUP,
   emptyDistribution,
   calcLeaningGroupRatios,
+  calcTilt,
+  tiltSide,
+  TILT_BALANCE_THRESHOLD,
 } from "./model";
 
+export { LEANING_COLORS, TILT_COLORS } from "./leaning-colors";
 export { LeaningBar } from "./ui/LeaningBar";
-export { GroupRatioBadges } from "./ui/GroupRatioBadges";

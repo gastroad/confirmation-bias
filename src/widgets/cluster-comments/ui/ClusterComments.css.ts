@@ -32,7 +32,7 @@ export const textarea = style({
   resize: "vertical",
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "10px 12px",
   fontSize: 14,
   lineHeight: 1.5,
@@ -56,7 +56,7 @@ export const counter = style({
   color: vars.color.textFaint,
 });
 
-export const counterOver = style([counter, { color: vars.color.badgeConservativeFg }]);
+export const counterOver = style([counter, { color: vars.color.dangerFg }]);
 
 export const submit = style({
   borderRadius: vars.radius.md,
@@ -66,7 +66,7 @@ export const submit = style({
   fontSize: 13,
   fontWeight: 600,
   fontFamily: vars.font.sans,
-  color: "#ffffff",
+  color: vars.color.accentFg,
   cursor: "pointer",
   selectors: {
     "&:disabled": { opacity: 0.5, cursor: "default" },
@@ -84,9 +84,11 @@ export const signInPrompt = style({
 });
 
 export const link = style({
+  textDecoration: "underline",
+  textUnderlineOffset: 2,
   color: vars.color.accent,
   fontWeight: 500,
-  selectors: { "&:hover": { textDecoration: "underline" } },
+  selectors: { "&:hover": { color: vars.color.textSecondary } },
 });
 
 export const list = style({
@@ -137,7 +139,7 @@ export const deleteButton = style({
   color: vars.color.textFaint,
   cursor: "pointer",
   selectors: {
-    "&:hover": { color: vars.color.badgeConservativeFg },
+    "&:hover": { color: vars.color.dangerFg },
     "&:disabled": { opacity: 0.5, cursor: "default" },
   },
 });
@@ -159,9 +161,9 @@ export const empty = style({
 
 export const error = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "9px 12px",
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });

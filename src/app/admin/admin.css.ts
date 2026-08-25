@@ -33,7 +33,7 @@ export const row = style({
 export const input = style({
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "8px 10px",
   fontSize: 13,
   fontFamily: vars.font.mono,
@@ -51,7 +51,7 @@ export const button = style({
   fontSize: 13,
   fontWeight: 600,
   fontFamily: vars.font.sans,
-  color: "#ffffff",
+  color: vars.color.accentFg,
   cursor: "pointer",
   selectors: {
     "&:disabled": { opacity: 0.6, cursor: "default" },
@@ -61,19 +61,19 @@ export const button = style({
 
 export const ok = style({
   fontSize: 13,
-  color: vars.color.badgeProgressiveFg,
+  color: vars.color.successFg,
 });
 
 export const fail = style({
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });
 
 export const warning = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "10px 12px",
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });

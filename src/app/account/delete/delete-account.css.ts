@@ -18,12 +18,12 @@ export const heading = style({
 
 export const warning = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "12px 14px",
   fontSize: 13,
   lineHeight: 1.6,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });
 
 export const list = style({
@@ -53,13 +53,13 @@ export const input = style({
   width: "100%",
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "10px 12px",
   fontSize: 14,
   fontFamily: vars.font.sans,
   color: vars.color.text,
   selectors: {
-    "&:focus": { outline: "none", borderColor: vars.color.badgeConservativeFg },
+    "&:focus": { outline: "none", borderColor: vars.color.dangerFg },
   },
 });
 
@@ -73,12 +73,12 @@ export const danger = style({
   flex: 1,
   borderRadius: vars.radius.md,
   border: "none",
-  background: vars.color.badgeConservativeFg,
+  background: vars.color.dangerFg,
   padding: "11px 12px",
   fontSize: 14,
   fontWeight: 600,
   fontFamily: vars.font.sans,
-  color: "#ffffff",
+  color: vars.color.accentFg,
   cursor: "pointer",
   selectors: {
     "&:disabled": { opacity: 0.4, cursor: "default" },
@@ -104,9 +104,9 @@ export const cancel = style({
 
 export const error = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "9px 12px",
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });

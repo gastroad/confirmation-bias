@@ -3,55 +3,104 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { LeaningBar, GroupRatioBadges, LEANING_LABELS } from "@/entities/outlet";
+import {
+  LeaningBar,
+  TILT_COLORS,
+  tiltSide,
+  TILT_BALANCE_THRESHOLD,
+  calcTilt,
+  calcLeaningGroupRatios,
+  LEANING_GROUP_LABELS,
+} from "@/entities/outlet";
 import { fetchClustersPage, fetchClusterStats, type ClusterSummary } from "@/entities/cluster";
 import { OUTLETS_PARAM, parseOutletParam } from "@/features/outlet-filter";
-import { formatRelative } from "@/shared/lib/format";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
 import { Skeleton } from "@/shared/ui";
 import * as styles from "./ClusterFeed.css";
 
 const SKELETON_COUNT = 5;
 
-function StatsBar({ outletIds, date }: { outletIds: string[]; date?: string }) {
+/** "보수 +20" / "균형". 막대가 말하는 것을 수치로 한 번 더 못박는다. */
+function TiltLabel({ tilt, className }: { tilt: number; className?: string }) {
+  const side = tiltSide(tilt);
+  const text =
+    side === "balanced"
+      ? "균형"
+      : `${side === "progressive" ? LEANING_GROUP_LABELS.progressive : LEANING_GROUP_LABELS.conservative} +${Math.round(Math.abs(tilt))}`;
+
+  return (
+    <span className={className} style={{ color: TILT_COLORS[side] }}>
+      {text}
+    </span>
+  );
+}
+
+/**
+ * 하루 전체 스펙트럼. 숫자 세 칸 대신 한 문장 판단과 막대 하나로 말한다.
+ * 목록의 막대와 같은 기하학을 쓰므로 "아래 이슈들의 합"으로 읽힌다.
+ */
+function DaySpectrum({ outletIds, date }: { outletIds: string[]; date?: string }) {
   const { data } = useQuery({
     queryKey: ["cluster-stats", outletIds.join(","), date ?? ""],
     queryFn: () => fetchClusterStats(outletIds, date),
   });
 
-  const dominant = data?.dominantLeaning ? LEANING_LABELS[data.dominantLeaning] : "—";
+  if (!data) {
+    return (
+      <div className={styles.daySpectrum}>
+        <Skeleton width="70%" height={18} />
+        <div className={styles.dayTrack}>
+          <Skeleton width="100%" height={18} radius={2} />
+        </div>
+      </div>
+    );
+  }
+
+  const tilt = calcTilt(calcLeaningGroupRatios(data.leaningDistribution));
 
   return (
-    <div className={styles.stats}>
-      <div className={styles.statCell}>
-        <p className={styles.statValue}>{data?.clusterCount ?? "—"}</p>
-        <p className={styles.statLabel}>이슈 클러스터</p>
-      </div>
-      <div className={styles.statCellDivided}>
-        <p className={styles.statValue}>{data?.articleCount ?? "—"}</p>
-        <p className={styles.statLabel}>수집 기사</p>
-      </div>
-      <div className={styles.statCell}>
-        <p className={styles.statValue}>{dominant}</p>
-        <p className={styles.statLabel}>최다 보도 성향</p>
+    <div className={styles.daySpectrum}>
+      <p className={styles.lede}>
+        <b>{data.articleCount.toLocaleString()}건</b>의 기사가{" "}
+        <b>{data.clusterCount.toLocaleString()}개 사건</b>으로 묶였습니다.{" "}
+        <DayVerdict tilt={tilt} />
+      </p>
+      <div className={styles.dayTrack}>
+        <LeaningBar distribution={data.leaningDistribution} showLabels large />
       </div>
     </div>
+  );
+}
+
+function DayVerdict({ tilt }: { tilt: number }) {
+  const side = tiltSide(tilt);
+  if (side === "balanced") return <>진영 간 보도량은 균형에 가깝습니다.</>;
+  const name =
+    side === "progressive" ? LEANING_GROUP_LABELS.progressive : LEANING_GROUP_LABELS.conservative;
+  const other =
+    side === "progressive" ? LEANING_GROUP_LABELS.conservative : LEANING_GROUP_LABELS.progressive;
+  return (
+    <>
+      {name} 성향 매체가 {other}보다 <b>{Math.abs(tilt).toFixed(1)}%p</b> 많이 썼습니다.
+    </>
   );
 }
 
 function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   return (
     <Link href={`/clusters/${cluster.id}`} className={styles.card}>
-      <div className={styles.cardHead}>
+      <div>
         <h3 className={styles.cardTitle}>{cluster.representativeTitle}</h3>
-        <span className={styles.cardTime}>{formatRelative(cluster.latestPublishedAt)}</span>
+        <LeaningBar distribution={cluster.leaningDistribution} />
       </div>
 
-      <LeaningBar distribution={cluster.leaningDistribution} />
-
-      <div className={styles.cardFooter}>
-        <GroupRatioBadges ratios={cluster.leaningGroupRatios} />
-        <span className={styles.cardCount}>{cluster.articleCount}건</span>
+      <div className={styles.cardMeta}>
+        <span className={styles.cardCount}>
+          {cluster.articleCount}
+          <em className={styles.cardCountUnit}>건</em>
+        </span>
+        <span className={styles.cardTime}>{cluster.outletCount}개사</span>
+        <TiltLabel tilt={cluster.tilt} className={styles.cardTilt} />
       </div>
     </Link>
   );
@@ -60,9 +109,11 @@ function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
 function ClusterCardSkeleton() {
   return (
     <div className={styles.skeletonCard}>
-      <Skeleton width="70%" height={16} />
-      <Skeleton width="100%" height={12} radius={9999} />
-      <Skeleton width="40%" height={12} />
+      <div className={styles.skeletonBody}>
+        <Skeleton width="70%" height={16} />
+        <Skeleton width="100%" height={11} radius={2} />
+      </div>
+      <Skeleton width="100%" height={40} />
     </div>
   );
 }
@@ -102,14 +153,23 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
     enabled: hasNextPage && !isFetchingNextPage,
   });
 
+  // DaySpectrum과 같은 쿼리 키라 react-query가 합쳐 준다(추가 요청 없음).
+  const { data: stats } = useQuery({
+    queryKey: ["cluster-stats", outletIds.join(","), date ?? ""],
+    queryFn: () => fetchClusterStats(outletIds, date),
+  });
+
   const clusters = data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <>
-      <StatsBar outletIds={outletIds} date={date} />
+      <DaySpectrum outletIds={outletIds} date={date} />
 
       <section>
-        <h2 className={styles.sectionTitle}>이슈 목록</h2>
+        <div className={styles.listHead}>
+          <span>이슈 {stats ? stats.clusterCount.toLocaleString() : "—"}</span>
+          <span>중도 기준 · ±{TILT_BALANCE_THRESHOLD}%p 이내는 균형</span>
+        </div>
 
         {isLoading ? (
           <SkeletonList />

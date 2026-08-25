@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { emptyDistribution, calcLeaningGroupRatios, OUTLETS, OUTLET_MAP } from "./model";
+import {
+  emptyDistribution,
+  calcLeaningGroupRatios,
+  calcTilt,
+  tiltSide,
+  TILT_BALANCE_THRESHOLD,
+  OUTLETS,
+  OUTLET_MAP,
+} from "./model";
 
 describe("emptyDistribution", () => {
   it("모든 값이 0인 분포를 반환한다", () => {
@@ -59,5 +67,43 @@ describe("OUTLETS / OUTLET_MAP", () => {
       expect(outlet.domain).toBeTruthy();
       expect(outlet.leaning).toBeTruthy();
     }
+  });
+});
+
+describe("calcTilt", () => {
+  it("진보와 보수가 같으면 0이다", () => {
+    const dist = { ...emptyDistribution(), left: 3, center: 4, right: 3 };
+    expect(calcTilt(calcLeaningGroupRatios(dist))).toBeCloseTo(0);
+  });
+
+  it("진보가 많으면 양수, 보수가 많으면 음수다", () => {
+    const prog = { ...emptyDistribution(), left: 7, right: 3 };
+    const cons = { ...emptyDistribution(), left: 3, right: 7 };
+    expect(calcTilt(calcLeaningGroupRatios(prog))).toBeCloseTo(40);
+    expect(calcTilt(calcLeaningGroupRatios(cons))).toBeCloseTo(-40);
+  });
+
+  it("중도만 있으면 0이다 (중도는 어느 쪽으로도 기울지 않는다)", () => {
+    const dist = { ...emptyDistribution(), center: 9 };
+    expect(calcTilt(calcLeaningGroupRatios(dist))).toBeCloseTo(0);
+  });
+
+  it("기사가 없으면 0이다", () => {
+    expect(calcTilt(calcLeaningGroupRatios(emptyDistribution()))).toBe(0);
+  });
+});
+
+describe("tiltSide", () => {
+  it("임계값 미만이면 균형이다", () => {
+    expect(tiltSide(0)).toBe("balanced");
+    expect(tiltSide(TILT_BALANCE_THRESHOLD - 0.1)).toBe("balanced");
+    expect(tiltSide(-(TILT_BALANCE_THRESHOLD - 0.1))).toBe("balanced");
+  });
+
+  it("임계값 이상이면 기운 쪽을 돌려준다", () => {
+    expect(tiltSide(TILT_BALANCE_THRESHOLD)).toBe("progressive");
+    expect(tiltSide(-TILT_BALANCE_THRESHOLD)).toBe("conservative");
+    expect(tiltSide(40)).toBe("progressive");
+    expect(tiltSide(-40)).toBe("conservative");
   });
 });

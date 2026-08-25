@@ -40,7 +40,7 @@ export const input = style({
   width: "100%",
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "10px 12px",
   fontSize: 14,
   fontFamily: vars.font.sans,
@@ -67,7 +67,7 @@ export const submit = style({
   fontSize: 14,
   fontWeight: 600,
   fontFamily: vars.font.sans,
-  color: "#ffffff",
+  color: vars.color.accentFg,
   cursor: "pointer",
   transition: "opacity 0.15s",
   selectors: {
@@ -83,11 +83,11 @@ export const submit = style({
 
 export const error = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "9px 12px",
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });
 
 export const footer = style({
@@ -97,8 +97,10 @@ export const footer = style({
 });
 
 export const link = style({
+  textDecoration: "underline",
+  textUnderlineOffset: 2,
   color: vars.color.accent,
   selectors: {
-    "&:hover": { textDecoration: "underline" },
+    "&:hover": { color: vars.color.textSecondary },
   },
 });

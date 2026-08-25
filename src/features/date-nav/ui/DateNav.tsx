@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/shared/ui";
-import { formatBucketDateLabel } from "@/shared/lib/bucket-date";
+import { formatBucketDateNumeric, bucketDateWeekday } from "@/shared/lib/bucket-date";
 import { datePath } from "../model";
 import * as styles from "./DateNav.css";
 
@@ -49,12 +49,11 @@ export function DateNav({
 }: DateNavProps) {
   return (
     <nav className={styles.root} aria-label="날짜 이동">
-      <Arrow to={prevDate} outletIds={outletIds} label="이전 날짜">
-        <ChevronLeftIcon size={18} />
-      </Arrow>
-
       <div className={styles.center}>
-        <p className={styles.label}>{formatBucketDateLabel(date)}</p>
+        <div className={styles.dateLine}>
+          <h2 className={styles.date}>{formatBucketDateNumeric(date)}</h2>
+          <span className={styles.weekday}>{bucketDateWeekday(date)}</span>
+        </div>
         {clusterCount > 0 ? (
           <p className={styles.meta}>
             {clusterCount.toLocaleString()}개 이슈 · {articleCount.toLocaleString()}건
@@ -64,9 +63,14 @@ export function DateNav({
         )}
       </div>
 
-      <Arrow to={nextDate} outletIds={outletIds} label="다음 날짜">
-        <ChevronRightIcon size={18} />
-      </Arrow>
+      <div className={styles.arrows}>
+        <Arrow to={prevDate} outletIds={outletIds} label="이전 날짜">
+          <ChevronLeftIcon size={18} />
+        </Arrow>
+        <Arrow to={nextDate} outletIds={outletIds} label="다음 날짜">
+          <ChevronRightIcon size={18} />
+        </Arrow>
+      </div>
     </nav>
   );
 }

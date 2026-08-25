@@ -2,6 +2,7 @@ import {
   OUTLET_MAP,
   emptyDistribution,
   calcLeaningGroupRatios,
+  calcTilt,
   LEANING_ORDER,
 } from "@/entities/outlet";
 import type { Leaning } from "@/entities/outlet";
@@ -50,18 +51,22 @@ export function toClusterSummary(row: SummaryRow): ClusterSummary {
     dist[leaningOf(a.outletId)]++;
   }
 
+  const ratios = calcLeaningGroupRatios(dist);
+
   return {
     id: row.id,
     representativeTitle: row.representativeTitle,
     summary: row.summary,
     bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
+    outletCount: new Set(row.articles.map((a) => a.outletId)).size,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
       row.createdAt
     ),
     leaningDistribution: dist,
-    leaningGroupRatios: calcLeaningGroupRatios(dist),
+    leaningGroupRatios: ratios,
+    tilt: calcTilt(ratios),
   };
 }
 
@@ -100,18 +105,22 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([hour, count]) => ({ hour, count }));
 
+  const ratios = calcLeaningGroupRatios(dist);
+
   return {
     id: row.id,
     representativeTitle: row.representativeTitle,
     summary: row.summary,
     bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
+    outletCount: new Set(row.articles.map((a) => a.outletId)).size,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
       row.createdAt
     ),
     leaningDistribution: dist,
-    leaningGroupRatios: calcLeaningGroupRatios(dist),
+    leaningGroupRatios: ratios,
+    tilt: calcTilt(ratios),
     articles,
     timeline,
   };

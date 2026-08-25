@@ -8,9 +8,13 @@ export interface ClusterSummary {
   /** 이 클러스터가 속한 KST 하루 ("YYYY-MM-DD") */
   bucketDate: string;
   articleCount: number;
+  /** 이 사건을 다룬 서로 다른 언론사 수 */
+  outletCount: number;
   latestPublishedAt: string;
   leaningDistribution: LeaningDistribution;
   leaningGroupRatios: LeaningGroupRatios;
+  /** 진보 비율 − 보수 비율 (%p). 중심선에서 어느 쪽으로 얼마나 벗어났는지 */
+  tilt: number;
 }
 
 export interface ClusterDetail extends ClusterSummary {

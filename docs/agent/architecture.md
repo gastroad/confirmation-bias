@@ -55,14 +55,14 @@ shared/          — 프레임워크 무관 유틸 / 스타일
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
   ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지)
 entities/        — 도메인 모델 + dumb UI
-  outlet/        — model.ts, ui/, index.ts
+  outlet/        — model.ts(순수·css 무의존), leaning-colors.ts(테마 토큰), ui/, index.ts
   article/       — model.ts, index.ts
   cluster/       — model.ts, lib.ts(row→DTO 매핑), api.ts(클라이언트 fetcher), ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
   profile-menu/  — ui/(ProfileMenu) — 테마·로그인·관리·탈퇴를 한 드롭다운에
-  date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav), index.ts
+  date-nav/      — model.ts(parseDateParam·datePath), ui/(DateNav — 날짜를 크게 세우는 지면 머리), index.ts
   auth-form/     — model.ts(AuthFormState), ui/(AuthForm), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
@@ -85,3 +85,28 @@ proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름
 
 - `server/` import는 API 라우트(`src/app/api/**`)와 서버 컴포넌트만. entities/widgets/features는 `entities/*/api.ts` 클라이언트 fetcher로 HTTP 호출 (DB 직접 접근 금지)
 - `features/`는 상태·인터랙션 허용(entities의 `ui/` dumb 규칙과 다름). 필터·정렬 등도 여기에 추가
+
+## 중심선(meridian) — 화면의 축
+
+성향 분포를 그리는 방식이 이 서비스의 시각적 주장이다. 손대기 전에 읽는다.
+
+`LeaningBar`는 막대를 **폭이 아니라 위치**로 그린다. 중도 구간의 중점이 항상 트랙 50%에
+놓이도록 막대 전체를 왼쪽으로 밀고, 막대는 트랙 폭의 **50%만** 차지한다(한쪽으로 100%
+쏠려도 잘리지 않는 최대 폭). 한쪽으로 튀어나온 길이가 곧 그 이슈의 편향이다.
+
+```
+progressive + neutral/2 = midpoint      ← 막대 안에서 중도 중점의 위치(%)
+left            = 50% − midpoint × 0.5  ← 트랙 좌측에서의 시작점
+transform-origin = midpoint             ← 진입 애니메이션이 자라는 지점 = 중심선
+```
+
+**`transform-origin`을 `center`로 두면 안 된다.** 막대의 기하학적 중심과 중도 중점은
+다르므로, 막대가 중심선 밖에서 자라 들어온다.
+
+`ClusterFeed`의 목록은 이 축을 세로선으로 관통시킨다(`list::before`). 행이 `1fr <메타열>`
+그리드라 중심선은 `calc(50% - (메타열 + gap) / 2)`에 놓인다. 하루 전체 스펙트럼도 같은 축을
+공유해야 하므로 `dayTrack`이 오른쪽을 같은 값만큼 비운다 — **이 셋이 어긋나면 디자인이
+성립하지 않는다.** 값을 바꿀 땐 `ClusterFeed.css.ts` 상단 상수 네 개만 고친다.
+
+편향 수치는 `calcTilt`(진보% − 보수%)이고, `TILT_BALANCE_THRESHOLD`(±5%p) 안이면 "균형"으로
+본다. 이 임계값은 디자인이 아니라 **서비스의 주장**이라 화면(목록 헤더)에 그대로 노출한다.

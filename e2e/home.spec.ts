@@ -20,8 +20,9 @@ test.describe("홈 페이지", () => {
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "날짜 이동" });
     await expect(nav).toBeVisible();
-    // "2026년 8월 23일 (일)" 형태
-    await expect(nav).toContainText(/\d{4}년 \d{1,2}월 \d{1,2}일/);
+    // "2026.08.24" + 요일 한 글자. 날짜가 페이지의 이름이라 모노 숫자로 크게 세운다.
+    await expect(nav).toContainText(/\d{4}\.\d{2}\.\d{2}/);
+    await expect(nav).toContainText(/[일월화수목금토]/);
   });
 
   test("이전 날짜로 이동하면 URL이 /d/YYYY-MM-DD 가 된다", async ({ page }) => {

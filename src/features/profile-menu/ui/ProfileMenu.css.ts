@@ -13,7 +13,7 @@ export const trigger = style({
   height: 32,
   borderRadius: vars.radius.full,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   color: vars.color.textSecondary,
   fontSize: 12,
   fontWeight: 600,
@@ -40,7 +40,7 @@ export const panel = style({
   flexDirection: "column",
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: 4,
   boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
 });
@@ -106,14 +106,15 @@ export const rowDanger = style([
     color: vars.color.textFaint,
     selectors: {
       "&:hover": {
-        background: vars.color.badgeConservativeBg,
-        color: vars.color.badgeConservativeFg,
+        background: vars.color.dangerBg,
+        color: vars.color.dangerFg,
       },
     },
   },
 ]);
 
-export const rowAccent = style([rowBase, { color: vars.color.accent }]);
+// 유채색 액센트가 없으므로 강조는 잉크의 진하기·굵기로 낸다.
+export const rowAccent = style([rowBase, { color: vars.color.text, fontWeight: 600 }]);
 
 export const check = style({
   marginLeft: "auto",
