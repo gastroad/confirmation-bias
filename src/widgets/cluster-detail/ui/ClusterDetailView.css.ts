@@ -1,7 +1,7 @@
 import { style, globalStyle } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/theme.css";
 
-export const main = style({
+export const root = style({
   display: "flex",
   flexDirection: "column",
   gap: 30,

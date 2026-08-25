@@ -63,7 +63,7 @@ export function ClusterDetailView({ cluster }: Props) {
   });
 
   return (
-    <main className={styles.main}>
+    <div className={styles.root}>
       <section className={styles.head}>
         <p className={styles.subline}>
           {formatBucketDateNumeric(cluster.bucketDate)} · {cluster.articleCount}건 ·{" "}
@@ -124,6 +124,6 @@ export function ClusterDetailView({ cluster }: Props) {
           <TimelineChart data={cluster.timeline} />
         </div>
       </section>
-    </main>
+    </div>
   );
 }
