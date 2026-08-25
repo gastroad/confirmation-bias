@@ -54,11 +54,41 @@
 
 - 스타일은 **vanilla-extract** 전용. 컴포넌트 옆 `*.css.ts`에 작성하고 `import * as styles`로 사용.
 - 색·반경·폰트·레이아웃 폭은 반드시 테마 토큰(`@/shared/styles/theme.css`의 `vars`)으로. 하드코딩 금지.
-  - 예외: 데이터에서 오는 색(`LEANING_COLORS` 등)은 인라인 `style`로 칠한다.
+  - 예외: 데이터에서 오는 값(성향 색·막대 위치)은 인라인 `style`로 칠한다. 단 **색 자체는
+    토큰이다** — `LEANING_COLORS`(`entities/outlet/leaning-colors.ts`)가 `vars.leaning.*`를 가리킨다.
 - 다크모드는 `theme.css.ts`가 토큰을 바꿔 자동 처리. 개별 css에 `@media (prefers-color-scheme)` 쓰지 않는다.
-- 본문·보조 텍스트 토큰은 **라이트/다크 양쪽에서** WCAG AA(4.5:1)를 넘겨야 한다. 흰 배경에서 4.5:1을
-  만족하는 가장 밝은 회색이 대략 `#767676`이라, `textFaint`보다 흐린 단계를 새로 만들 여지는 없다.
-  대비는 `surface`(가장 밝은 배경) 기준으로 확인한다 — `bg`만 보면 카드 위에서 미달한다.
+
+### 유채색 액센트를 두지 않는다 (2026-08-25)
+
+파랑·빨강은 **성향의 의미를 독점한다.** 세 번째 유채색이 들어오면 독자가 매번 "이 색은
+성향인가 브랜드인가"를 판단해야 한다. 그래서 `accent`는 잉크색이다.
+
+- 활성 상태(선택된 필터 칩·주요 버튼)는 색이 아니라 **잉크 반전** — `accent` 배경 + `accentFg` 글자.
+- 링크는 색이 아니라 **밑줄**로 구분한다. hover에서 색을 죽인다.
+- `accent` 위에 얹는 글자색은 반드시 `accentFg`. `"#ffffff"` 하드코딩은 다크에서 흰 글자가
+  흰 배경에 얹혀 사라진다.
+- 상태 색은 정치 성향과 무관하다 → `dangerBg`/`dangerFg`/`successFg`.
+  (구 `badgeConservative*`/`badgeProgressive*`를 이 이름으로 바꿨다. 실제 용도가 에러·성공이었다.)
+
+### 대비 기준: `bg`가 최악의 배경이다
+
+본문·보조 텍스트 토큰은 **라이트/다크 양쪽에서** WCAG AA(4.5:1)를 넘겨야 한다.
+
+- 2026-08-25에 팔레트를 뒤집어 **지면(`bg`)이 카드(`surface`)보다 어둡다**(뉴스프린트 회색 위에
+  흰 종이). 따라서 **대비는 `bg` 기준으로 확인한다** — 예전 규칙("`surface` 기준")은 `surface`가
+  더 어둡던 시절의 것이라 지금은 반대다.
+- `#ebedf0` 위에서 4.5:1을 넘기는 가장 밝은 회색이 대략 `#5d6470`(4.87:1)이라, `textFaint`보다
+  흐린 단계를 새로 만들 여지는 없다.
+- **recharts 눈금은 `currentColor`를 상속한다.** 축 라벨 색을 명시하지 않으면 데이터 잉크를
+  따라가 대비가 모자란다 → `tick={{ fill: vars.color.textMuted }}`.
+
+### 서체
+
+- 본문·제목: `vars.font.sans` (IBM Plex Sans KR). **한글이 섞이면 무조건 sans.**
+- `vars.font.mono` (IBM Plex Mono)는 **숫자·날짜·코드 전용.** 한글에 모노를 걸면 자간이
+  벌어져 읽기 어렵다. 숫자 정렬이 필요하면 sans + `fontVariantNumeric: "tabular-nums"`.
+- 한글 줄바꿈은 `global.css.ts`의 `wordBreak: "keep-all"`이 전역으로 처리한다. 끄지 않는다.
+
 - 자세한 절차는 `/add-styled-ui` 스킬 참고.
 
 ## 테스트

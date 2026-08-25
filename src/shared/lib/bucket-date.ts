@@ -23,6 +23,22 @@ export function formatBucketDateLabel(value: string): string {
   return `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${WEEKDAYS[d.getUTCDay()]})`;
 }
 
+/**
+ * "2026-08-23" → "2026.08.24" 형태의 자릿수 고정 표기.
+ * 날짜가 이 서비스의 단위이자 페이지의 이름이라, 모노 서체로 크게 세우는 자리에 쓴다.
+ */
+export function formatBucketDateNumeric(value: string): string {
+  const d = new Date(`${value}T00:00:00Z`);
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${d.getUTCFullYear()}.${mm}.${dd}`;
+}
+
+/** "2026-08-23" → "토". UTC로 계산해 어느 시간대에서 렌더해도 같은 값이 나온다. */
+export function bucketDateWeekday(value: string): string {
+  return WEEKDAYS[new Date(`${value}T00:00:00Z`).getUTCDay()];
+}
+
 /** "2026-08-23" → "8월 23일". 카드처럼 폭이 좁은 곳에서 쓴다. */
 export function formatBucketDateShort(value: string): string {
   const d = new Date(`${value}T00:00:00Z`);

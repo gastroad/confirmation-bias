@@ -74,8 +74,10 @@ export const source = style({
 });
 
 export const sourceLink = style({
+  textDecoration: "underline",
+  textUnderlineOffset: 2,
   color: vars.color.accent,
-  selectors: { "&:hover": { textDecoration: "underline" } },
+  selectors: { "&:hover": { color: vars.color.textSecondary } },
 });
 
 export const deleteButton = style({
@@ -90,8 +92,8 @@ export const deleteButton = style({
   cursor: "pointer",
   selectors: {
     "&:hover": {
-      background: vars.color.badgeConservativeBg,
-      color: vars.color.badgeConservativeFg,
+      background: vars.color.dangerBg,
+      color: vars.color.dangerFg,
     },
     "&:disabled": { opacity: 0.5, cursor: "default" },
   },
@@ -106,11 +108,11 @@ export const empty = style({
 
 export const error = style({
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.badgeConservativeFg}`,
-  background: vars.color.badgeConservativeBg,
+  border: `1px solid ${vars.color.dangerFg}`,
+  background: vars.color.dangerBg,
   padding: "9px 12px",
   fontSize: 13,
-  color: vars.color.badgeConservativeFg,
+  color: vars.color.dangerFg,
 });
 
 export const more = style({
@@ -118,7 +120,7 @@ export const more = style({
   marginTop: 4,
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "8px 18px",
   fontSize: 13,
   fontFamily: vars.font.sans,

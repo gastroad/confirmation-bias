@@ -33,9 +33,19 @@ export function TimelineChart({ data }: Props) {
     <div className={styles.container}>
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 4, left: -16 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={vars.color.chartGrid} />
+          {/* 눈금 라벨은 currentColor를 상속하면 데이터 잉크를 따라가 대비가 모자란다. */}
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 11, fill: vars.color.textMuted }}
+            stroke={vars.color.border}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fontSize: 11, fill: vars.color.textMuted }}
+            stroke={vars.color.border}
+          />
           <Tooltip
             formatter={(v) => [`${v}건`, "기사 수"]}
             labelStyle={{ fontSize: 12, color: vars.color.text }}

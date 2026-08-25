@@ -46,6 +46,8 @@ export const chevron = style({
 export const chevronOpen = style([chevron, { transform: "rotate(180deg)" }]);
 
 export const clearButton = style({
+  textDecoration: "underline",
+  textUnderlineOffset: 2,
   border: "none",
   background: "transparent",
   padding: 0,
@@ -54,7 +56,7 @@ export const clearButton = style({
   cursor: "pointer",
   selectors: {
     "&:hover": {
-      textDecoration: "underline",
+      color: vars.color.textSecondary,
     },
   },
 });
@@ -83,7 +85,7 @@ export const chip = style({
   gap: 6,
   borderRadius: vars.radius.full,
   border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.control,
   padding: "4px 10px",
   fontSize: 13,
   color: vars.color.textSecondary,
@@ -96,12 +98,18 @@ export const chip = style({
   },
 });
 
+// 활성 상태는 유채색이 아니라 잉크 반전으로 표시한다.
+// 성향 색(파랑·빨강)이 화면에서 의미를 독점해야 하므로 필터가 그 색을 빌려 쓰지 않는다.
 export const chipActive = style([
   chip,
   {
+    background: vars.color.accent,
     borderColor: vars.color.accent,
-    color: vars.color.text,
+    color: vars.color.accentFg,
     fontWeight: 500,
+    selectors: {
+      "&:hover": { borderColor: vars.color.accent },
+    },
   },
 ]);
 

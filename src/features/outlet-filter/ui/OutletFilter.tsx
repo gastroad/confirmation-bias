@@ -16,9 +16,11 @@ export function OutletFilter() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [expanded, setExpanded] = useState(true);
-
   const selected = new Set(parseOutletParam(searchParams.get(OUTLETS_PARAM)));
+
+  // 기본은 접힘. 언론사 18개를 펼쳐 두면 지면의 주장(하루 스펙트럼)이 화면 밖으로 밀린다.
+  // 이미 필터가 걸려 있을 때만 무엇이 선택됐는지 보이도록 펼친 채 시작한다.
+  const [expanded, setExpanded] = useState(selected.size > 0);
 
   function commit(ids: string[]) {
     const params = new URLSearchParams(searchParams.toString());

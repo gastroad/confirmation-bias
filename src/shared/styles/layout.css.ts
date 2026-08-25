@@ -12,7 +12,7 @@ export const header = style({
   top: 0,
   zIndex: 10,
   borderBottom: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
+  background: vars.color.surface,
 });
 
 export const headerInner = style({
@@ -29,10 +29,10 @@ export const container = style({
   width: "100%",
   maxWidth: vars.layout.maxWidth,
   margin: "0 auto",
-  padding: "24px 16px",
+  padding: "30px 16px 24px",
   display: "flex",
   flexDirection: "column",
-  gap: 24,
+  gap: 26,
 });
 
 export const headerActions = style({
@@ -48,15 +48,18 @@ export const logo = style({
 });
 
 export const brand = style({
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: 700,
-  letterSpacing: "-0.01em",
+  letterSpacing: "-0.02em",
   color: vars.color.text,
 });
 
 export const brandSub = style({
-  fontSize: 14,
+  fontSize: 13,
   color: vars.color.textFaint,
+  "@media": {
+    "screen and (max-width: 600px)": { display: "none" },
+  },
 });
 
 export const backLink = style({
@@ -71,7 +74,7 @@ export const backLink = style({
 });
 
 export const divider = style({
-  color: vars.color.border,
+  color: vars.color.textFaint,
 });
 
 export const brandSmall = style({
@@ -86,7 +89,7 @@ export const brandSmall = style({
 export const footer = style({
   borderTop: `1px solid ${vars.color.border}`,
   background: vars.color.bg,
-  marginTop: 48,
+  marginTop: 56,
 });
 
 export const footerInner = style({
@@ -112,10 +115,12 @@ export const footerLinks = style({
 
 export const footerLink = style({
   color: vars.color.textSecondary,
+  textUnderlineOffset: 2,
   transition: "color 0.15s",
   selectors: {
     "&:hover": {
       color: vars.color.text,
+      textDecoration: "underline",
     },
   },
 });

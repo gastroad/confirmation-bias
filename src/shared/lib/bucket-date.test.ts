@@ -3,6 +3,8 @@ import {
   isValidBucketDate,
   formatBucketDateLabel,
   formatBucketDateShort,
+  formatBucketDateNumeric,
+  bucketDateWeekday,
   shiftBucketDate,
 } from "./bucket-date";
 
@@ -55,5 +57,27 @@ describe("shiftBucketDate", () => {
   it("월·연 경계를 넘는다", () => {
     expect(shiftBucketDate("2026-08-31", 1)).toBe("2026-09-01");
     expect(shiftBucketDate("2026-01-01", -1)).toBe("2025-12-31");
+  });
+});
+
+describe("formatBucketDateNumeric", () => {
+  it("월·일을 두 자리로 채운다", () => {
+    expect(formatBucketDateNumeric("2026-08-24")).toBe("2026.08.24");
+    expect(formatBucketDateNumeric("2026-01-05")).toBe("2026.01.05");
+  });
+
+  it("UTC로 계산해 시간대와 무관하게 같은 값을 낸다", () => {
+    const tz = process.env.TZ;
+    process.env.TZ = "America/Los_Angeles";
+    expect(formatBucketDateNumeric("2026-08-24")).toBe("2026.08.24");
+    process.env.TZ = tz;
+  });
+});
+
+describe("bucketDateWeekday", () => {
+  it("KST 기준일의 요일을 한 글자로 돌려준다", () => {
+    expect(bucketDateWeekday("2026-08-24")).toBe("월");
+    expect(bucketDateWeekday("2026-08-23")).toBe("일");
+    expect(bucketDateWeekday("2026-08-29")).toBe("토");
   });
 });

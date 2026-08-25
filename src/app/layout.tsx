@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Sans_KR, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import Script from "next/script";
 
@@ -20,14 +20,20 @@ import * as layout from "@/shared/styles/layout.css";
 import { Providers } from "./providers";
 import "./global.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// 한글 본문용. Geist는 latin 서브셋만 실어 한글이 전부 시스템 폰트로 떨어졌다.
+const plexSansKr = IBM_Plex_Sans_KR({
+  variable: "--font-plex-sans-kr",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// 날짜·건수·퍼센트 전용. 자릿수가 세로로 맞아야 비교가 읽힌다.
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -73,8 +79,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#ebedf0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0f13" },
   ],
 };
 
@@ -86,7 +92,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${plexSansKr.variable} ${plexMono.variable}`}
       suppressHydrationWarning
     >
       <body>

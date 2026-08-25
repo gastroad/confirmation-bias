@@ -51,7 +51,7 @@ export const primary = style({
   fontSize: 14,
   fontWeight: 600,
   fontFamily: vars.font.sans,
-  color: "#ffffff",
+  color: vars.color.accentFg,
   cursor: "pointer",
   selectors: { "&:hover": { opacity: 0.9 } },
 });
