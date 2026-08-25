@@ -1,8 +1,28 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "./theme.css";
 
+/**
+ * 지면의 좌우 여백. 헤더·본문·푸터가 **같은 값**을 써야 세로줄이 맞는다.
+ * 넓은 화면에서 maxWidth에 닿기 전까지는 이 값이 유일한 여백이라, 하나로 고정하면
+ * 태블릿~좁은 데스크톱 폭에서 카드가 뷰포트에 꽉 차 답답해진다.
+ */
+const GUTTER = 18;
+const GUTTER_MD = 28;
+const GUTTER_LG = 36;
+
+const gutterMedia = {
+  "screen and (min-width: 600px)": { paddingLeft: GUTTER_MD, paddingRight: GUTTER_MD },
+  "screen and (min-width: 960px)": { paddingLeft: GUTTER_LG, paddingRight: GUTTER_LG },
+};
+
+/**
+ * body가 flex column이므로 지면이 남은 높이를 먹는다(= sticky footer).
+ * `minHeight: 100vh`로 두면 내용이 짧은 페이지(클러스터 상세 등)에서 푸터가
+ * 한 화면 아래로 밀려, 빈 화면을 한 번 스크롤해야 나타난다.
+ * `1 0 auto` — 늘어나되 내용보다 줄지는 않는다.
+ */
 export const page = style({
-  minHeight: "100vh",
+  flex: "1 0 auto",
   width: "100%",
   background: vars.color.bg,
 });
@@ -19,20 +39,22 @@ export const headerInner = style({
   width: "100%",
   maxWidth: vars.layout.maxWidth,
   margin: "0 auto",
-  padding: "16px",
+  padding: `16px ${GUTTER}px`,
   display: "flex",
   alignItems: "center",
   gap: 12,
+  "@media": gutterMedia,
 });
 
 export const container = style({
   width: "100%",
   maxWidth: vars.layout.maxWidth,
   margin: "0 auto",
-  padding: "30px 16px 24px",
+  padding: `30px ${GUTTER}px 24px`,
   display: "flex",
   flexDirection: "column",
   gap: 26,
+  "@media": gutterMedia,
 });
 
 export const headerActions = style({
@@ -96,7 +118,8 @@ export const footerInner = style({
   width: "100%",
   maxWidth: vars.layout.maxWidth,
   margin: "0 auto",
-  padding: "24px 16px",
+  padding: `24px ${GUTTER}px`,
+  "@media": gutterMedia,
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",

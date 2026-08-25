@@ -3,6 +3,8 @@ import { vars } from "@/shared/styles/theme.css";
 
 // error / not-found / loading 이 공유하는 상태 화면 스타일.
 export const root = style({
+  // layout.page와 같은 이유로 남은 높이를 먹는다 — 푸터가 화면 아래에 붙는다.
+  flex: "1 0 auto",
   minHeight: "60vh",
   display: "flex",
   flexDirection: "column",

@@ -89,17 +89,14 @@ function DayVerdict({ tilt }: { tilt: number }) {
 function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
   return (
     <Link href={`/clusters/${cluster.id}`} className={styles.card}>
-      <div>
-        <h3 className={styles.cardTitle}>{cluster.representativeTitle}</h3>
-        <LeaningBar distribution={cluster.leaningDistribution} />
-      </div>
+      <h3 className={styles.cardTitle}>{cluster.representativeTitle}</h3>
+      <LeaningBar distribution={cluster.leaningDistribution} />
 
       <div className={styles.cardMeta}>
-        <span className={styles.cardCount}>
-          {cluster.articleCount}
-          <em className={styles.cardCountUnit}>건</em>
+        <span className={styles.cardStat}>
+          <em className={styles.cardNum}>{cluster.articleCount}</em>건 ·{" "}
+          <em className={styles.cardNum}>{cluster.outletCount}</em>개사
         </span>
-        <span className={styles.cardTime}>{cluster.outletCount}개사</span>
         <TiltLabel tilt={cluster.tilt} className={styles.cardTilt} />
       </div>
     </Link>
@@ -109,11 +106,9 @@ function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
 function ClusterCardSkeleton() {
   return (
     <div className={styles.skeletonCard}>
-      <div className={styles.skeletonBody}>
-        <Skeleton width="70%" height={16} />
-        <Skeleton width="100%" height={11} radius={2} />
-      </div>
-      <Skeleton width="100%" height={40} />
+      <Skeleton width="70%" height={16} />
+      <Skeleton width="100%" height={11} radius={2} />
+      <Skeleton width="42%" height={11} />
     </div>
   );
 }

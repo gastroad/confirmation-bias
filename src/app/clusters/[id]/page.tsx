@@ -108,11 +108,12 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
         </div>
       </header>
 
-      <ClusterDetailView cluster={cluster} />
-
-      <div className={layout.container}>
+      {/* 상세와 댓글이 같은 container를 공유한다. 본문이 컨테이너 밖에 있으면
+          목록 페이지와 좌우 여백이 어긋나 상세만 화면에 꽉 찬다. */}
+      <main className={layout.container}>
+        <ClusterDetailView cluster={cluster} />
         <ClusterComments clusterId={cluster.id} signedIn={Boolean(sessionUser)} />
-      </div>
+      </main>
     </div>
   );
 }
