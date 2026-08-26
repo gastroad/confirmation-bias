@@ -53,14 +53,76 @@ export async function findClusterSummaryPage({ cursor, limit, outletIds, bucketD
 }
 
 /**
- * 사이트맵용 경량 조회. 상세 페이지가 있는 모든 클러스터의 id·updatedAt만.
- * (id+updatedAt만 실어 egress 최소화. sitemap.ts는 revalidate로 조회 빈도를 묶는다.)
+ * 색인 기준. **도메인 상수(`INDEX_MIN_ARTICLES` 등)는 `src/entities/cluster`에 있고**
+ * `server/`는 그걸 import할 수 없으므로(레이어 방향) 호출자가 값을 넘긴다.
+ * 임계값이 두 곳에 갈리지 않게 하려는 것이다.
  */
-export async function findClusterRefs() {
-  return db.cluster.findMany({
-    orderBy: [{ bucketDate: "desc" }, { id: "desc" }],
-    select: { id: true, updatedAt: true },
-  });
+export interface IndexCriteria {
+  minArticles: number;
+  minLeaningGroups: number;
+  /** leaning → 진영 그룹 이름. 어느 그룹에도 없는 leaning(`unknown`)은 세지 않는다. */
+  groupByLeaning: Record<string, string>;
+}
+
+function criteriaParams({ minArticles, minLeaningGroups, groupByLeaning }: IndexCriteria) {
+  const entries = Object.entries(groupByLeaning);
+  return [entries.map(([l]) => l), entries.map(([, g]) => g), minArticles, minLeaningGroups];
+}
+
+interface ClusterRefRow {
+  id: string;
+  updatedAt: Date;
+  bucketDate: Date;
+}
+
+/**
+ * 사이트맵용 경량 조회. **색인 기준을 넘긴 클러스터만.**
+ *
+ * 성향 그룹 수는 Prisma로 표현할 수 없어 raw SQL이다. 1만 건을 전부 DTO로 만들어 거르는
+ * 것보다 DB에서 거르는 편이 egress·메모리 양쪽에서 싸다. 판정 결과는 상세 페이지의
+ * `isIndexableCluster`(DTO 기반)와 같아야 한다.
+ */
+export async function findIndexableClusterRefs(criteria: IndexCriteria) {
+  return db.$queryRawUnsafe<ClusterRefRow[]>(
+    `WITH grp AS (SELECT * FROM unnest($1::text[], $2::text[]) AS t(leaning, name))
+     SELECT cl.id, cl."updatedAt", cl."bucketDate"
+     FROM "Cluster" cl
+     JOIN "Article" a ON a."clusterId" = cl.id
+     JOIN "Outlet" o ON o.id = a."outletId"
+     LEFT JOIN grp ON grp.leaning = o.leaning
+     WHERE cl."articleCount" >= $3::int
+     GROUP BY cl.id, cl."updatedAt", cl."bucketDate"
+     HAVING count(DISTINCT grp.name) >= $4::int
+     ORDER BY cl."bucketDate" DESC, cl.id DESC`,
+    ...criteriaParams(criteria)
+  );
+}
+
+/**
+ * 그 날짜에 색인 기준을 넘긴 클러스터가 몇 개인가. 0이면 날짜 페이지도 색인에서 뺀다
+ * (껍데기만 모인 날짜가 색인되면 그 자체로 품질 감점이다).
+ */
+export async function countIndexableClusters(
+  bucketDate: Date,
+  criteria: IndexCriteria
+): Promise<number> {
+  const [row] = await db.$queryRawUnsafe<{ count: number }[]>(
+    `WITH grp AS (SELECT * FROM unnest($1::text[], $2::text[]) AS t(leaning, name)),
+          keep AS (
+       SELECT cl.id
+       FROM "Cluster" cl
+       JOIN "Article" a ON a."clusterId" = cl.id
+       JOIN "Outlet" o ON o.id = a."outletId"
+       LEFT JOIN grp ON grp.leaning = o.leaning
+       WHERE cl."articleCount" >= $3::int AND cl."bucketDate" = $5::date
+       GROUP BY cl.id
+       HAVING count(DISTINCT grp.name) >= $4::int
+     )
+     SELECT count(*)::int AS count FROM keep`,
+    ...criteriaParams(criteria),
+    bucketDate
+  );
+  return row?.count ?? 0;
 }
 
 export async function findClusterDetailRow(id: string) {
@@ -77,7 +139,6 @@ export async function findClusterDetailRow(id: string) {
         select: {
           id: true,
           title: true,
-          description: true,
           url: true,
           publishedAt: true,
           outletId: true,

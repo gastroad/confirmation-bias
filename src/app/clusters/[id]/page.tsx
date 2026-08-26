@@ -6,13 +6,13 @@ import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { getSessionUser } from "@server/auth";
-import { toClusterDetail } from "@/entities/cluster";
+import { toClusterDetail, isIndexableCluster } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ClusterComments } from "@/widgets/cluster-comments";
 import { ProfileMenu } from "@/features/profile-menu";
 import { datePath } from "@/features/date-nav";
-import { Logo } from "@/shared/ui";
+import { AdSenseLoader, Logo } from "@/shared/ui";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
@@ -65,6 +65,10 @@ export async function generateMetadata({
       modifiedTime: cluster.latestPublishedAt,
     },
     twitter: { card: "summary_large_image", title, description },
+    // 기사가 적거나 한 진영만 등장하는 클러스터는 "성향별 비교"가 성립하지 않는다.
+    // 페이지는 그대로 열어 두고 색인만 뺀다. follow는 남겨 링크 그래프를 유지한다.
+    // → entities/cluster의 INDEX_MIN_ARTICLES 주석
+    ...(isIndexableCluster(cluster) ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
@@ -76,6 +80,9 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className={layout.page}>
+      {/* 색인 대상인 클러스터에서만 광고를 띄운다 → shared/ui/AdSenseLoader */}
+      {isIndexableCluster(cluster) && <AdSenseLoader />}
+
       <JsonLd
         data={clusterCollectionSchema({
           id: cluster.id,

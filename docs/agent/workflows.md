@@ -19,6 +19,15 @@ npm run cluster:day -- --date=2026-08-20 --dry-run --threshold=0.65   # 임계�
 `.env`에 `OPENAI_API_KEY`, `DATABASE_URL`(+ `DIRECT_URL`) 필요.
 설계·임계값 근거는 [daily-clustering.md](./daily-clustering.md).
 
+```bash
+# 3. RSS pubDate 이상치로 생긴 과거 버킷 정리 (일회성). 먼저 --dry-run으로 대상을 본다
+npm run cleanup:dates -- --dry-run
+npm run cleanup:dates
+```
+
+댓글이 달린 클러스터가 대상에 있으면 **지우지 않고 중단한다**(Comment는 ON DELETE CASCADE라
+사람이 판단해야 한다). 수집 단계의 재발 방지는 `scripts/collect.ts`의 `MAX_PAST_DAYS`가 맡는다.
+
 ## DB 초기화 (처음 셋업)
 
 ```bash

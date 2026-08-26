@@ -44,6 +44,7 @@ RSS 피드
 | `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                    |
 | `scripts/collect.ts`              | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md) |
 | `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)               |
+| `scripts/cleanup-dirty-dates.ts`  | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                   |
 | `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                                    |
 | `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                               |
 
@@ -53,11 +54,11 @@ RSS 피드
 shared/          — 프레임워크 무관 유틸 / 스타일
   lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
-  ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지)
+  ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지), AdSenseLoader(콘텐츠 페이지 전용)
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts(순수·css 무의존), leaning-colors.ts(테마 토큰), ui/, index.ts
   article/       — model.ts, index.ts
-  cluster/       — model.ts, lib.ts(row→DTO 매핑), api.ts(클라이언트 fetcher), ui/, index.ts
+  cluster/       — model.ts(+색인 기준 상수), lib.ts(row→DTO 매핑·isIndexableCluster), api.ts, ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts

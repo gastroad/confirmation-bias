@@ -43,3 +43,18 @@ export interface ClusterStats {
   leaningDistribution: LeaningDistribution;
   dominantLeaning: Leaning | null;
 }
+
+/**
+ * 색인 기준 — **기사 3건 이상 & 등장 성향 그룹 2개 이상.**
+ *
+ * 2026-08-25 AdSense 심사에서 "복제된 콘텐츠"·"가치가 별로 없는 콘텐츠" 두 건을 통보받았다.
+ * 원인은 클러스터 1만여 개를 **전량 색인**한 것이다. 실측(2026-08-27)으로 기사 1건짜리가
+ * 61%, 등장 성향이 한쪽뿐인 게 75%였다 — 즉 "성향별 비교"라는 이 서비스의 부가가치가
+ * 아예 성립하지 않는 페이지가 대부분이었고, 심사자가 무작위로 열면 그런 껍데기가 나왔다.
+ *
+ * 이 기준을 넘지 못한 페이지도 **접근은 그대로 열어 둔다.** 색인만 뺀다(noindex, follow) —
+ * 사용자에겐 손실이 없고 크롤러에게만 "이건 대표 페이지가 아니다"라고 말하는 것이다.
+ * → docs/agent/adsense-compliance.md
+ */
+export const INDEX_MIN_ARTICLES = 3;
+export const INDEX_MIN_LEANING_GROUPS = 2;

@@ -19,7 +19,7 @@
  * 키마다 인자가 달라 캐시 항목도 갈리므로(`?date=` 유무 등) 일부만 멀쩡해 보일 수 있다.
  * 배포 직후 한 경로만 확인하고 넘어가면 놓친다.
  */
-export const DTO_VERSION = "v2";
+export const DTO_VERSION = "v3";
 
 export const CACHE_TTL = {
   /** 클러스터 상세. 한번 만들어진 날짜의 클러스터는 굳으므로 길게 잡아도 된다. */

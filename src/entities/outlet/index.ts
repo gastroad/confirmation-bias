@@ -15,6 +15,7 @@ export {
   LEANING_ORDER,
   LEANING_GROUP_LABELS,
   LEANING_GROUP_ORDER,
+  GROUP_BY_LEANING,
   OUTLETS_BY_GROUP,
   emptyDistribution,
   calcLeaningGroupRatios,

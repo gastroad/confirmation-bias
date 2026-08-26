@@ -114,20 +114,21 @@ DB가 싱가포르이므로 **Vercel 함수 리전을 같이 맞춰야 한다.**
 
 Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_URL·이름·설명·키워드).
 
-| 요소                | 위치                                          | 비고                                                                           |
-| ------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
-| 전역 메타데이터     | `src/app/layout.tsx`                          | metadataBase·title.template·OG·Twitter·robots·canonical·viewport               |
-| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`              | `generateMetadata`(제목=대표기사, canonical, og:type=article)                  |
-| 날짜별 페이지       | `src/app/d/[date]/page.tsx`                   | `/d/YYYY-MM-DD`. 기사가 없는 날짜는 `robots: noindex`로 빈 페이지 색인 방지    |
-| robots.txt          | `src/app/robots.ts`                           | `/api/` 차단, sitemap 링크                                                     |
-| sitemap.xml         | `src/app/sitemap.ts`                          | 홈 + 날짜 페이지 + 전체 클러스터. `revalidate=21600`(6h)로 크롤당 DB 조회 억제 |
-| OG 이미지           | `src/app/opengraph-image.tsx`                 | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백  |
-| 크롤러 메타데이터   | `next.config.ts`의 `htmlLimitedBots`          | JS 미실행 봇에 메타데이터를 head로 blocking 전송. 기본 목록 + 카카오톡·다음    |
-| 구조화 데이터       | `src/shared/seo/`                             | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                   |
-| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx`  | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                 |
-| 이용약관            | `src/app/terms/`                              | 저작권·게시물 책임·금지행위. 푸터·sitemap에 링크                               |
-| 상태 화면           | `error.tsx` · `loading.tsx` · `not-found.tsx` | DB 장애·autosuspend wake 시 흰 화면 대신 재시도                                |
-| 개인정보처리방침    | `src/app/privacy/`                            | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                        |
+| 요소                | 위치                                          | 비고                                                                                                            |
+| ------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 전역 메타데이터     | `src/app/layout.tsx`                          | metadataBase·title.template·OG·Twitter·robots·canonical·viewport                                                |
+| 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`              | `generateMetadata`(제목=대표기사, canonical, og:type=article)                                                   |
+| 날짜별 페이지       | `src/app/d/[date]/page.tsx`                   | `/d/YYYY-MM-DD`. 색인 기준을 넘긴 이슈가 0개인 날짜는 `robots: noindex`                                         |
+| robots.txt          | `src/app/robots.ts`                           | `/api/` 차단, sitemap 링크                                                                                      |
+| sitemap.xml         | `src/app/sitemap.ts`                          | 홈 + **색인 기준을 넘긴** 날짜·클러스터만. `revalidate=21600`(6h)로 크롤당 DB 조회 억제                         |
+| 색인 기준           | `src/entities/cluster/model.ts`               | 기사 3건 이상 & 성향 진영 2개 이상. 미달은 `noindex, follow` → [adsense-compliance.md](./adsense-compliance.md) |
+| OG 이미지           | `src/app/opengraph-image.tsx`                 | `next/og` 동적 생성. 한글 폰트는 Google Fonts에서 TTF 로드, 실패 시 영문 폴백                                   |
+| 크롤러 메타데이터   | `next.config.ts`의 `htmlLimitedBots`          | JS 미실행 봇에 메타데이터를 head로 blocking 전송. 기본 목록 + 카카오톡·다음                                     |
+| 구조화 데이터       | `src/shared/seo/`                             | WebSite / CollectionPage+ItemList / BreadcrumbList (JSON-LD)                                                    |
+| 파비콘·로고         | `src/app/icon.svg`, `src/shared/ui/Logo.tsx`  | 프리즘 분광 마크(진보·중도·보수 분광). 헤더 락업·파비콘에 공유                                                  |
+| 이용약관            | `src/app/terms/`                              | 저작권·게시물 책임·금지행위. 푸터·sitemap에 링크                                                                |
+| 상태 화면           | `error.tsx` · `loading.tsx` · `not-found.tsx` | DB 장애·autosuspend wake 시 흰 화면 대신 재시도                                                                 |
+| 개인정보처리방침    | `src/app/privacy/`                            | AdSense·GDPR 요건. 문의처는 `site.ts`의 `CONTACT_EMAIL`                                                         |
 
 - **`generateMetadata`가 async면 메타데이터는 body 끝으로 스트리밍된다.** 인라인 스크립트가 head로
   옮기므로 브라우저와 Googlebot(JS 실행)은 문제없지만, JS를 실행하지 않는 크롤러는 못 읽는다.
@@ -148,13 +149,17 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 > ⚠️ **2026-08-25 심사에서 정책 위반 2건(복제된 콘텐츠 · 가치가 별로 없는 콘텐츠)을 통보받았다.**
 > 광고 게재 전에 해결해야 한다. 진단과 작업 목록 → [adsense-compliance.md](./adsense-compliance.md)
 
-| 요소             | 위치                         | 비고                                                                |
-| ---------------- | ---------------------------- | ------------------------------------------------------------------- |
-| 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT` | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유  |
-| 로더 스크립트    | `src/app/layout.tsx`         | `next/script`(afterInteractive). 이게 광고+**CMP 동의 배너**를 로드 |
-| 사이트 확인 메타 | `layout.tsx` metadata.other  | `google-adsense-account` 메타                                       |
-| ads.txt          | `public/ads.txt`             | `google.com, pub-8694059194416409, DIRECT, f08c47fec0942fa0`        |
+| 요소             | 위치                                | 비고                                                                          |
+| ---------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
+| 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT`        | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유            |
+| 로더 스크립트    | `src/shared/ui/AdSenseLoader.tsx`   | `next/script`(afterInteractive). 이게 광고+**CMP 동의 배너**를 로드           |
+| 로더 렌더 위치   | 홈 · `/d/[date]` · `/clusters/[id]` | **루트 레이아웃이 아니다.** 콘텐츠 페이지에서, 그것도 색인 기준을 넘겼을 때만 |
+| 사이트 확인 메타 | `layout.tsx` metadata.other         | `google-adsense-account` 메타. 소유 증명이라 루트에 그대로 둔다               |
+| ads.txt          | `public/ads.txt`                    | `google.com, pub-8694059194416409, DIRECT, f08c47fec0942fa0`                  |
 
+- **로더를 루트에 두지 않는다**(2026-08-27 변경). 루트 레이아웃에 있으면 `/auth/*`·`/account/*`·
+  `/admin/*` 처럼 읽을 콘텐츠가 없는 화면에도 자동광고가 붙는데, 그것 자체가 별도의 정책
+  위반 항목이다. 색인 기준 미달인 클러스터·날짜에서도 같은 이유로 렌더하지 않는다.
 - **CMP:** EEA·영국·스위스 동의는 AdSense "개인정보 보호 및 메시지"의 Google 자체 CMP가 담당.
   별도 스크립트 없이 위 로더가 배너를 띄운다.
 - 개인화 광고·쿠키 고지는 `src/app/privacy/`(개인정보처리방침)에 포함.
