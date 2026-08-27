@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 import { findIndexableClusterRefs } from "@server/queries/clusters";
 import { findDaySummaries } from "@server/queries/days";
+import { findOutletStats } from "@server/queries/outlets";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { INDEX_CRITERIA } from "@/entities/cluster";
 import { SITE_URL, absoluteUrl } from "@/shared/config/site";
@@ -13,9 +14,10 @@ import { SITE_URL, absoluteUrl } from "@/shared/config/site";
 // 날짜 페이지도 같은 기준으로 거른다 — 껍데기만 모인 날짜를 상위 허브로 내보낼 이유가 없다.
 const getEntries = unstable_cache(
   async () => {
-    const [clusters, days] = await Promise.all([
+    const [clusters, days, outlets] = await Promise.all([
       findIndexableClusterRefs(INDEX_CRITERIA),
       findDaySummaries(),
+      findOutletStats(),
     ]);
 
     const toIso = (d: Date) => d.toISOString().slice(0, 10);
@@ -32,6 +34,8 @@ const getEntries = unstable_cache(
         id: c.id,
         lastModified: c.updatedAt.toISOString(),
       })),
+      // 기사가 한 건도 없는 매체는 보여줄 집계가 없다(상세 페이지도 noindex다).
+      outlets: outlets.filter((o) => o.articleCount > 0).map((o) => o.outletId),
     };
   },
   ["sitemap-entries", DTO_VERSION],
@@ -39,7 +43,7 @@ const getEntries = unstable_cache(
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { days, clusters } = await getEntries();
+  const { days, clusters, outlets } = await getEntries();
 
   // 날짜 페이지는 클러스터 상세보다 상위 허브다. 최신일수록 우선순위를 높게 준다.
   const dayEntries: MetadataRoute.Sitemap = days.map((d, i) => ({
@@ -55,6 +59,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly",
     // 전량 색인하던 시절엔 0.5로 눌러 뒀지만, 이제 여기 남은 건 기준을 통과한 페이지뿐이다.
     priority: 0.6,
+  }));
+
+  // 언론사 페이지는 전부 우리가 계산한 값이라 복제 텍스트가 0이다. 날짜 허브 다음으로 둔다.
+  const outletEntries: MetadataRoute.Sitemap = outlets.map((id) => ({
+    url: absoluteUrl(`/outlets/${id}`),
+    lastModified: new Date(),
+    changeFrequency: "daily",
+    priority: 0.7,
   }));
 
   return [
@@ -83,6 +95,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    {
+      url: absoluteUrl("/outlets"),
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    ...outletEntries,
     ...dayEntries,
     ...clusterEntries,
   ];

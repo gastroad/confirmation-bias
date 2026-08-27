@@ -176,3 +176,47 @@ export function tiltSide(tilt: number): TiltSide {
   if (Math.abs(tilt) < TILT_BALANCE_THRESHOLD) return "balanced";
   return tilt > 0 ? "progressive" : "conservative";
 }
+
+/**
+ * 언론사별 집계. **전부 우리가 계산한 값이고 원문 복제가 0이다** —
+ * 언론사 페이지를 만드는 이유가 그것이다. → docs/agent/adsense-compliance.md
+ */
+export interface OutletStats {
+  outletId: string;
+  articleCount: number;
+  clusterCount: number;
+  /** 이 매체 말고 아무도 다루지 않은 이슈 수. */
+  soloCount: number;
+  /** 이 매체가 가장 먼저 보도한 이슈 수. */
+  firstMoverCount: number;
+  /** "YYYY-MM-DD". 기사가 없으면 null. */
+  firstDate: string | null;
+  lastDate: string | null;
+}
+
+/** 같은 이슈를 함께 다룬 횟수. "누구와 의제가 겹치는가". */
+export interface OutletOverlap {
+  outletId: string;
+  sharedClusters: number;
+}
+
+export interface OutletDailyPoint {
+  /** "YYYY-MM-DD" */
+  date: string;
+  count: number;
+}
+
+export interface OutletClusterRef {
+  id: string;
+  title: string;
+  bucketDate: string;
+  articleCount: number;
+}
+
+export interface OutletProfile {
+  outlet: OutletMetadata;
+  stats: OutletStats;
+  overlaps: OutletOverlap[];
+  daily: OutletDailyPoint[];
+  recentClusters: OutletClusterRef[];
+}

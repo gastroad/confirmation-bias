@@ -5,6 +5,11 @@ export type {
   LeaningGroupRatios,
   OutletMetadata,
   TiltSide,
+  OutletStats,
+  OutletOverlap,
+  OutletDailyPoint,
+  OutletClusterRef,
+  OutletProfile,
 } from "./model";
 
 export {
@@ -24,5 +29,12 @@ export {
   TILT_BALANCE_THRESHOLD,
 } from "./model";
 
+export {
+  toOutletStats,
+  toOutletProfile,
+  buildOutletSummary,
+  sortOutletsByVolume,
+  ratioPercent,
+} from "./lib";
 export { LEANING_COLORS, TILT_COLORS } from "./leaning-colors";
 export { LeaningBar } from "./ui/LeaningBar";
