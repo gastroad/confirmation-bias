@@ -108,6 +108,14 @@ export const LEANING_GROUP_LABELS: Record<LeaningGroup, string> = {
 // 진보 → 중도 → 보수 (LeaningBar의 좌→우 스펙트럼과 동일한 순서)
 export const LEANING_GROUP_ORDER: LeaningGroup[] = ["progressive", "neutral", "conservative"];
 
+/**
+ * leaning → 진영 그룹의 역방향 매핑. `unknown`은 어느 그룹에도 속하지 않아 **키 자체가 없다**
+ * (그룹 수를 셀 때 "미분류"가 한 진영처럼 잡히면 안 된다).
+ */
+export const GROUP_BY_LEANING: Record<string, LeaningGroup> = Object.fromEntries(
+  LEANING_GROUP_ORDER.flatMap((g) => LEANING_GROUPS[g].map((l) => [l, g]))
+);
+
 export const OUTLETS_BY_GROUP: Record<LeaningGroup, OutletMetadata[]> = {
   conservative: OUTLETS.filter((o) => LEANING_GROUPS.conservative.includes(o.leaning)),
   neutral: OUTLETS.filter((o) => LEANING_GROUPS.neutral.includes(o.leaning)),

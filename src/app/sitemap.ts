@@ -1,20 +1,33 @@
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
-import { findClusterRefs } from "@server/queries/clusters";
+import { findIndexableClusterRefs } from "@server/queries/clusters";
 import { findDaySummaries } from "@server/queries/days";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
+import { INDEX_CRITERIA } from "@/entities/cluster";
 import { SITE_URL, absoluteUrl } from "@/shared/config/site";
 
 // 크롤러가 올 때마다 1만 건을 조회할 이유가 없다. Date를 넘기지 않도록 ISO 문자열로 뽑는다
 // (unstable_cache는 반환값을 JSON 직렬화한다).
+//
+// **색인 기준을 넘긴 클러스터만 싣는다**(→ entities/cluster의 INDEX_MIN_ARTICLES 주석).
+// 날짜 페이지도 같은 기준으로 거른다 — 껍데기만 모인 날짜를 상위 허브로 내보낼 이유가 없다.
 const getEntries = unstable_cache(
   async () => {
-    const [clusters, days] = await Promise.all([findClusterRefs(), findDaySummaries()]);
+    const [clusters, days] = await Promise.all([
+      findIndexableClusterRefs(INDEX_CRITERIA),
+      findDaySummaries(),
+    ]);
+
+    const toIso = (d: Date) => d.toISOString().slice(0, 10);
+    const indexableDays = new Set(clusters.map((c) => toIso(c.bucketDate)));
+
     return {
-      days: days.map((d) => ({
-        date: d.bucketDate.toISOString().slice(0, 10),
-        lastModified: d.bucketDate.toISOString(),
-      })),
+      days: days
+        .filter((d) => indexableDays.has(toIso(d.bucketDate)))
+        .map((d) => ({
+          date: toIso(d.bucketDate),
+          lastModified: d.bucketDate.toISOString(),
+        })),
       clusters: clusters.map((c) => ({
         id: c.id,
         lastModified: c.updatedAt.toISOString(),
@@ -40,7 +53,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: absoluteUrl(`/clusters/${c.id}`),
     lastModified: new Date(c.lastModified),
     changeFrequency: "monthly",
-    priority: 0.5,
+    // 전량 색인하던 시절엔 0.5로 눌러 뒀지만, 이제 여기 남은 건 기준을 통과한 페이지뿐이다.
+    priority: 0.6,
   }));
 
   return [

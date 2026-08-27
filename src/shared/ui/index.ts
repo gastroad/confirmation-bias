@@ -1,6 +1,7 @@
 export { Skeleton } from "./Skeleton";
 export { Logo } from "./Logo";
 export { ThemeScript } from "./ThemeScript";
+export { AdSenseLoader } from "./AdSenseLoader";
 export {
   SunIcon,
   MoonIcon,

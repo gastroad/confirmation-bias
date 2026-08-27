@@ -4,10 +4,14 @@ import {
   calcLeaningGroupRatios,
   calcTilt,
   LEANING_ORDER,
+  LEANING_GROUPS,
+  LEANING_GROUP_ORDER,
+  GROUP_BY_LEANING,
 } from "@/entities/outlet";
-import type { Leaning } from "@/entities/outlet";
+import type { Leaning, LeaningDistribution } from "@/entities/outlet";
 import type { TimelinePoint } from "@/entities/article";
 import type { ClusterSummary, ClusterDetail, ClusterStats, DaySummary } from "./model";
+import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
 
 // 서버 쿼리(server/queries/clusters.ts) 결과를 받는 입력 형태.
 // Prisma 결과가 구조적으로 호환되며, 여기(도메인 레이어)에서 DTO로 변환한다.
@@ -24,7 +28,6 @@ interface DetailRow extends SummaryRow {
   articles: {
     id: string;
     title: string;
-    description: string | null;
     url: string;
     publishedAt: Date;
     outletId: string;
@@ -81,7 +84,6 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     return {
       id: a.id,
       title: a.title,
-      description: a.description,
       url: a.url,
       publishedAt: a.publishedAt.toISOString(),
       outlet: meta ?? {
@@ -158,3 +160,36 @@ export function toClusterStats(raw: {
     dominantLeaning: dist[dominantLeaning ?? "unknown"] > 0 ? dominantLeaning : null,
   };
 }
+
+/**
+ * 등장한 진영 그룹(진보/중도/보수)의 수. `unknown`은 어느 그룹에도 속하지 않아 세지 않는다.
+ */
+export function countLeaningGroups(dist: LeaningDistribution): number {
+  return LEANING_GROUP_ORDER.filter((g) => LEANING_GROUPS[g].some((l) => dist[l] > 0)).length;
+}
+
+/**
+ * 이 클러스터가 색인 대상인가. 기준의 근거는 `INDEX_MIN_ARTICLES` 주석에 있다.
+ *
+ * DTO만 보고 판정하므로 상세 페이지는 **DB를 다시 치지 않는다.** sitemap은 1만 건을 전부
+ * DTO로 만들 수 없어 같은 기준을 SQL로 표현한다(`findIndexableClusterRefs`) — 임계값은
+ * 거기에도 이 상수를 넘겨 단일 출처를 유지한다.
+ */
+export function isIndexableCluster(
+  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution">
+): boolean {
+  return (
+    cluster.articleCount >= INDEX_MIN_ARTICLES &&
+    countLeaningGroups(cluster.leaningDistribution) >= INDEX_MIN_LEANING_GROUPS
+  );
+}
+
+/**
+ * `server/queries/clusters.ts`의 raw SQL에 그대로 넘기는 색인 기준.
+ * `server/`는 이 상수들을 import할 수 없으므로 값이 여기서 흘러 들어간다.
+ */
+export const INDEX_CRITERIA = {
+  minArticles: INDEX_MIN_ARTICLES,
+  minLeaningGroups: INDEX_MIN_LEANING_GROUPS,
+  groupByLeaning: GROUP_BY_LEANING,
+} as const;

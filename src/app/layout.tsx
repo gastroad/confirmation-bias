@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_KR, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
-import Script from "next/script";
 
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { websiteSchema } from "@/shared/seo/schemas";
@@ -97,13 +96,8 @@ export default function RootLayout({
     >
       <body>
         <ThemeScript />
-        {/* AdSense 로더. 이 스크립트가 광고 게재와 EEA/UK/CH 대상 CMP 동의 배너를 함께 띄운다. */}
-        <Script
-          id="adsbygoogle-init"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-        />
+        {/* AdSense 로더는 여기 없다. 콘텐츠 페이지에서만 렌더한다 → shared/ui/AdSenseLoader.
+            루트에 두면 /auth·/account·/admin 같은 콘텐츠 없는 화면에도 광고가 붙는다. */}
         <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
         <footer className={layout.footer}>

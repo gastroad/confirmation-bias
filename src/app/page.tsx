@@ -5,7 +5,7 @@ import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
 import { ProfileMenu } from "@/features/profile-menu";
-import { Logo } from "@/shared/ui";
+import { AdSenseLoader, Logo } from "@/shared/ui";
 import { signOutAction } from "./auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
@@ -24,6 +24,9 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
 
   return (
     <div className={layout.page}>
+      {/* 최신 날짜에 색인 대상 이슈가 있을 때만 광고를 띄운다 → shared/ui/AdSenseLoader */}
+      {nav && nav.indexableClusterCount > 0 && <AdSenseLoader />}
+
       <header className={layout.header}>
         <div className={layout.headerInner}>
           <Logo size={28} className={layout.logo} />

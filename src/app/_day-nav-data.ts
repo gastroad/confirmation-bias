@@ -4,7 +4,9 @@ import {
   findDaySummary,
   findAdjacentBucketDates,
 } from "@server/queries/days";
+import { countIndexableClusters } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
+import { INDEX_CRITERIA } from "@/entities/cluster";
 
 /**
  * 날짜 내비게이션이 쓰는 값들. 홈과 `/d/[date]`가 공유한다.
@@ -18,6 +20,8 @@ export interface DayNavData {
   nextDate: string | null;
   clusterCount: number;
   articleCount: number;
+  /** 색인 기준을 넘긴 클러스터 수. 0이면 이 날짜 페이지는 색인에서 뺀다. */
+  indexableClusterCount: number;
 }
 
 const toIso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
@@ -25,9 +29,10 @@ const toIso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 export const getDayNav = unstable_cache(
   async (dateIso: string): Promise<DayNavData> => {
     const bucket = new Date(`${dateIso}T00:00:00Z`);
-    const [summary, adjacent] = await Promise.all([
+    const [summary, adjacent, indexableClusterCount] = await Promise.all([
       findDaySummary(bucket),
       findAdjacentBucketDates(bucket),
+      countIndexableClusters(bucket, INDEX_CRITERIA),
     ]);
     return {
       date: dateIso,
@@ -35,6 +40,7 @@ export const getDayNav = unstable_cache(
       nextDate: toIso(adjacent.next),
       clusterCount: summary?.clusterCount ?? 0,
       articleCount: summary?.articleCount ?? 0,
+      indexableClusterCount,
     };
   },
   ["day-nav", DTO_VERSION],
