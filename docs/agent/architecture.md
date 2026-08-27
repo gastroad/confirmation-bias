@@ -59,7 +59,7 @@ shared/          — 프레임워크 무관 유틸 / 스타일
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
   ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지), AdSenseLoader(콘텐츠 페이지 전용)
 entities/        — 도메인 모델 + dumb UI
-  outlet/        — model.ts(순수·css 무의존), leaning-colors.ts(테마 토큰), ui/, index.ts
+  outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts, ui/, index.ts
   article/       — model.ts, index.ts
   cluster/       — model.ts(+색인 기준 상수), lib.ts(row→DTO 매핑·isIndexableCluster), api.ts, ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
@@ -72,6 +72,7 @@ widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
   cluster-detail/
   cluster-comments/
+  outlet-profile/  — 언론사 페이지 본문(통계·추이 차트·중복 매체·최근 이슈)
 app/             — Next.js App Router
   page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
   d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
@@ -80,6 +81,7 @@ app/             — Next.js App Router
   account/       — delete(회원 탈퇴). /auth 레이아웃 밖에 둔다(로그인 상태에서 쓰는 화면)
   terms/         — 이용약관
   about/         — 소개 및 방법론. 성향 분류 근거·클러스터링 방식·**한계 고지**
+  outlets/       — 언론사 허브 + `[id]` 상세. `_data.ts`가 집계를 6시간 캐시
   error.tsx · loading.tsx · not-found.tsx — 상태 화면
   admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]

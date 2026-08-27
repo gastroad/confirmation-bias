@@ -145,6 +145,14 @@ export default async function AboutPage() {
 
           <OutletTable />
 
+          <p className={styles.note}>
+            매체별 보도량·단독 보도 비율·최초 보도 횟수는{" "}
+            <Link href="/outlets" className={styles.link}>
+              언론사별 보도 분석
+            </Link>
+            에서 볼 수 있습니다.
+          </p>
+
           <h3 className={styles.subheading}>이 분류의 성격</h3>
           <p className={styles.paragraph}>
             이 배치는 <strong>운영자가 정한 상대적 위치</strong>입니다. 국내 언론 지형에 대한 통상적
