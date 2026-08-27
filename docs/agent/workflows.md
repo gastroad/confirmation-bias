@@ -28,6 +28,17 @@ npm run cleanup:dates
 댓글이 달린 클러스터가 대상에 있으면 **지우지 않고 중단한다**(Comment는 ON DELETE CASCADE라
 사람이 판단해야 한다). 수집 단계의 재발 방지는 `scripts/collect.ts`의 `MAX_PAST_DAYS`가 맡는다.
 
+```bash
+# 4. 기존 클러스터에 요약 문장 백필. 문장 규칙을 고친 뒤 전체에 반영할 때도 이걸 쓴다
+npm run backfill:summary -- --dry-run          # 쓰지 않고 표본만
+npm run backfill:summary                       # 전체 재생성
+npm run backfill:summary -- --missing-only     # summary가 비어 있는 것만
+```
+
+⚠️ **백필에 `cluster:day --all`을 쓰지 않는다.** `clusterDay`는 그 날짜의 클러스터를 지우고
+**새 id로 재생성**하므로 1만여 개 URL이 전부 바뀌고 이미 색인된 URL이 전량 404가 된다.
+`backfill:summary`는 클러스터를 건드리지 않고 `summary`만 UPDATE한다.
+
 ## DB 초기화 (처음 셋업)
 
 ```bash
