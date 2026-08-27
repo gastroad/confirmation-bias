@@ -109,6 +109,9 @@ export default function RootLayout({
               <Link className={layout.footerLink} href="/">
                 홈
               </Link>
+              <Link className={layout.footerLink} href="/about">
+                소개 및 방법론
+              </Link>
               <Link className={layout.footerLink} href="/terms">
                 이용약관
               </Link>

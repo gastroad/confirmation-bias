@@ -65,6 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
+      // 방법론 페이지는 이 서비스가 뭘 어떻게 계산하는지 밝히는 곳이라 약관보다 상위다.
+      url: absoluteUrl("/about"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: absoluteUrl("/privacy"),
       lastModified: new Date(),
       changeFrequency: "yearly",

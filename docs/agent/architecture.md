@@ -79,6 +79,7 @@ app/             — Next.js App Router
   auth/          — sign-in · sign-up · actions.ts (Server Action)
   account/       — delete(회원 탈퇴). /auth 레이아웃 밖에 둔다(로그인 상태에서 쓰는 화면)
   terms/         — 이용약관
+  about/         — 소개 및 방법론. 성향 분류 근거·클러스터링 방식·**한계 고지**
   error.tsx · loading.tsx · not-found.tsx — 상태 화면
   admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
