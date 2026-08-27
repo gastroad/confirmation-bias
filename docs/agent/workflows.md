@@ -35,6 +35,12 @@ npm run backfill:summary                       # 전체 재생성
 npm run backfill:summary -- --missing-only     # summary가 비어 있는 것만
 ```
 
+```bash
+# 5. 이미 적재된 제목·발췌의 HTML 엔티티 잔재 복원 (멱등)
+npm run repair:titles -- --dry-run
+npm run repair:titles
+```
+
 ⚠️ **백필에 `cluster:day --all`을 쓰지 않는다.** `clusterDay`는 그 날짜의 클러스터를 지우고
 **새 id로 재생성**하므로 1만여 개 URL이 전부 바뀌고 이미 색인된 URL이 전량 404가 된다.
 `backfill:summary`는 클러스터를 건드리지 않고 `summary`만 UPDATE한다.

@@ -2,6 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { db } from "../server/db";
 import { toBucketDate } from "../server/clustering/bucket";
 import { findBlockedUrlSet } from "../server/queries/blocked-urls";
+import { decodeFeedEntities } from "../server/feed-entities";
 import feedSpecs from "./feed_specs.json";
 
 // RSS를 긁어 Article로 바로 적재한다. 임베딩·클러스터링은 하지 않는다
@@ -52,8 +53,16 @@ function toText(val: unknown): string {
   return "";
 }
 
+/**
+ * 태그를 걷어낸 뒤 엔티티를 되돌린다. **순서가 중요하다** — 엔티티를 먼저 풀면
+ * `&lt;script&gt;`가 진짜 태그가 되어 그다음 태그 제거에 걸려 사라진다.
+ *
+ * URL에는 적용하지 않는다. 프레시안 링크에 `&amp;ref=rss`가 섞여 오지만 `Article.url`은
+ * `@unique`라, 지금부터 디코딩하면 같은 기사가 옛 URL과 새 URL로 두 번 적재된다.
+ * 링크 자체는 정상 동작하므로 건드리지 않는다.
+ */
 function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, "").trim();
+  return decodeFeedEntities(str.replace(/<[^>]*>/g, "")).trim();
 }
 
 // RSS 2.0은 pubDate, Dublin Core는 dc:date를 쓴다. 경향·프레시안이 후자라 pubDate만 보면

@@ -21,6 +21,7 @@
     "cluster:day": "npx tsx --env-file-if-exists=.env scripts/cluster-day.ts",
     "cleanup:dates": "npx tsx --env-file-if-exists=.env scripts/cleanup-dirty-dates.ts",
     "backfill:summary": "npx tsx --env-file-if-exists=.env scripts/backfill-summary.ts",
+    "repair:titles": "npx tsx --env-file-if-exists=.env scripts/repair-titles.ts",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
