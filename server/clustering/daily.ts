@@ -5,6 +5,7 @@ import { generateEmbeddings } from "./embed";
 import { dot } from "./similarity";
 import { centroidOf, decodeEmbedding, encodeEmbedding, normalizeInPlace } from "./vector";
 import { bucketRange, formatBucketDate } from "./bucket";
+import { buildClusterSummary } from "./summary";
 
 /**
  * 코사인 유사도 임계값. 세 날짜(2026-08-20 662건 / 08-17 403건 / 07-15 518건)를
@@ -34,6 +35,10 @@ interface Loaded {
   ids: string[];
   titles: string[];
   vectors: Float32Array[];
+  /** `ids`와 같은 인덱스. 요약 문장(진영별 보도·침묵·시차)이 쓴다. */
+  outletIds: string[];
+  /** `ids`와 같은 인덱스. */
+  publishedAt: Date[];
   /** 재클러스터링 전 배정. 댓글 승계에 쓴다. */
   previousClusterByArticle: Map<string, string>;
 }
@@ -43,7 +48,15 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
   const { start, end } = bucketRange(bucket);
   const rows = await db.article.findMany({
     where: { publishedAt: { gte: start, lt: end } },
-    select: { id: true, title: true, description: true, embedding: true, clusterId: true },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      embedding: true,
+      clusterId: true,
+      outletId: true,
+      publishedAt: true,
+    },
     orderBy: { publishedAt: "asc" },
   });
 
@@ -67,6 +80,8 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
   const ids: string[] = [];
   const titles: string[] = [];
   const vectors: Float32Array[] = [];
+  const outletIds: string[] = [];
+  const publishedAt: Date[] = [];
   const previousClusterByArticle = new Map<string, string>();
 
   for (const r of rows) {
@@ -79,6 +94,8 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
 
     ids.push(r.id);
     titles.push(r.title);
+    outletIds.push(r.outletId);
+    publishedAt.push(r.publishedAt);
     if (r.clusterId) previousClusterByArticle.set(r.id, r.clusterId);
     // 512차원으로 자르면서 생긴 노름 오차(0.99933~1.00058)를 여기서 흡수한다.
     // 이후 hac은 유사도를 내적으로만 계산한다.
@@ -89,6 +106,8 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
     ids,
     titles,
     vectors,
+    outletIds,
+    publishedAt,
     previousClusterByArticle,
     embedded: dryRun ? 0 : missing.length,
   };
@@ -158,10 +177,8 @@ export async function clusterDay(
   { threshold = DEFAULT_THRESHOLD, dryRun = false }: ClusterDayOptions = {}
 ): Promise<ClusterDayResult> {
   const bucketDate = formatBucketDate(bucket);
-  const { ids, titles, vectors, previousClusterByArticle, embedded } = await loadDay(
-    bucket,
-    dryRun
-  );
+  const { ids, titles, vectors, outletIds, publishedAt, previousClusterByArticle, embedded } =
+    await loadDay(bucket, dryRun);
 
   if (vectors.length === 0) {
     return { bucketDate, articles: 0, clusters: 0, largest: 0, singletons: 0, embedded };
@@ -194,6 +211,15 @@ export async function clusterDay(
 
   const successor = successorByOldCluster(previousClusterByArticle, ids, groups, clusterIds);
 
+  // 침묵한 진영을 말하려면 **보도하지 않은 매체까지 포함한 전체 명단**이 필요하다.
+  const outlets = await db.outlet.findMany({ select: { id: true, name: true, leaning: true } });
+  const summaries = groups.map((group) =>
+    buildClusterSummary(
+      group.map((i) => ({ outletId: outletIds[i], publishedAt: publishedAt[i] })),
+      outlets
+    )
+  );
+
   // **삭제를 마지막에 한다.** 옛 클러스터를 먼저 지우면 Comment의 ON DELETE CASCADE가
   // 댓글까지 가져가 버린다(재실행 시에만 해당). 새 클러스터를 만들고 댓글을 옮긴 뒤에 지운다.
   await db.$transaction(async (tx) => {
@@ -207,6 +233,7 @@ export async function clusterDay(
         bucketDate: bucket,
         representativeTitle: titles[representativeIndex(vectors, group)],
         articleCount: group.length,
+        summary: summaries[gi],
       })),
     });
 

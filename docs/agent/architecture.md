@@ -15,6 +15,7 @@ RSS 피드
     └─▶ server/clustering/daily.ts
           ├─ 임베딩 없는 기사만 배치 임베딩 (100건/request)
           ├─ hac.ts — average linkage 응집 클러스터링 (threshold 0.62)
+          ├─ summary.ts — 진영별 보도·침묵·시차를 문장으로 (자체 작성 텍스트)
           └─ 트랜잭션: 해당 날짜 클러스터 삭제 → 재생성 → 기사 배정  ⇒ 멱등
               │
               └─▶ server/queries/*  — 순수 Prisma 조회 (커서 페이지네이션/집계)
@@ -27,26 +28,28 @@ RSS 피드
 
 ## 디렉토리 역할
 
-| 경로                              | 역할                                                                               |
-| --------------------------------- | ---------------------------------------------------------------------------------- |
-| `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                                           |
-| `server/auth.ts`                  | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md)  |
-| `server/session-cookie.ts`        | 세션 쿠키 존재 판정(순수 함수). 왕복 단축 → [caching.md](./caching.md)             |
-| `server/cache.ts`                 | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                   |
-| `server/github.ts`                | `workflow_dispatch` 호출 (관리자 수동 트리거)                                      |
-| `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                            |
-| `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)             |
-| `server/clustering/similarity.ts` | 내적·코사인 유사도 순수 함수                                                       |
-| `server/clustering/vector.ts`     | 임베딩 Float32 bytes 인코딩·정규화·centroid                                        |
-| `server/clustering/bucket.ts`     | KST 날짜 버킷 변환 (`toBucketDate` 등)                                             |
-| `server/clustering/hac.ts`        | 응집 클러스터링 (average linkage, 순수 함수)                                       |
-| `server/clustering/daily.ts`      | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                            |
-| `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                    |
-| `scripts/collect.ts`              | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md) |
-| `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)               |
-| `scripts/cleanup-dirty-dates.ts`  | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                   |
-| `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                                    |
-| `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                               |
+| 경로                              | 역할                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                                             |
+| `server/auth.ts`                  | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md)    |
+| `server/session-cookie.ts`        | 세션 쿠키 존재 판정(순수 함수). 왕복 단축 → [caching.md](./caching.md)               |
+| `server/cache.ts`                 | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                     |
+| `server/github.ts`                | `workflow_dispatch` 호출 (관리자 수동 트리거)                                        |
+| `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                              |
+| `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)               |
+| `server/clustering/similarity.ts` | 내적·코사인 유사도 순수 함수                                                         |
+| `server/clustering/vector.ts`     | 임베딩 Float32 bytes 인코딩·정규화·centroid                                          |
+| `server/clustering/bucket.ts`     | KST 날짜 버킷 변환 (`toBucketDate` 등)                                               |
+| `server/clustering/hac.ts`        | 응집 클러스터링 (average linkage, 순수 함수)                                         |
+| `server/clustering/daily.ts`      | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                              |
+| `server/clustering/summary.ts`    | 클러스터 요약 문장 생성 (보도 편중·침묵한 진영·보도 시차). **LLM 미사용, 순수 함수** |
+| `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                      |
+| `scripts/collect.ts`              | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md)   |
+| `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)                 |
+| `scripts/cleanup-dirty-dates.ts`  | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                     |
+| `scripts/backfill-summary.ts`     | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
+| `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                                      |
+| `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                                 |
 
 ## FSD 레이어 (src/)
 
