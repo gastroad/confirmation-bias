@@ -61,7 +61,7 @@ shared/          — 프레임워크 무관 유틸 / 스타일
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts, ui/, index.ts
   article/       — model.ts, index.ts
-  cluster/       — model.ts(+색인 기준 상수), lib.ts(row→DTO 매핑·isIndexableCluster), api.ts, ui/, index.ts
+  cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙), api.ts, ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
@@ -82,6 +82,7 @@ app/             — Next.js App Router
   terms/         — 이용약관
   about/         — 소개 및 방법론. 성향 분류 근거·클러스터링 방식·**한계 고지**
   outlets/       — 언론사 허브 + `[id]` 상세. `_data.ts`가 집계를 6시간 캐시
+  weekly/        — 주간 리포트(선별 게재). 선별 규칙은 `entities/cluster`에, 화면에도 그대로 노출
   error.tsx · loading.tsx · not-found.tsx — 상태 화면
   admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
