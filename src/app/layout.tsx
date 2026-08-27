@@ -112,6 +112,9 @@ export default function RootLayout({
               <Link className={layout.footerLink} href="/about">
                 소개 및 방법론
               </Link>
+              <Link className={layout.footerLink} href="/weekly">
+                주간 리포트
+              </Link>
               <Link className={layout.footerLink} href="/outlets">
                 언론사
               </Link>

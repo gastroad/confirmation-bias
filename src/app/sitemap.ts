@@ -96,6 +96,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.3,
     },
     {
+      // 선별 게재(curation) 페이지. 매일 내용이 바뀌고 URL은 고정이다.
+      url: absoluteUrl("/weekly"),
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
       url: absoluteUrl("/outlets"),
       lastModified: new Date(),
       changeFrequency: "daily",

@@ -15,4 +15,7 @@ export {
   countLeaningGroups,
   isIndexableCluster,
   INDEX_CRITERIA,
+  partitionBySpread,
+  selectMostSplit,
+  selectMostShared,
 } from "./lib";

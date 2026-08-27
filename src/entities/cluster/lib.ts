@@ -1,4 +1,5 @@
 import {
+  TILT_BALANCE_THRESHOLD,
   OUTLET_MAP,
   emptyDistribution,
   calcLeaningGroupRatios,
@@ -193,3 +194,50 @@ export const INDEX_CRITERIA = {
   minLeaningGroups: INDEX_MIN_LEANING_GROUPS,
   groupByLeaning: GROUP_BY_LEANING,
 } as const;
+
+/**
+ * 목록에서 **한 매체만 다룬 이슈**를 갈라낸다.
+ *
+ * 실측으로 클러스터의 61%가 단독 보도다. 그대로 섞어 놓으면 스크롤할수록 비교가 성립하지
+ * 않는 카드만 나온다. **감추는 게 아니라 분류하는 것이다** — 호출한 쪽이 건수를 밝히고
+ * 접어서 보여준다. → docs/agent/adsense-compliance.md
+ */
+export function partitionBySpread(clusters: ClusterSummary[]): {
+  covered: ClusterSummary[];
+  solo: ClusterSummary[];
+} {
+  const covered: ClusterSummary[] = [];
+  const solo: ClusterSummary[] = [];
+  for (const c of clusters) (c.outletCount >= 2 ? covered : solo).push(c);
+  return { covered, solo };
+}
+
+/**
+ * 진영 간 보도량이 가장 크게 갈린 이슈. 주간 리포트의 선별 규칙이다.
+ *
+ * `minArticles`를 색인 기준보다 높게 잡는 이유: 3~4건짜리는 한 건만 갈려도 ±75%p가 나와
+ * 목록이 그런 것들로만 채워진다. 수치가 과장될 뿐 아니라 "여러 매체가 다뤘는데도 한쪽이
+ * 압도했다"는 이 목록의 주장 자체가 성립하지 않는다.
+ */
+export function selectMostSplit(
+  clusters: readonly ClusterSummary[],
+  { minArticles, limit }: { minArticles: number; limit: number }
+): ClusterSummary[] {
+  return clusters
+    .filter((c) => c.articleCount >= minArticles && Math.abs(c.tilt) >= TILT_BALANCE_THRESHOLD)
+    .slice()
+    .sort((a, b) => Math.abs(b.tilt) - Math.abs(a.tilt) || b.articleCount - a.articleCount)
+    .slice(0, limit);
+}
+
+/** 진보·중도·보수가 모두 다룬 이슈를 보도량 순으로. 성향과 무관하게 무게가 실린 사건. */
+export function selectMostShared(
+  clusters: readonly ClusterSummary[],
+  limit: number
+): ClusterSummary[] {
+  return clusters
+    .filter((c) => countLeaningGroups(c.leaningDistribution) === LEANING_GROUP_ORDER.length)
+    .slice()
+    .sort((a, b) => b.articleCount - a.articleCount || Math.abs(a.tilt) - Math.abs(b.tilt))
+    .slice(0, limit);
+}

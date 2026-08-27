@@ -125,6 +125,28 @@ export async function countIndexableClusters(
   return row?.count ?? 0;
 }
 
+/**
+ * 날짜 구간의 클러스터. 주간 리포트가 쓴다.
+ *
+ * `minArticles`로 1차로 거른 뒤 색인 판정은 호출자가 DTO로 마무리한다 —
+ * 진영 수까지 SQL로 세는 것보다 이쪽이 정확하고(같은 `isIndexableCluster`를 쓴다)
+ * 한 주 분량이면 양도 얼마 안 된다.
+ */
+export async function findClustersInRange(from: Date, to: Date, minArticles: number) {
+  return db.cluster.findMany({
+    where: { bucketDate: { gte: from, lte: to }, articleCount: { gte: minArticles } },
+    orderBy: [{ bucketDate: "desc" }, { articleCount: "desc" }, { id: "desc" }],
+    select: {
+      id: true,
+      representativeTitle: true,
+      summary: true,
+      bucketDate: true,
+      createdAt: true,
+      articles: { select: { outletId: true, publishedAt: true } },
+    },
+  });
+}
+
 export async function findClusterDetailRow(id: string) {
   return db.cluster.findUnique({
     where: { id },

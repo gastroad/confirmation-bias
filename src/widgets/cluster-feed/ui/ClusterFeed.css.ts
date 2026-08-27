@@ -205,3 +205,66 @@ export const retryButton = style({
     "&:hover": { borderColor: vars.color.borderHover },
   },
 });
+
+/**
+ * 단독 보도 묶음. 카드가 아니라 목록으로 낮춰 그린다 — 중심선을 관통시키지 않는 것도
+ * 의도다. 비교가 성립하지 않는 이슈에 축을 그리면 그 자체가 거짓말이 된다.
+ */
+export const soloBlock = style({
+  marginTop: 20,
+  border: `1px solid ${vars.color.border}`,
+  borderRadius: vars.radius.md,
+  background: vars.color.surface,
+});
+
+export const soloSummary = style({
+  display: "flex",
+  alignItems: "baseline",
+  gap: 8,
+  flexWrap: "wrap",
+  padding: "12px 14px",
+  fontSize: 13.5,
+  color: vars.color.textSecondary,
+  cursor: "pointer",
+  listStyle: "none",
+  selectors: {
+    "&::-webkit-details-marker": { display: "none" },
+    "&:hover": { color: vars.color.text },
+  },
+});
+
+export const soloHint = style({
+  fontSize: 12,
+  color: vars.color.textFaint,
+});
+
+export const soloList = style({
+  borderTop: `1px solid ${vars.color.border}`,
+  padding: "4px 0",
+});
+
+export const soloItem = style({
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  padding: "9px 14px",
+  color: "inherit",
+  textDecoration: "none",
+  selectors: {
+    "&:hover": { background: vars.color.bg },
+  },
+});
+
+export const soloTitle = style({
+  fontSize: 13.5,
+  lineHeight: 1.5,
+  color: vars.color.textSecondary,
+});
+
+export const soloCount = style({
+  fontFamily: vars.font.mono,
+  fontSize: 12,
+  color: vars.color.textFaint,
+  flexShrink: 0,
+  fontVariantNumeric: "tabular-nums",
+});

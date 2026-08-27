@@ -12,7 +12,12 @@ import {
   calcLeaningGroupRatios,
   LEANING_GROUP_LABELS,
 } from "@/entities/outlet";
-import { fetchClustersPage, fetchClusterStats, type ClusterSummary } from "@/entities/cluster";
+import {
+  fetchClustersPage,
+  fetchClusterStats,
+  partitionBySpread,
+  type ClusterSummary,
+} from "@/entities/cluster";
 import { OUTLETS_PARAM, parseOutletParam } from "@/features/outlet-filter";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
 import { Skeleton } from "@/shared/ui";
@@ -155,6 +160,7 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
   });
 
   const clusters = data?.pages.flatMap((p) => p.items) ?? [];
+  const { covered, solo } = partitionBySpread(clusters);
 
   return (
     <>
@@ -198,13 +204,34 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
           </div>
         ) : (
           <>
-            <ul className={styles.list}>
-              {clusters.map((c) => (
-                <li key={c.id}>
-                  <ClusterCard cluster={c} />
-                </li>
-              ))}
-            </ul>
+            {covered.length > 0 && (
+              <ul className={styles.list}>
+                {covered.map((c) => (
+                  <li key={c.id}>
+                    <ClusterCard cluster={c} />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {solo.length > 0 && (
+              <details className={styles.soloBlock}>
+                <summary className={styles.soloSummary}>
+                  단독 보도 <b>{solo.length}</b>건
+                  <span className={styles.soloHint}>한 매체만 다룬 이슈 · 비교 대상 없음</span>
+                </summary>
+                <ul className={styles.soloList}>
+                  {solo.map((c) => (
+                    <li key={c.id}>
+                      <Link href={`/clusters/${c.id}`} className={styles.soloItem}>
+                        <span className={styles.soloTitle}>{c.representativeTitle}</span>
+                        <span className={styles.soloCount}>{c.articleCount}건</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
 
             {isFetchingNextPage && <SkeletonList />}
             <div ref={sentinelRef} className={styles.sentinel} aria-hidden />
