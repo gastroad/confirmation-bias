@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# playwright (MCP 스크린샷·페이지 스냅샷, e2e 리포트·산출물)
+/.playwright-mcp/
+/test-results/
+/playwright-report/
+/blob-report/
