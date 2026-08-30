@@ -170,6 +170,63 @@ export function calcTilt(ratios: LeaningGroupRatios): number {
  */
 export const TILT_BALANCE_THRESHOLD = 5;
 
+export interface BarSegment {
+  leaning: Leaning;
+  count: number;
+  /** 막대 안에서 차지하는 폭(%). 세그먼트 합은 100이다. */
+  percent: number;
+}
+
+export interface BarGeometry {
+  /**
+   * 막대 안에서 중도 구간의 중점이 놓인 위치(%). 이것이 **중심선**이고,
+   * 진입 애니메이션이 자라는 지점(`transform-origin`의 x좌표)이기도 하다.
+   */
+  midpoint: number;
+  /** 트랙 좌측에서 막대가 시작하는 위치(%). */
+  left: number;
+  /** 0건인 성향은 빠진다. 진보 → 보수 순(LEANING_ORDER). */
+  segments: BarSegment[];
+}
+
+/**
+ * 성향 분포를 중심선 기준 막대의 기하로 옮긴다. 기사가 없으면 null(빈 레일).
+ *
+ * 막대는 폭이 아니라 **위치**로 말한다 — 중도 구간의 중점이 항상 트랙 한가운데(50%)에
+ * 놓이므로, 한쪽으로 튀어나온 길이가 곧 그 이슈의 편향이다. 목록에서 여러 막대가 같은
+ * 세로선을 공유하면 위아래 이슈가 서로 직접 비교된다.
+ *
+ * ```
+ * midpoint = 진보% + 중도%/2       ← 막대 안에서 중도 중점의 위치
+ * left     = 50 − midpoint × 0.5   ← 트랙 좌측에서의 시작점
+ * ```
+ *
+ * `× 0.5`는 **막대가 트랙 폭의 50%만 차지하기 때문이다**(한쪽으로 100% 쏠려도 잘리지 않는
+ * 최대 폭). 그래서 `left + midpoint × 0.5`는 어떤 분포에서도 50이 된다.
+ *
+ * 계산이 JSX 밖에 있는 이유: 이 기하가 이 서비스의 시각적 주장이라 브라우저 없이도
+ * 검증할 수 있어야 한다. → docs/agent/architecture.md의 "중심선(meridian)"
+ */
+export function calcBarGeometry(dist: LeaningDistribution): BarGeometry | null {
+  const total = Object.values(dist).reduce((s, n) => s + n, 0);
+  if (total === 0) return null;
+
+  const percentOf = (leaning: Leaning) => (dist[leaning] / total) * 100;
+  const sumOf = (leanings: Leaning[]) => leanings.reduce((s, l) => s + percentOf(l), 0);
+
+  const midpoint = sumOf(LEANING_GROUPS.progressive) + sumOf(LEANING_GROUPS.neutral) / 2;
+
+  return {
+    midpoint,
+    left: 50 - midpoint * 0.5,
+    segments: LEANING_ORDER.filter((l) => dist[l] > 0).map((leaning) => ({
+      leaning,
+      count: dist[leaning],
+      percent: percentOf(leaning),
+    })),
+  };
+}
+
 export type TiltSide = "progressive" | "conservative" | "balanced";
 
 export function tiltSide(tilt: number): TiltSide {

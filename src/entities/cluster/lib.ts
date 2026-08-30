@@ -9,8 +9,8 @@ import {
   LEANING_GROUP_ORDER,
   GROUP_BY_LEANING,
 } from "@/entities/outlet";
-import type { Leaning, LeaningDistribution } from "@/entities/outlet";
-import type { TimelinePoint } from "@/entities/article";
+import type { Leaning, LeaningDistribution, LeaningGroup } from "@/entities/outlet";
+import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article";
 import type { ClusterSummary, ClusterDetail, ClusterStats, DaySummary } from "./model";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
 
@@ -240,4 +240,34 @@ export function selectMostShared(
     .slice()
     .sort((a, b) => b.articleCount - a.articleCount || Math.abs(a.tilt) - Math.abs(b.tilt))
     .slice(0, limit);
+}
+
+export interface LeaningColumn {
+  group: LeaningGroup;
+  /** 보도 시각 오름차순. 누가 먼저 썼는지 읽히도록. */
+  articles: ArticleWithOutlet[];
+  /** 같은 매체의 여러 건은 하나로 센다. */
+  outletCount: number;
+}
+
+/**
+ * 기사를 진보·중도·보수 세 열로 가른다. 상세 페이지가 "같은 사건, 세 갈래 제목"을
+ * 나란히 세우는 근거다.
+ *
+ * **보도하지 않은 진영도 빈 열로 남긴다** — 침묵이 이 서비스가 보여주려는 것이라
+ * 열을 감추면 주장이 사라진다. 명단에 없는 매체(`unknown`)는 어느 열에도 넣지 않는다.
+ */
+export function groupArticlesByLeaning(articles: readonly ArticleWithOutlet[]): LeaningColumn[] {
+  return LEANING_GROUP_ORDER.map((group) => {
+    const leanings: Leaning[] = LEANING_GROUPS[group];
+    const inGroup = articles
+      .filter((a) => leanings.includes(a.outlet.leaning))
+      .sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+
+    return {
+      group,
+      articles: inGroup,
+      outletCount: new Set(inGroup.map((a) => a.outlet.id)).size,
+    };
+  });
 }

@@ -10,6 +10,8 @@ export type {
   OutletDailyPoint,
   OutletClusterRef,
   OutletProfile,
+  BarGeometry,
+  BarSegment,
 } from "./model";
 
 export {
@@ -27,6 +29,7 @@ export {
   calcTilt,
   tiltSide,
   TILT_BALANCE_THRESHOLD,
+  calcBarGeometry,
 } from "./model";
 
 export {
