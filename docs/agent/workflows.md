@@ -149,6 +149,49 @@ npm run format:check
 
 작업 하나 = 워크트리 하나 = 브랜치 하나. `main` 원본 클론은 직접 커밋하지 않고 항상 clean하게 둔다.
 
+**`main` 워크트리는 "무엇을 할지"를 정하는 자리다.** 방향이 정해지면 작업 자체는 별도
+워크트리의 독립 세션이 이어받는다. 인계는 `/handoff` 슬래시 커맨드가 수행한다.
+
+### Orca로 생성 (기본 경로)
+
+```bash
+orca worktree create \
+  --repo name:confirmation-bias \
+  --name feat/<slug> \
+  --agent claude \
+  --prompt "<논의 요약>" \
+  --json
+```
+
+한 번의 호출로 워크트리·브랜치 생성 → setup 훅 → Claude 세션 기동 → 프롬프트 주입까지
+끝난다. 리포에 등록된 setup 훅(`orca repo show --repo name:confirmation-bias`의
+`hookSettings.scripts.setup`)이 아래를 대신하므로 손으로 할 일이 없다.
+
+| 훅                               | 하는 일                                                        |
+| -------------------------------- | -------------------------------------------------------------- |
+| `~/orca/script/orca-seed-env.sh` | `main`의 `.env`·`.env.*` 복사 (gitignore라 새 워크트리엔 없다) |
+| `~/orca/script/orca-draft-pr.sh` | 씨앗 커밋 + `main` 대상 **draft PR** 생성                      |
+| `npm install`                    | `postinstall`이 `prisma generate`까지 수행                     |
+
+- `--agent claude`로 뜬 세션은 **Orca가 관리하는 별도 프로세스**다. 호출한 세션의 컨텍스트를
+  쓰지 않고, 그 턴이 끝나도 계속 산다(Task 툴 서브에이전트와 다른 점).
+  넘긴 쪽은 진행 상황을 들여다보지 않는다 — full handoff다.
+- `--activate`를 붙이면 Orca 화면이 새 워크트리로 전환된다. 기본은 백그라운드 생성.
+- `--base-branch`는 생략한다. 리포 기본 base(`main`)를 쓴다.
+- 넘기는 프롬프트에 `CLAUDE.md`·`docs/agent/*` 내용을 복붙하지 않는다. 새 세션이 자동으로 읽는다.
+
+머지 후 정리:
+
+```bash
+git pull                                        # main 워크트리에서
+orca worktree rm --worktree branch:feat/<slug>
+```
+
+`worktree rm`은 워크트리와 로컬 브랜치를 함께 지운다(머지가 확인된 것만 — 증명되지 않은
+브랜치는 남긴다).
+
+### 수동 생성 (Orca 없이)
+
 ```bash
 # 1. 형제 디렉토리에 워크트리 + 브랜치 동시 생성
 git worktree add ../confirmationbias-<slug> -b feat/<slug>
