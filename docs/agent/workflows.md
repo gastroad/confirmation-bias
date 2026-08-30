@@ -110,10 +110,21 @@ npm run dev          # localhost:3000
 ## 테스트
 
 ```bash
-npm run test:unit -- --run    # 단위 테스트 (watch 없이 1회)
-npm run test:unit             # 단위 테스트 watch 모드
-npm run test:e2e              # E2E (dev 서버 미리 실행 필요)
+npm run test:unit -- --run                    # 단위·API 라우트 (watch 없이 1회)
+npm run test:unit                             # watch 모드
+npm run test:unit -- --run --project src      # jsdom 쪽만 (src/**)
+npm run test:unit -- --run --project server   # node 쪽만 (server/**)
+
+npm run dev                                   # E2E는 dev 서버가 먼저 떠 있어야 한다
+npm run test:e2e                              # 실 DB를 보는 Playwright
+npx playwright test e2e/seo.spec.ts           # 파일 하나만
+npx playwright test --ui                      # 실패 원인을 볼 때
 ```
+
+- **CI(`ci.yml`)는 `test:unit`만 돌린다.** E2E는 실 DB가 필요해 로컬 전용이다.
+- E2E가 통째로 실패하면 먼저 dev 서버와 DB 연결을 확인한다(Neon은 5분 무활동 시 autosuspend).
+- 데이터 조건이 안 맞는 스펙은 실패가 아니라 skip으로 지나간다. 설계·주의점은
+  [conventions.md](./conventions.md)의 "테스트" 절에 있다.
 
 ## 타입 체크 / 린트
 

@@ -93,7 +93,64 @@
 
 ## 테스트
 
-- 단위 테스트: `*.test.ts` 파일을 테스트 대상 파일 옆에 위치.
-- E2E: `e2e/` 디렉토리.
-- `npm run test:unit -- --run` 으로 단위 테스트 실행.
-- Server Component는 Vitest로 테스트 불가 → E2E(Playwright)로 커버.
+테스트 파일은 **대상 파일 옆에** 둔다(`foo.ts` → `foo.test.ts`). E2E만 `e2e/`에 모은다.
+`npm run test:unit -- --run`으로 1회 실행하며, **CI가 실제로 돌리는 건 이것뿐이다**
+(E2E는 실 DB가 필요해 로컬 전용 — 아래 참고).
+
+### 무엇을 어디서 잡는가
+
+| 층         | 도구               | 잡는 것                                                           |
+| ---------- | ------------------ | ----------------------------------------------------------------- |
+| 순수 함수  | Vitest             | 클러스터링·성향 계산·날짜 버킷·문장 생성·**화면의 기하**          |
+| DTO 매핑   | Vitest             | `entities/*/lib.ts` — **캐시 경계**라 Date→문자열이 여기서 끝난다 |
+| API 라우트 | Vitest (node 환경) | 파라미터 파싱·권한(401/404)·응답 모양                             |
+| 화면       | Playwright         | 렌더 결과, 상호작용, SEO 메타, 실제 라우팅                        |
+
+**컴포넌트를 렌더하는 단위 테스트는 두지 않는다.** 렌더 결과는 E2E가 실물로 보는 편이
+낫고, 그 사이에 낀 층은 프로덕션 코드가 바뀔 때마다 같이 손봐야 하는 비용만 남았다.
+(그래서 `@testing-library/*`·`@vitejs/plugin-react`도 정리했다.)
+
+### 계산은 JSX 밖에 둔다
+
+렌더해야만 검증되는 계산이 생기면 **컴포넌트 테스트를 쓰지 말고 계산을 함수로 뺀다.**
+브라우저 없이 검증할 수 있고, 값의 근거가 한 곳에 모인다.
+
+- `calcBarGeometry`(`entities/outlet/model.ts`) — 중심선 기하. 막대의 `left`·`transform-origin`.
+  `LeaningBar`는 이 값을 인라인 스타일로 옮기기만 한다.
+- `groupArticlesByLeaning`(`entities/cluster/lib.ts`) — 상세 페이지의 세 갈래 열.
+
+`unstable_cache`가 JSON 직렬화하는 경계가 DTO 매핑이므로, 그 테스트는
+`JSON.parse(JSON.stringify(dto))`가 원본과 같은지까지 본다. → [caching.md](./caching.md)
+
+### API 라우트 테스트
+
+파일 첫 줄에 `// @vitest-environment node`를 둔다(Request/Response가 필요하다).
+`next/cache`의 `unstable_cache`는 함수를 그대로 돌려주는 것으로 mock하고,
+`@server/queries/*`·`@server/auth`를 갈아 끼운다.
+
+`route.test.ts`는 Next의 라우트 파일 규약(`route.ts`)에 걸리지 않아 app 디렉토리 안에 둬도 된다.
+
+### 파이프라인은 실행 환경 타임존을 믿지 않는다
+
+GitHub Actions runner는 **UTC**로 돈다. `bucket.ts`는 오프셋을 더한 뒤 UTC 메서드로 읽어
+어디서 돌든 같은 KST 날짜를 낸다 — `bucket.test.ts`가 워크플로 yml의 cron을 **직접 읽어**
+이 정합을 검증하므로, cron을 잘못 옮기면 CI가 잡는다.
+
+같은 이유로 화면의 시각 표기(`shared/lib/format.ts`)도 KST로 고정한다. 환경 타임존을
+따르면 서버 렌더(Vercel=UTC)와 클라이언트 렌더가 갈린다.
+
+### E2E (Playwright)
+
+**실 DB를 본다.** dev 서버가 떠 있어야 하고(`npm run dev`), CI에는 넣지 않았다.
+
+그래서 `e2e/fixtures.ts`가 같은 API를 먼저 호출해 **그 값과 화면을 대조한다.**
+"이슈가 335개다" 같은 단언은 내일 깨지지만, "화면의 이슈 수 == `/api/clusters/stats`의
+`clusterCount`"는 데이터가 바뀌어도 함께 바뀐다 — 그리고 더 강한 것을 검증한다.
+
+- 데이터 조건이 안 맞으면 `test.skip(...)`으로 건너뛴다(단독 보도가 없는 날 등).
+- 목록 정렬이 기사 수 내림차순이라 **단독 보도(1건)는 첫 페이지에 없다.**
+  `findDayWithSoloOnFirstPage`로 첫 페이지에 실제로 걸리는 날짜를 찾아 쓴다.
+- **robots 메타는 기다렸다 읽는다**(`robotsMeta` 헬퍼). async `generateMetadata`의 결과는
+  body 끝으로 스트리밍된 뒤 스크립트가 head로 옮기므로, 바로 읽으면 null이다.
+  dev에서는 통과하고 프로덕션 빌드에서만 터진다.
+- 서버를 막 띄운 직후에는 콜드 스타트가 겹쳐 흔들린다 → `expect.timeout`을 10초로 뒀다.

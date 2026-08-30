@@ -1,7 +1,5 @@
 import {
   LeaningBar,
-  LEANING_GROUPS,
-  LEANING_GROUP_ORDER,
   LEANING_GROUP_LABELS,
   LEANING_COLORS,
   calcTilt,
@@ -9,6 +7,7 @@ import {
 } from "@/entities/outlet";
 import type { Leaning, LeaningGroup } from "@/entities/outlet";
 import { TimelineChart } from "./TimelineChart";
+import { groupArticlesByLeaning } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { formatDate } from "@/shared/lib/format";
 import { formatBucketDateNumeric } from "@/shared/lib/bucket-date";
@@ -50,17 +49,7 @@ function Verdict({ cluster }: { cluster: ClusterDetail }) {
 }
 
 export function ClusterDetailView({ cluster }: Props) {
-  const byGroup = LEANING_GROUP_ORDER.map((group) => {
-    const leanings: Leaning[] = LEANING_GROUPS[group];
-    const articles = cluster.articles
-      .filter((a) => leanings.includes(a.outlet.leaning))
-      .sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
-    return {
-      group,
-      articles,
-      outletCount: new Set(articles.map((a) => a.outlet.id)).size,
-    };
-  });
+  const byGroup = groupArticlesByLeaning(cluster.articles);
 
   return (
     <div className={styles.root}>
