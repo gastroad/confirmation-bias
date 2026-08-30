@@ -110,7 +110,7 @@ npm run dev          # localhost:3000
 ## 테스트
 
 ```bash
-npm run test:unit -- --run                    # 단위·컴포넌트·API 라우트 (watch 없이 1회)
+npm run test:unit -- --run                    # 단위·API 라우트 (watch 없이 1회)
 npm run test:unit                             # watch 모드
 npm run test:unit -- --run --project src      # jsdom 쪽만 (src/**)
 npm run test:unit -- --run --project server   # node 쪽만 (server/**)
