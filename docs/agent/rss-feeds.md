@@ -24,6 +24,15 @@ DB의 2023-03 이상치 20건이 전부 여기서 왔다.
 피드에서 뺐지만 **`OUTLETS`에는 남긴다** — 기존 기사 20건의 출처이고, 지우면 FK가 깨진다.
 필터에는 계속 뜨지만 새 기사가 들어오지 않는다.
 
+### 한겨레 — 403을 돌려주기 시작했다 (2026-08-30)
+
+`https://www.hani.co.kr/rss/politics/`가 리다이렉트 뒤 **403 Forbidden**(nginx)을 준다.
+로컬에서 재현되며 GitHub Actions에서는 아직 들어오고 있다 — IP나 UA 조건으로 보인다.
+
+`collect.ts`의 `fetch`에 **User-Agent 헤더가 없다.** 이것이 원인일 가능성이 높고, 더 큰 문제는
+**끊겨도 아무도 모른다**는 것이다(fetch 실패는 빈 배열로 삼켜지고 워크플로우는 success).
+→ [collection-reliability.md](./collection-reliability.md)
+
 ### 중앙일보 · KBS — 피드가 아예 없었다
 
 `OUTLETS`에 등록만 되어 있고 `feed_specs.json`에는 없었다. 기사 0건.
@@ -61,8 +70,13 @@ DB의 2023-03 이상치 20건이 전부 여기서 왔다.
 `pickPublishedRaw()`가 `pubDate` → `dc:date` 순으로 본다. 수정 후 프레시안 기사의
 발행 시각이 수집 시각과 달라진 것으로 확인했다.
 
-**한겨레는 여전히 수집 시각으로 떨어진다** — item에 날짜 태그가 아예 없고
-`lastBuildDate`만 채널 레벨에 있다. RSS가 최신순이고 3시간마다 수집하므로 오차는 크지 않다.
+**한겨레·서울신문은 여전히 수집 시각으로 떨어진다** — item에 날짜 태그가 아예 없고
+`lastBuildDate`만 채널 레벨에 있다(서울신문은 2026-08-30 확인).
+
+⚠️ **"3시간마다 수집하므로 오차는 크지 않다"는 전제가 깨졌다.** 실제 수집 간격이 최대
+14.9시간까지 벌어지므로, 이 두 매체는 그만큼 버킷이 밀린다. 서울신문은 링크의 기사 ID
+(`newsView.php?id=20260831006002`)에 날짜가 들어 있어 보정할 수 있다.
+→ [collection-reliability.md](./collection-reliability.md)
 
 ## `feed_specs.json`은 politics만 남겼다
 
