@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { buildOutletSummary, ratioPercent, sortOutletsByVolume, toOutletStats } from "./lib";
+import {
+  buildOutletSummary,
+  ratioPercent,
+  sortOutletsByVolume,
+  toOutletStats,
+  toOutletProfile,
+} from "./lib";
 import { OUTLET_MAP } from "./model";
 import type { OutletProfile, OutletStats } from "./model";
 
@@ -118,5 +124,139 @@ describe("sortOutletsByVolume", () => {
     ]);
     // OUTLETS 배열에서 chosun이 hani보다 앞이다
     expect(sorted.map((s) => s.outletId)).toEqual(["chosun", "hani"]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// toOutletProfile — 언론사 페이지의 DTO 경계. 여기도 6시간 캐시를 통과한다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const statsRow = (over: Partial<Parameters<typeof toOutletProfile>[0]["stats"]> = {}) => ({
+  outletId: "hani",
+  articleCount: 1407,
+  clusterCount: 1297,
+  soloCount: 775,
+  firstMoverCount: 807,
+  firstDate: new Date("2026-06-29T00:00:00.000Z"),
+  lastDate: new Date("2026-08-26T00:00:00.000Z"),
+  ...over,
+});
+
+describe("toOutletProfile", () => {
+  it("명단에 없는 언론사면 null — 페이지가 404로 떨어져야 한다", () => {
+    expect(
+      toOutletProfile({
+        stats: statsRow({ outletId: "ghost-media" }),
+        overlaps: [],
+        daily: [],
+        recentClusters: [],
+      })
+    ).toBeNull();
+  });
+
+  it("Date를 전부 YYYY-MM-DD 문자열로 바꾼다", () => {
+    const profile = toOutletProfile({
+      stats: statsRow(),
+      overlaps: [],
+      daily: [{ bucketDate: new Date("2026-08-26T00:00:00.000Z"), count: 12 }],
+      recentClusters: [
+        {
+          id: "cl-1",
+          representativeTitle: "국회 본회의 통과",
+          bucketDate: new Date("2026-08-25T00:00:00.000Z"),
+          articleCount: 5,
+        },
+      ],
+    })!;
+
+    expect(profile.stats.firstDate).toBe("2026-06-29");
+    expect(profile.daily[0]).toEqual({ date: "2026-08-26", count: 12 });
+    expect(profile.recentClusters[0]).toEqual({
+      id: "cl-1",
+      title: "국회 본회의 통과",
+      bucketDate: "2026-08-25",
+      articleCount: 5,
+    });
+    expect(JSON.parse(JSON.stringify(profile))).toEqual(profile);
+  });
+
+  it("명단에서 빠진 언론사와의 겹침은 버린다 — 이름을 찾을 수 없어 화면에 undefined가 뜬다", () => {
+    const profile = toOutletProfile({
+      stats: statsRow(),
+      overlaps: [
+        { outletId: "yonhap", sharedClusters: 302 },
+        { outletId: "retired-media", sharedClusters: 280 },
+        { outletId: "chosun", sharedClusters: 249 },
+      ],
+      daily: [],
+      recentClusters: [],
+    })!;
+
+    expect(profile.overlaps.map((o) => o.outletId)).toEqual(["yonhap", "chosun"]);
+    expect(buildOutletSummary(profile)).not.toContain("undefined");
+  });
+
+  it("outlet 메타를 명단에서 채운다", () => {
+    const profile = toOutletProfile({
+      stats: statsRow({ outletId: "chosun" }),
+      overlaps: [],
+      daily: [],
+      recentClusters: [],
+    })!;
+    expect(profile.outlet).toBe(OUTLET_MAP.chosun);
+  });
+
+  it("기사가 없는 매체도 프로필을 만든다 (페이지는 열되 색인만 뺀다)", () => {
+    const profile = toOutletProfile({
+      stats: statsRow({
+        outletId: "sisain",
+        articleCount: 0,
+        clusterCount: 0,
+        soloCount: 0,
+        firstMoverCount: 0,
+        firstDate: null,
+        lastDate: null,
+      }),
+      overlaps: [],
+      daily: [],
+      recentClusters: [],
+    })!;
+
+    expect(profile).not.toBeNull();
+    expect(profile.stats.articleCount).toBe(0);
+    expect(profile.stats.firstDate).toBeNull();
+    expect(buildOutletSummary(profile)).toContain("현재 수집된 기사가 없습니다");
+  });
+});
+
+describe("buildOutletSummary — 경계", () => {
+  it("클러스터가 0이면 단독 보도 문장을 만들지 않는다 — 0으로 나누지 않는다", () => {
+    const s = buildOutletSummary(
+      profile({ stats: stats({ articleCount: 5, clusterCount: 0, soloCount: 0 }) })
+    );
+    expect(s).not.toContain("단독 보도");
+    expect(s).not.toContain("NaN");
+  });
+
+  it("모든 이슈가 단독이면 100%로 적는다", () => {
+    const s = buildOutletSummary(
+      profile({ stats: stats({ clusterCount: 10, soloCount: 10, firstMoverCount: 10 }) })
+    );
+    expect(s).toContain("10개(100%)");
+  });
+
+  it("어떤 조합에서도 NaN이나 undefined가 새어 나가지 않는다", () => {
+    const cases = [
+      profile(),
+      profile({ overlaps: [] }),
+      profile({ stats: stats({ clusterCount: 0, soloCount: 0, firstMoverCount: 0 }) }),
+      profile({ stats: stats({ articleCount: 0, firstDate: null, lastDate: null }) }),
+      profile({ stats: stats({ firstDate: "2026-08-26", lastDate: "2026-08-26" }) }),
+    ];
+    for (const p of cases) {
+      const s = buildOutletSummary(p);
+      expect(s).not.toMatch(/NaN|undefined|null/);
+      expect(s.endsWith(".")).toBe(true);
+    }
   });
 });
