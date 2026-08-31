@@ -77,6 +77,10 @@ Next.js는 자동으로 `.env` 로드.
   긁어야 하지만 클러스터링은 하루가 닫힌 뒤 한 번이면 된다.
 - **`data/new-articles.json` 중간 파일은 제거됐다.** collect가 DB에 직접 쓴다.
 - 설계·임계값 근거: [daily-clustering.md](./daily-clustering.md)
+- ⚠️ **cron 주기는 보장되지 않는다.** GitHub Actions `schedule`은 SLA가 없어 2026-08-27~29에
+  실행 간격이 최대 **14.9시간**까지 벌어졌다. 피드가 3~5시간치만 담는 매체(오마이뉴스 3.0h ·
+  세계일보 5.4h)는 그 사이 기사를 통째로 잃는다. 게다가 **collect는 피드가 죽어도 success로
+  끝난다.** → [collection-reliability.md](./collection-reliability.md)
 
 ## Neon 리소스 관리
 
