@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../_shell";
-import {
-  LeaningBar,
-  LEANING_GROUP_LABELS,
-  TILT_BALANCE_THRESHOLD,
-  TILT_COLORS,
-  tiltSide,
-} from "@/entities/outlet";
-import { INDEX_MIN_ARTICLES } from "@/entities/cluster";
+import { TILT_BALANCE_THRESHOLD } from "@/entities/outlet";
+import { ClusterCard, INDEX_MIN_ARTICLES } from "@/entities/cluster";
 import type { ClusterSummary } from "@/entities/cluster";
-import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { SITE_NAME } from "@/shared/config/site";
 import { getWeeklyReport, WEEK_DAYS, TOP_SPLIT, TOP_SHARED, SPLIT_MIN_ARTICLES } from "./_data";
 import * as styles from "./weekly.css";
@@ -25,18 +18,12 @@ export const metadata: Metadata = {
 // 셸이 세션 쿠키를 읽어 어차피 동적이다 → app/_shell.tsx
 export const dynamic = "force-dynamic";
 
-function TiltText({ tilt }: { tilt: number }) {
-  const side = tiltSide(tilt);
-  if (side === "balanced") return <span>균형</span>;
-  const name =
-    side === "progressive" ? LEANING_GROUP_LABELS.progressive : LEANING_GROUP_LABELS.conservative;
-  return (
-    <span style={{ color: TILT_COLORS[side] }}>
-      {name} +{Math.round(Math.abs(tilt))}%p
-    </span>
-  );
-}
-
+/**
+ * 순위를 매겨 세운 이슈 목록. 순위 열만 이 페이지의 것이고, 항목 본문은 날짜별 목록과
+ * 같은 카드다 → entities/cluster의 ClusterCard.
+ *
+ * 여러 날짜가 섞이므로 날짜를 함께 적고, 수치가 이 페이지의 주장이라 단위(%p)까지 적는다.
+ */
 function IssueList({ items }: { items: ClusterSummary[] }) {
   if (items.length === 0) {
     return <p className={styles.empty}>이 기간에는 기준을 넘긴 이슈가 없습니다.</p>;
@@ -46,20 +33,7 @@ function IssueList({ items }: { items: ClusterSummary[] }) {
       {items.map((c, i) => (
         <Link key={c.id} href={`/clusters/${c.id}`} className={styles.item}>
           <span className={styles.rank}>{String(i + 1).padStart(2, "0")}</span>
-          <span>
-            <span className={styles.itemTitle}>{c.representativeTitle}</span>
-            <span className={styles.itemBar}>
-              <LeaningBar distribution={c.leaningDistribution} />
-            </span>
-            <span className={styles.itemMeta}>
-              <span>
-                {formatBucketDateShort(c.bucketDate)} ·{" "}
-                <span className={styles.itemNum}>{c.articleCount}</span>건 ·{" "}
-                <span className={styles.itemNum}>{c.outletCount}</span>개사
-              </span>
-              <TiltText tilt={c.tilt} />
-            </span>
-          </span>
+          <ClusterCard cluster={c} showDate showTiltUnit headingLevel={4} />
         </Link>
       ))}
     </div>

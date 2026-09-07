@@ -69,37 +69,9 @@ export const actions = style({
   marginTop: 4,
 });
 
-export const danger = style({
+/** 취소와 탈퇴가 같은 폭으로 선다. 한쪽이 커 보이면 그것만으로 유도가 된다. */
+export const action = style({
   flex: 1,
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.dangerFg,
-  padding: "11px 12px",
-  fontSize: 14,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  selectors: {
-    "&:disabled": { opacity: 0.4, cursor: "default" },
-    "&:hover:not(:disabled)": { opacity: 0.9 },
-  },
-});
-
-export const cancel = style({
-  flex: 1,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  padding: "11px 12px",
-  fontSize: 14,
-  fontWeight: 500,
-  color: vars.color.textSecondary,
-  selectors: {
-    "&:hover": { background: vars.color.surfaceHover, color: vars.color.text },
-  },
 });
 
 export const error = style({

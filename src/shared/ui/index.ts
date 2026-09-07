@@ -1,3 +1,5 @@
+export { Button, buttonClass } from "./Button";
+export type { ButtonVariant, ButtonSize, ButtonStyleProps } from "./Button";
 export { Skeleton } from "./Skeleton";
 export { Logo } from "./Logo";
 export { ThemeScript } from "./ThemeScript";

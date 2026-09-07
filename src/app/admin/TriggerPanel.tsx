@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/shared/ui";
 import type { TriggerState } from "./actions";
 import * as styles from "./admin.css";
 
@@ -25,9 +26,9 @@ export function CollectPanel({ action }: { action: FormAction }) {
         않습니다.
       </p>
       <form action={formAction} className={styles.row}>
-        <button type="submit" className={styles.button} disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "요청 중…" : "수집 실행"}
-        </button>
+        </Button>
         <Result state={state} />
       </form>
     </section>
@@ -50,9 +51,9 @@ export function ClusterPanel({ action }: { action: FormAction }) {
           pattern="\d{4}-\d{2}-\d{2}"
           size={22}
         />
-        <button type="submit" className={styles.button} disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "요청 중…" : "클러스터링 실행"}
-        </button>
+        </Button>
         <Result state={state} />
       </form>
     </section>

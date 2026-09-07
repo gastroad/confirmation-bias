@@ -21,3 +21,4 @@ export {
   selectMostShared,
   groupArticlesByLeaning,
 } from "./lib";
+export { ClusterCard } from "./ui/ClusterCard";

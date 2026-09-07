@@ -45,33 +45,6 @@ export const actions = style({
   justifyContent: "center",
 });
 
-export const primary = style({
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.accent,
-  padding: "10px 18px",
-  fontSize: 14,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  selectors: { "&:hover": { opacity: 0.9 } },
-});
-
-export const secondary = style({
-  display: "inline-flex",
-  alignItems: "center",
-  borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  padding: "10px 18px",
-  fontSize: 14,
-  fontWeight: 500,
-  color: vars.color.textSecondary,
-  selectors: {
-    "&:hover": { background: vars.color.surfaceHover, color: vars.color.text },
-  },
-});
-
 export const digest = style({
   marginTop: 4,
   fontSize: 11,

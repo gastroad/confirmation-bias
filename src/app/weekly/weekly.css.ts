@@ -81,32 +81,6 @@ export const rank = style({
   fontVariantNumeric: "tabular-nums",
 });
 
-export const itemTitle = style({
-  fontSize: 15,
-  fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "-0.01em",
-});
-
-export const itemBar = style({
-  marginTop: 8,
-});
-
-export const itemMeta = style({
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  fontSize: 12,
-  color: vars.color.textMuted,
-  marginTop: 6,
-  fontVariantNumeric: "tabular-nums",
-});
-
-export const itemNum = style({
-  fontFamily: vars.font.mono,
-  color: vars.color.textSecondary,
-});
-
 export const empty = style({
   fontSize: 14,
   color: vars.color.textFaint,

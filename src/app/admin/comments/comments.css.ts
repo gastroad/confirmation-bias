@@ -80,25 +80,6 @@ export const sourceLink = style({
   selectors: { "&:hover": { color: vars.color.textSecondary } },
 });
 
-export const deleteButton = style({
-  marginLeft: "auto",
-  border: "none",
-  background: "transparent",
-  padding: "2px 6px",
-  borderRadius: vars.radius.sm,
-  fontSize: 12,
-  fontFamily: vars.font.sans,
-  color: vars.color.textFaint,
-  cursor: "pointer",
-  selectors: {
-    "&:hover": {
-      background: vars.color.dangerBg,
-      color: vars.color.dangerFg,
-    },
-    "&:disabled": { opacity: 0.5, cursor: "default" },
-  },
-});
-
 export const empty = style({
   fontSize: 13,
   color: vars.color.textFaint,
@@ -115,18 +96,8 @@ export const error = style({
   color: vars.color.dangerFg,
 });
 
-export const more = style({
+/** 더 보기는 목록 아래 가운데. 삭제로 줄이 줄어도 자리가 흔들리지 않는다. */
+export const moreAction = style({
   alignSelf: "center",
   marginTop: 4,
-  borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  background: vars.color.control,
-  padding: "8px 18px",
-  fontSize: 13,
-  fontFamily: vars.font.sans,
-  color: vars.color.textSecondary,
-  cursor: "pointer",
-  selectors: {
-    "&:hover": { borderColor: vars.color.borderHover, color: vars.color.text },
-  },
 });

@@ -43,22 +43,6 @@ export const input = style({
   },
 });
 
-export const button = style({
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.accent,
-  padding: "9px 14px",
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  selectors: {
-    "&:disabled": { opacity: 0.6, cursor: "default" },
-    "&:hover:not(:disabled)": { opacity: 0.9 },
-  },
-});
-
 export const ok = style({
   fontSize: 13,
   color: vars.color.successFg,

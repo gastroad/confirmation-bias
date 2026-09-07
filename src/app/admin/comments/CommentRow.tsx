@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { formatDate } from "@/shared/lib/format";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
+import { Button } from "@/shared/ui";
 import type { DeleteState } from "./actions";
 import * as styles from "./comments.css";
 
@@ -41,9 +42,9 @@ export function CommentRow({ comment, action }: Props) {
         <span className={styles.time}>{formatDate(comment.createdAt)}</span>
         <form action={formAction}>
           <input type="hidden" name="id" value={comment.id} />
-          <button type="submit" className={styles.deleteButton} disabled={pending}>
+          <Button type="submit" variant="quiet" size="xs" disabled={pending}>
             {pending ? "삭제 중…" : "삭제"}
-          </button>
+          </Button>
         </form>
       </div>
 

@@ -58,12 +58,15 @@ shared/          — 프레임워크 무관 유틸 / 스타일
   config/        — site.ts(SEO·브랜드), search-params.ts(URL 쿼리 파라미터 이름)
   lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts(page·gutters·container·prose)
-  ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지), AdSenseLoader(콘텐츠 페이지 전용)
+  ui/            — Button(모든 버튼의 단일 출처), Logo, Skeleton, icons, ThemeScript(FOUC 방지),
+                   AdSenseLoader(콘텐츠 페이지 전용)
 entities/        — 도메인 모델 + dumb UI ( @x/ = 형제 entity 전용 공개 API )
-  outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts, ui/, index.ts
+  outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts,
+                   ui/(LeaningBar·TiltLabel), index.ts
                    @x/article.ts · @x/cluster.ts — 대상별로 여는 범위를 다르게 적는다
   article/       — model.ts, @x/cluster.ts, index.ts
-  cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙), api.ts, ui/, index.ts
+  cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙), api.ts,
+                   ui/(ClusterCard — 목록 항목의 본문), index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
@@ -137,9 +140,37 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
 - **세로선은 목록(`ul`)이 아니라 카드에 건다.** hover 배경이 카드 위에 깔리므로 `list::before`로
   그리면 커서가 얹힌 줄만 축이 끊긴다. 카드의 `::before`는 배경 위·막대 아래에 놓인다
   (positioned 형제 중 DOM 순서가 앞이라 막대가 축을 가린다 — 의도한 순서다).
+- **축을 관통시킬지는 카드 본문이 아니라 그 목록이 정한다.** 카드 본문(제목·막대·수치 한 줄)은
+  `entities/cluster`의 `ClusterCard`로 공용이지만 중심선은 `cluster-feed` 위젯에만 있다.
+  주간 리포트는 순위 열(28px)만큼 막대가 오른쪽으로 밀려 있어 행의 50%가 막대의 중점이
+  아니다 — 거기에 축을 그으면 맞지 않는 자리에 축이 선다.
 
 편향 수치는 `calcTilt`(진보% − 보수%)이고, `TILT_BALANCE_THRESHOLD`(±5%p) 안이면 "균형"으로
 본다. 이 임계값은 디자인이 아니라 **서비스의 주장**이라 화면(목록 헤더)에 그대로 노출한다.
+
+## 버튼 — 생김새는 `shared/ui/Button` 하나에서 나온다
+
+`<button>`이든 버튼처럼 생긴 `<Link>`든 **자기 css.ts에 버튼을 새로 정의하지 않는다.**
+
+```tsx
+<Button type="submit" disabled={pending}>차단</Button>        // 기본 = primary · md
+<Button variant="quiet" size="xs">삭제</Button>
+<Link href="/" className={buttonClass({ variant: "secondary", size: "lg" })}>홈으로</Link>
+```
+
+- `variant` — `primary`(권하는 동작) · `danger`(되돌릴 수 없는 동작) · `secondary`(나란한 대안) ·
+  `quiet`(행 끝에 숨은 파괴적 동작. hover에서만 danger로 드러난다)
+- `size` — `xs`(행 안) · `sm` · `md`(기본) · `lg`(그 화면의 주 동작)
+- `Button`은 `<button>`을 그리고 `type` 기본값이 `"button"`이다. `<Link>`·`<a>`에는
+  `buttonClass()`로 클래스만 입힌다 — shared는 프레임워크를 모르므로 next/link가 들어오지 않는다.
+- 바깥 자리가 정하는 것(`alignSelf`·`flex: 1`·`marginTop`)만 `className`으로 얹는다.
+  색·패딩·글자 크기를 얹기 시작하면 흩어져 있던 시절로 돌아간다.
+- **테두리는 투명한 1px이 기본이다.** 채운 버튼과 윤곽 버튼이 같은 `size`에서 같은 높이로
+  서야 나란히 놓았을 때 어긋나지 않는다(예전엔 `border: none`과 1px이 섞여 2px씩 어긋났다).
+
+10개 css.ts에 흩어져 있던 것을 2026-09-07에 모았다. 그중 7곳이 accent 배경 버튼을 각자
+정의했는데 패딩이 `8px 16px`·`9px 14px`·`9px 16px`·`10px 18px`·`11px 12px`로 다 달랐고
+disabled 투명도도 0.4/0.5/0.6으로 갈려 있었다.
 
 ## 페이지 셸 — 세션·헤더·본문 컨테이너를 한 곳에
 

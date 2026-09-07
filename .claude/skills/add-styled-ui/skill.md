@@ -15,9 +15,32 @@ description: vanilla-extract로 FSD UI 컴포넌트의 스타일을 작성합니
 
 ## SKIP
 
+- **버튼.** 새로 만들지 않는다 → `shared/ui`의 `Button` / `buttonClass()` (아래 "이미 있는 것" 참고).
 - `server/`·`scripts/` 등 UI가 아닌 코드.
 - 데이터에서 오는 색(예: `LEANING_COLORS[leaning]`)을 요소에 칠하는 경우
   → 그건 테마가 아니므로 그대로 인라인 `style={{ backgroundColor: ... }}`로 둔다.
+
+## 이미 있는 것을 먼저 쓴다
+
+스타일을 쓰기 **전에** 아래에 해당하는지 본다. 여기 있는 것을 자기 `*.css.ts`에 다시 정의하면
+그 순간 드리프트가 시작된다(버튼이 10개 파일에 흩어졌던 게 이 경로였다).
+
+| 그리려는 것                          | 쓸 것                                                  |
+| ------------------------------------ | ------------------------------------------------------ |
+| 버튼 (`<button>`)                    | `Button` — `@/shared/ui`                               |
+| 버튼처럼 생긴 `<Link>`·`<a>`         | `buttonClass({ variant, size })` — `@/shared/ui`       |
+| 로딩 자리표시                        | `Skeleton` — `@/shared/ui`                             |
+| 성향 분포 막대                       | `LeaningBar` — `@/entities/outlet`                     |
+| 편중 라벨("보수 +20")                | `TiltLabel` — `@/entities/outlet`                      |
+| 이슈 목록 항목(제목·막대·수치 한 줄) | `ClusterCard` — `@/entities/cluster`                   |
+| 좌우 여백·본문 열                    | `layout.gutters` / `layout.container` / `layout.prose` |
+
+- `Button`의 `variant`는 `primary`·`danger`·`secondary`·`quiet`, `size`는 `xs`·`sm`·`md`·`lg`다.
+  → [architecture.md](../../../docs/agent/architecture.md)의 "버튼"
+- 이들에 얹어도 되는 것은 **바깥 자리가 정하는 것만**이다 — `alignSelf`·`flex: 1`·`marginTop` 같은
+  배치. 색·패딩·글자 크기를 `className`으로 덮기 시작하면 공용이 아니게 된다.
+- 모양이 같은데 한 곳만 다르게 해야 한다면, 자기 css를 새로 쓰지 말고 **공용 쪽에 prop을 낸다**
+  (`ClusterCard`의 `showDate`·`showTiltUnit`·`headingLevel`이 그렇게 생겼다).
 
 ## 절차
 
@@ -53,7 +76,16 @@ description: vanilla-extract로 FSD UI 컴포넌트의 스타일을 작성합니
   → 축 텍스트·그리드 선은 `globalStyle(\`${container} .recharts-...\`, { fill/stroke: vars... })`.
 - Tooltip의 `contentStyle`/`labelStyle`은 인라인 style(div)이라 `vars`를 그대로 넣어도 된다.
 
+## 헤딩의 마진은 컴포넌트가 소유한다
+
+`global.css.ts`의 마진 리셋은 `h1, h2, h3, p, ul, li`까지만 덮는다. `h4` 이하를 쓰면 UA 기본
+위쪽 마진(약 20px)이 딸려 들어온다. 헤딩 단계가 props로 갈리는 컴포넌트는
+`margin: "0 0 15px"`처럼 **네 방향을 다 적는다**(`entities/cluster`의 `ClusterCard` 참고).
+
 ## 완료 확인
 
 - `npx tsc --noEmit` — 토큰 타입 오류 없는지.
 - `npm run build` — vanilla-extract Turbopack 플러그인이 정상 추출하는지(빌드가 진짜 검증).
+- 공용 컴포넌트를 건드렸으면 **쓰는 쪽 화면을 실제로 본다.** dev 서버를 띄우고
+  `npx playwright test`(실 DB) — 특히 라이트/다크 양쪽. 포트 3000이 이미 물려 있으면 Next가
+  3001로 올라가므로 **어느 서버를 보고 있는지 먼저 확인한다**(구 코드를 보고 통과할 수 있다).

@@ -80,25 +80,6 @@ export const sourceLink = style({
   selectors: { "&:hover": { color: vars.color.textSecondary } },
 });
 
-export const deleteButton = style({
-  marginLeft: "auto",
-  border: "none",
-  background: "transparent",
-  padding: "2px 6px",
-  borderRadius: vars.radius.sm,
-  fontSize: 12,
-  fontFamily: vars.font.sans,
-  color: vars.color.textFaint,
-  cursor: "pointer",
-  selectors: {
-    "&:hover": {
-      background: vars.color.dangerBg,
-      color: vars.color.dangerFg,
-    },
-    "&:disabled": { opacity: 0.5, cursor: "default" },
-  },
-});
-
 export const empty = style({
   fontSize: 13,
   color: vars.color.textFaint,
@@ -113,22 +94,6 @@ export const error = style({
   padding: "9px 12px",
   fontSize: 13,
   color: vars.color.dangerFg,
-});
-
-export const more = style({
-  alignSelf: "center",
-  marginTop: 4,
-  borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  background: vars.color.control,
-  padding: "8px 18px",
-  fontSize: 13,
-  fontFamily: vars.font.sans,
-  color: vars.color.textSecondary,
-  cursor: "pointer",
-  selectors: {
-    "&:hover": { borderColor: vars.color.borderHover, color: vars.color.text },
-  },
 });
 
 export const form = style({
@@ -156,23 +121,6 @@ export const input = style({
   },
 });
 
-export const submit = style({
-  alignSelf: "flex-start",
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.accent,
-  padding: "9px 16px",
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  selectors: {
-    "&:disabled": { opacity: 0.5, cursor: "default" },
-    "&:hover:not(:disabled)": { opacity: 0.9 },
-  },
-});
-
 export const ok = style({
   fontSize: 13,
   color: vars.color.successFg,
@@ -188,6 +136,11 @@ export const url = style({
 export const reason = style({
   fontSize: 12,
   color: vars.color.textMuted,
+});
+
+/** 등록 버튼은 폼 폭을 다 쓰지 않는다. 입력 두 칸 아래 왼쪽에 붙인다. */
+export const submitAction = style({
+  alignSelf: "flex-start",
 });
 
 export const hint = style({

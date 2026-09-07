@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Button } from "@/shared/ui";
 import type { BlockActionState } from "./actions";
 import * as styles from "./blocked.css";
 
@@ -44,9 +45,9 @@ export function BlockForm({ action }: { action: Action }) {
         placeholder="사유 메모 (선택) — 예: OO일보 2026-08-24 요청"
         aria-label="차단 사유"
       />
-      <button type="submit" className={styles.submit} disabled={pending}>
+      <Button type="submit" className={styles.submitAction} disabled={pending}>
         {pending ? "처리 중…" : "차단"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -56,9 +57,9 @@ export function UnblockButton({ url, action }: { url: string; action: Action }) 
   return (
     <form action={formAction}>
       <input type="hidden" name="url" value={url} />
-      <button type="submit" className={styles.deleteButton} disabled={pending}>
+      <Button type="submit" variant="quiet" size="xs" disabled={pending}>
         {pending ? "해제 중…" : "차단 해제"}
-      </button>
+      </Button>
     </form>
   );
 }

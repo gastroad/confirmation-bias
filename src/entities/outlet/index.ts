@@ -41,3 +41,4 @@ export {
 } from "./lib";
 export { LEANING_COLORS, TILT_COLORS } from "./leaning-colors";
 export { LeaningBar } from "./ui/LeaningBar";
+export { TiltLabel } from "./ui/TiltLabel";
