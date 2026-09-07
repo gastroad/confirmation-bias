@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getSessionUser, isAdmin } from "@server/auth";
 import { findBlockedUrls, countBlockedUrls } from "@server/queries/blocked-urls";
-import { ProfileMenu } from "@/features/profile-menu";
-import { Logo } from "@/shared/ui";
+import { SiteHeader } from "@/widgets/site-header";
 import { formatDate } from "@/shared/lib/format";
 import { signOutAction } from "../../auth/actions";
 import { blockUrlAction, unblockUrlAction } from "./actions";
@@ -27,19 +25,12 @@ export default async function BlockedUrlsPage() {
 
   return (
     <div className={layout.page}>
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/admin" className={layout.backLink}>
-            ← 관리
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>차단 기사</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        user={sessionUser}
+        signOut={signOutAction}
+        back={{ href: "/admin", label: "관리" }}
+        title="차단 기사"
+      />
 
       <main className={layout.container}>
         {denied ? (

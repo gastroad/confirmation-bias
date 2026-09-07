@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUser } from "@server/auth";
-import { ProfileMenu } from "@/features/profile-menu";
 import { signOutAction } from "../../auth/actions";
-import { AdSenseLoader, Logo } from "@/shared/ui";
+import { AdSenseLoader } from "@/shared/ui";
 import { OUTLET_MAP, buildOutletSummary } from "@/entities/outlet";
+import { SiteHeader } from "@/widgets/site-header";
 import { OutletProfileView } from "@/widgets/outlet-profile";
-import { SITE_NAME } from "@/shared/config/site";
 import { getOutletProfile, TREND_DAYS } from "../_data";
 import * as layout from "@/shared/styles/layout.css";
 
@@ -53,19 +51,11 @@ export default async function OutletDetailPage({ params }: { params: Params }) {
     <div className={layout.page}>
       {hasContent && <AdSenseLoader />}
 
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/outlets" className={layout.backLink}>
-            ← 언론사
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>{SITE_NAME}</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        user={sessionUser}
+        signOut={signOutAction}
+        back={{ href: "/outlets", label: "언론사" }}
+      />
 
       <main className={layout.container}>
         <OutletProfileView profile={profile} trendDays={TREND_DAYS} />

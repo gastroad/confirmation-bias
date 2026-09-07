@@ -69,8 +69,8 @@ test.describe("주간 리포트", () => {
     await expect(page.getByRole("heading", { name: "같은 사건, 세 갈래 제목" })).toBeVisible();
   });
 
-  test("홈으로 돌아갈 수 있다", async ({ page }) => {
-    await page.getByRole("link", { name: "← 홈" }).click();
+  test("브랜드 락업이 홈으로 돌아가는 길이다", async ({ page }) => {
+    await page.getByRole("banner").getByRole("link", { name: "확증편향 홈" }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 });

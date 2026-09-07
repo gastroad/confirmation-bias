@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser, isAdmin } from "@server/auth";
 import { findRecentComments, countAllComments } from "@server/queries/comments";
-import { ProfileMenu } from "@/features/profile-menu";
-import { Logo } from "@/shared/ui";
 import { signOutAction } from "../../auth/actions";
 import { adminDeleteCommentAction } from "./actions";
 import { CommentRow } from "./CommentRow";
 import * as styles from "./comments.css";
+import { SiteHeader } from "@/widgets/site-header";
 import * as layout from "@/shared/styles/layout.css";
 
 export const metadata: Metadata = {
@@ -31,19 +30,12 @@ export default async function AdminCommentsPage({ searchParams }: { searchParams
 
   return (
     <div className={layout.page}>
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/admin" className={layout.backLink}>
-            ← 관리
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>댓글 관리</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        user={sessionUser}
+        signOut={signOutAction}
+        back={{ href: "/admin", label: "관리" }}
+        title="댓글 관리"
+      />
 
       <main className={layout.container}>
         {denied ? (

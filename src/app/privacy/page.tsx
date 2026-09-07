@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getSessionUser } from "@server/auth";
-import { ProfileMenu } from "@/features/profile-menu";
 import { signOutAction } from "../auth/actions";
-import { Logo } from "@/shared/ui";
+import { SiteHeader } from "@/widgets/site-header";
 import { SITE_NAME, CONTACT_EMAIL } from "@/shared/config/site";
 import * as layout from "@/shared/styles/layout.css";
 import * as styles from "./privacy.css";
@@ -27,19 +25,7 @@ export default async function PrivacyPage() {
 
   return (
     <div className={layout.page}>
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 홈
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>확증편향</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader user={sessionUser} signOut={signOutAction} />
 
       <article className={styles.article}>
         <h1 className={styles.title}>개인정보처리방침</h1>

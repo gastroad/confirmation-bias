@@ -105,18 +105,14 @@ export default function RootLayout({
             <span>
               © {new Date().getFullYear()} {SITE_NAME}
             </span>
+            {/* 주간 리포트·언론사는 헤더의 주요 메뉴로 옮겼다 → widgets/site-header.
+                푸터에는 지면 자체가 아니라 지면에 대한 고지(약관·방침·문의)만 남긴다. */}
             <nav className={layout.footerLinks}>
               <Link className={layout.footerLink} href="/">
                 홈
               </Link>
               <Link className={layout.footerLink} href="/about">
                 소개 및 방법론
-              </Link>
-              <Link className={layout.footerLink} href="/weekly">
-                주간 리포트
-              </Link>
-              <Link className={layout.footerLink} href="/outlets">
-                언론사
               </Link>
               <Link className={layout.footerLink} href="/terms">
                 이용약관
