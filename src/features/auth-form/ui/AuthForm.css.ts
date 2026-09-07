@@ -57,28 +57,9 @@ export const input = style({
   },
 });
 
-export const submit = style({
+/** 마지막 입력 칸과 붙지 않게 한 칸 띄운다. */
+export const submitAction = style({
   marginTop: 4,
-  width: "100%",
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.accent,
-  padding: "11px 12px",
-  fontSize: 14,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  transition: "opacity 0.15s",
-  selectors: {
-    "&:disabled": {
-      opacity: 0.6,
-      cursor: "default",
-    },
-    "&:hover:not(:disabled)": {
-      opacity: 0.9,
-    },
-  },
 });
 
 export const error = style({

@@ -11,6 +11,7 @@ import {
   type Comment,
 } from "@/entities/comment";
 import { formatDate } from "@/shared/lib/format";
+import { Button } from "@/shared/ui";
 import * as styles from "./ClusterComments.css";
 
 interface ClusterCommentsProps {
@@ -36,14 +37,15 @@ function CommentItem({
         </span>
         <span className={styles.time}>{formatDate(comment.createdAt)}</span>
         {comment.canDelete && (
-          <button
-            type="button"
-            className={styles.deleteButton}
+          <Button
+            variant="quiet"
+            size="xs"
+            className={styles.deleteAction}
             onClick={() => onDelete(comment.id)}
             disabled={deleting}
           >
             삭제
-          </button>
+          </Button>
         )}
       </div>
       <p className={styles.body}>{comment.body}</p>
@@ -116,9 +118,9 @@ export function ClusterComments({ clusterId, signedIn }: ClusterCommentsProps) {
             <span className={over ? styles.counterOver : styles.counter}>
               {draft.length} / {MAX_COMMENT_LENGTH}
             </span>
-            <button type="submit" className={styles.submit} disabled={!canSubmit}>
+            <Button type="submit" disabled={!canSubmit}>
               {create.isPending ? "등록 중…" : "등록"}
-            </button>
+            </Button>
           </div>
         </form>
       ) : (

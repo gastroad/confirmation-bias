@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { Button, buttonClass } from "@/shared/ui";
 import type { AuthFormState } from "@/features/auth-form";
 import * as styles from "./delete-account.css";
 
@@ -52,16 +53,21 @@ export function DeleteAccountForm({ email, action }: Props) {
       />
 
       <div className={styles.actions}>
-        <Link href="/" className={styles.cancel}>
+        <Link
+          href="/"
+          className={buttonClass({ variant: "secondary", size: "lg", className: styles.action })}
+        >
           취소
         </Link>
-        <button
+        <Button
           type="submit"
-          className={styles.danger}
+          variant="danger"
+          size="lg"
+          className={styles.action}
           disabled={confirm.trim() !== CONFIRM_WORD || pending}
         >
           {pending ? "처리 중…" : "탈퇴하기"}
-        </button>
+        </Button>
       </div>
     </form>
   );

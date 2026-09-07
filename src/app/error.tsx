@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Button, buttonClass } from "@/shared/ui";
 import * as styles from "./status.css";
 
 /**
@@ -28,10 +29,10 @@ export default function Error({
         접속해 주세요.
       </p>
       <div className={styles.actions}>
-        <button type="button" className={styles.primary} onClick={reset}>
+        <Button size="lg" onClick={reset}>
           다시 시도
-        </button>
-        <Link href="/" className={styles.secondary}>
+        </Button>
+        <Link href="/" className={buttonClass({ variant: "secondary", size: "lg" })}>
           홈으로
         </Link>
       </div>

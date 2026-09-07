@@ -45,6 +45,7 @@ FSD 아키텍처 규칙에 맞춰 `src/entities/` 아래에 새 도메인 Entity
    계산해 DTO에 실어 내린다**(예: `comment.canDelete`).
 4. **`api.ts`** — 클라이언트 fetcher. 응답이 `!ok`면 우리말 메시지로 throw 한다.
 5. **`ui/<Component>.tsx`** — props만 받는다. 스타일은 `/add-styled-ui` 스킬을 따른다.
+   그 스킬의 "이미 있는 것을 먼저 쓴다" 표를 먼저 본다 — 버튼·막대·목록 항목은 이미 공용이다.
 6. **`index.ts`** — 타입과 함수를 골라 re-export.
 7. 필요하면 `server/queries/<name>.ts`(순수 Prisma)와 API 라우트를 함께 만든다.
 

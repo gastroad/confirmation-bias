@@ -5,14 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   LeaningBar,
-  TILT_COLORS,
-  tiltSide,
   TILT_BALANCE_THRESHOLD,
   calcTilt,
   calcLeaningGroupRatios,
+  tiltSide,
   LEANING_GROUP_LABELS,
 } from "@/entities/outlet";
 import {
+  ClusterCard,
   fetchClustersPage,
   fetchClusterStats,
   partitionBySpread,
@@ -21,25 +21,10 @@ import {
 import { parseOutletParam } from "@/features/outlet-filter";
 import { OUTLETS_PARAM } from "@/shared/config/search-params";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
-import { Skeleton } from "@/shared/ui";
+import { Button, Skeleton } from "@/shared/ui";
 import * as styles from "./ClusterFeed.css";
 
 const SKELETON_COUNT = 5;
-
-/** "보수 +20" / "균형". 막대가 말하는 것을 수치로 한 번 더 못박는다. */
-function TiltLabel({ tilt, className }: { tilt: number; className?: string }) {
-  const side = tiltSide(tilt);
-  const text =
-    side === "balanced"
-      ? "균형"
-      : `${side === "progressive" ? LEANING_GROUP_LABELS.progressive : LEANING_GROUP_LABELS.conservative} +${Math.round(Math.abs(tilt))}`;
-
-  return (
-    <span className={className} style={{ color: TILT_COLORS[side] }}>
-      {text}
-    </span>
-  );
-}
 
 /**
  * 하루 전체 스펙트럼. 숫자 세 칸 대신 한 문장 판단과 막대 하나로 말한다.
@@ -92,19 +77,11 @@ function DayVerdict({ tilt }: { tilt: number }) {
   );
 }
 
-function ClusterCard({ cluster }: { cluster: ClusterSummary }) {
+/** 중심선을 관통시키는 껍데기만 여기 있다. 카드 내용은 entities/cluster가 그린다. */
+function FeedCard({ cluster }: { cluster: ClusterSummary }) {
   return (
     <Link href={`/clusters/${cluster.id}`} className={styles.card}>
-      <h3 className={styles.cardTitle}>{cluster.representativeTitle}</h3>
-      <LeaningBar distribution={cluster.leaningDistribution} />
-
-      <div className={styles.cardMeta}>
-        <span className={styles.cardStat}>
-          <em className={styles.cardNum}>{cluster.articleCount}</em>건 ·{" "}
-          <em className={styles.cardNum}>{cluster.outletCount}</em>개사
-        </span>
-        <TiltLabel tilt={cluster.tilt} className={styles.cardTilt} />
-      </div>
+      <ClusterCard cluster={cluster} />
     </Link>
   );
 }
@@ -178,9 +155,14 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
         ) : isError ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyTitle}>목록을 불러오지 못했습니다.</p>
-            <button type="button" className={styles.retryButton} onClick={() => refetch()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className={styles.retryAction}
+              onClick={() => refetch()}
+            >
               다시 시도
-            </button>
+            </Button>
           </div>
         ) : clusters.length === 0 ? (
           <div className={styles.emptyState}>
@@ -209,7 +191,7 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
               <ul className={styles.list}>
                 {covered.map((c) => (
                   <li key={c.id}>
-                    <ClusterCard cluster={c} />
+                    <FeedCard cluster={c} />
                   </li>
                 ))}
               </ul>

@@ -58,22 +58,6 @@ export const counter = style({
 
 export const counterOver = style([counter, { color: vars.color.dangerFg }]);
 
-export const submit = style({
-  borderRadius: vars.radius.md,
-  border: "none",
-  background: vars.color.accent,
-  padding: "8px 16px",
-  fontSize: 13,
-  fontWeight: 600,
-  fontFamily: vars.font.sans,
-  color: vars.color.accentFg,
-  cursor: "pointer",
-  selectors: {
-    "&:disabled": { opacity: 0.5, cursor: "default" },
-    "&:hover:not(:disabled)": { opacity: 0.9 },
-  },
-});
-
 export const signInPrompt = style({
   borderRadius: vars.radius.md,
   border: `1px dashed ${vars.color.border}`,
@@ -129,19 +113,9 @@ export const time = style({
   color: vars.color.textFaint,
 });
 
-export const deleteButton = style({
+/** 삭제는 행 끝으로 민다. 작성 시각 바로 옆에 붙으면 시각을 지우는 것처럼 읽힌다. */
+export const deleteAction = style({
   marginLeft: "auto",
-  border: "none",
-  background: "transparent",
-  padding: 0,
-  fontSize: 12,
-  fontFamily: vars.font.sans,
-  color: vars.color.textFaint,
-  cursor: "pointer",
-  selectors: {
-    "&:hover": { color: vars.color.dangerFg },
-    "&:disabled": { opacity: 0.5, cursor: "default" },
-  },
 });
 
 export const body = style({

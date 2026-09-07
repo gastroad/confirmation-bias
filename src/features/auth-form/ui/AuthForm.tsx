@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Button } from "@/shared/ui";
 import type { AuthFormState, AuthFormAction } from "../model";
 import * as styles from "./AuthForm.css";
 
@@ -83,9 +84,15 @@ export function AuthForm({ mode, action }: AuthFormProps) {
           />
         </div>
 
-        <button type="submit" className={styles.submit} disabled={pending}>
+        <Button
+          type="submit"
+          size="lg"
+          fullWidth
+          className={styles.submitAction}
+          disabled={pending}
+        >
           {pending ? copy.pending : copy.submit}
-        </button>
+        </Button>
       </form>
 
       <p className={styles.footer}>

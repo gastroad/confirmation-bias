@@ -70,6 +70,7 @@ import { OUTLET_MAP, calcTilt } from "@/entities/outlet/@x/cluster";
 | ---------------------------- | ----------------------------------------------------------------- |
 | 새 도메인 타입               | `src/entities/<name>/model.ts`                                    |
 | 새 도메인 UI (props-only)    | `src/entities/<name>/ui/<Component>.tsx`                          |
+| 버튼                         | **새로 만들지 않는다** — `src/shared/ui/Button`                   |
 | 페이지 수준 UI 조합          | `src/widgets/<name>/ui/<Widget>.tsx`                              |
 | 날짜·문자열 유틸             | `src/shared/lib/`                                                 |
 | DB 쿼리 (순수 Prisma)        | `server/queries/<name>.ts`                                        |
@@ -93,6 +94,9 @@ import { OUTLET_MAP, calcTilt } from "@/entities/outlet/@x/cluster";
 ## 스타일링
 
 - 스타일은 **vanilla-extract** 전용. 컴포넌트 옆 `*.css.ts`에 작성하고 `import * as styles`로 사용.
+- **버튼은 자기 css.ts에 다시 정의하지 않는다.** `shared/ui`의 `Button`(또는 `<Link>`에 입히는
+  `buttonClass()`)을 쓰고, 바깥 자리가 정하는 것(`alignSelf`·`flex`·`marginTop`)만 `className`으로
+  얹는다. → [architecture.md](./architecture.md)의 "버튼"
 - 색·반경·폰트·레이아웃 폭은 반드시 테마 토큰(`@/shared/styles/theme.css`의 `vars`)으로. 하드코딩 금지.
   - 예외: 데이터에서 오는 값(성향 색·막대 위치)은 인라인 `style`로 칠한다. 단 **색 자체는
     토큰이다** — `LEANING_COLORS`(`entities/outlet/leaning-colors.ts`)가 `vars.leaning.*`를 가리킨다.

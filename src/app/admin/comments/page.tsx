@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isAdmin } from "@server/auth";
+import { buttonClass } from "@/shared/ui";
 import { findRecentComments, countAllComments } from "@server/queries/comments";
 import { getUser } from "../../_session";
 import { AppShell } from "../../_shell";
@@ -64,7 +65,10 @@ export default async function AdminCommentsPage({ searchParams }: { searchParams
 
               {/* 관리 화면이라 무한 스크롤 대신 명시적인 더보기를 쓴다(삭제 중 위치가 흔들리지 않게). */}
               {data.nextCursor && (
-                <Link href={`/admin/comments?cursor=${data.nextCursor}`} className={styles.more}>
+                <Link
+                  href={`/admin/comments?cursor=${data.nextCursor}`}
+                  className={buttonClass({ variant: "secondary", className: styles.moreAction })}
+                >
                   더 보기
                 </Link>
               )}

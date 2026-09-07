@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { buttonClass } from "@/shared/ui";
 import * as styles from "./status.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default function NotFound() {
         주소는 더 이상 유효하지 않을 수 있습니다.
       </p>
       <div className={styles.actions}>
-        <Link href="/" className={styles.secondary}>
+        <Link href="/" className={buttonClass({ variant: "secondary", size: "lg" })}>
           최신 뉴스 보기
         </Link>
       </div>

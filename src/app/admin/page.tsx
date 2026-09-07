@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isAdmin } from "@server/auth";
+import { buttonClass } from "@/shared/ui";
 import { getUser } from "../_session";
 import { AppShell } from "../_shell";
 import { triggerCollectAction, triggerClusterAction } from "./actions";
@@ -50,7 +51,7 @@ export default async function AdminPage() {
               수집에서도 제외됩니다.
             </p>
             <div className={styles.row}>
-              <Link href="/admin/blocked" className={styles.button}>
+              <Link href="/admin/blocked" className={buttonClass()}>
                 차단 기사 관리로 이동
               </Link>
             </div>
@@ -62,7 +63,7 @@ export default async function AdminPage() {
               전체 댓글을 최신순으로 훑어보고 삭제합니다. 신고·스팸 대응용입니다.
             </p>
             <div className={styles.row}>
-              <Link href="/admin/comments" className={styles.button}>
+              <Link href="/admin/comments" className={buttonClass()}>
                 댓글 관리로 이동
               </Link>
             </div>
