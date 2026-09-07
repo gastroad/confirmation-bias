@@ -18,7 +18,7 @@ test.describe("정적 페이지", () => {
 
   test("소개 페이지가 한계를 고지한다 — 방법론 페이지의 요건이다", async ({ page }) => {
     await page.goto("/about");
-    await expect(page.locator("main, body")).toContainText(/한계|완벽하지|주의/);
+    await expect(page.getByRole("main")).toContainText(/한계|완벽하지|주의/);
   });
 });
 
@@ -106,15 +106,38 @@ test.describe("푸터", () => {
     expect(footer.y + footer.height).toBeCloseTo(viewport.height, 0);
   });
 
+  // 헤더·본문·푸터가 좌우 여백을 각자 적던 동안 세로줄이 갈렸다(약관·방침·소개는 자체
+  // 컨테이너를 써 16px을 썼다). 지금은 셋 다 layout.css의 gutters 하나를 합성한다.
   test("푸터 링크가 헤더·본문과 같은 좌우 여백을 쓴다", async ({ page }) => {
-    await page.goto("/");
-    const header = await page.getByRole("banner").locator("> div").boundingBox();
-    const main = await page.locator("main").boundingBox();
-    const footer = await page.getByRole("contentinfo").locator("> div").boundingBox();
+    for (const path of ["/", "/weekly", "/outlets", "/about", "/terms", "/privacy"]) {
+      await page.goto(path);
+      const header = await page.getByRole("banner").locator("> div").boundingBox();
+      const main = await page.getByRole("main").boundingBox();
+      const footer = await page.getByRole("contentinfo").locator("> div").boundingBox();
 
-    expect(header!.x).toBeCloseTo(main!.x, 0);
-    expect(footer!.x).toBeCloseTo(main!.x, 0);
+      expect(header!.x, path).toBeCloseTo(main!.x, 0);
+      expect(footer!.x, path).toBeCloseTo(main!.x, 0);
+    }
   });
+});
+
+// 읽는 글은 한 줄이 길어지지 않게 본문 열을 좁힌다. 좁히는 방식이 관건이라 못박아 둔다 —
+// 컨테이너째 좁혀 가운데 정렬하면 글이 헤더의 세로줄보다 오른쪽에서 시작한다.
+test.describe("읽는 글의 본문 열", () => {
+  for (const path of ["/about", "/terms", "/privacy"]) {
+    test(`${path} 의 글이 브랜드와 같은 세로줄에서 시작한다`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+
+      // 브랜드 락업(로고+워드마크)의 왼쪽 끝이 지면의 세로줄이다.
+      const brand = await page.getByRole("banner").getByRole("link").first().boundingBox();
+      const heading = await page.getByRole("main").getByRole("heading", { level: 1 }).boundingBox();
+
+      expect(heading!.x).toBeCloseTo(brand!.x, 0);
+      // 그러면서 지면 폭(64rem)보다는 좁다 — 한 줄이 100자를 넘지 않게
+      expect(heading!.width).toBeLessThan(800);
+    });
+  }
 });
 
 test.describe("찾을 수 없는 페이지", () => {

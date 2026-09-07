@@ -4,19 +4,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
-import { getSessionUser } from "@server/auth";
 import { toClusterDetail, isIndexableCluster } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
-import { SiteHeader } from "@/widgets/site-header";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ClusterComments } from "@/widgets/cluster-comments";
 import { datePath } from "@/features/date-nav";
-import { AdSenseLoader } from "@/shared/ui";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
-import { signOutAction } from "../../auth/actions";
-import * as layout from "@/shared/styles/layout.css";
+import { getUser } from "../../_session";
+import { AppShell } from "../../_shell";
 
 // 두 겹으로 캐시한다.
 //  - unstable_cache: 요청 **간** 캐시. 한번 만들어진 날짜의 클러스터는 굳으므로 길게 잡는다.
@@ -73,15 +70,20 @@ export async function generateMetadata({
 
 export default async function ClusterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [cluster, sessionUser] = await Promise.all([getCluster(id), getSessionUser()]);
+  const [cluster, sessionUser] = await Promise.all([getCluster(id), getUser()]);
 
   if (!cluster) notFound();
 
   return (
-    <div className={layout.page}>
-      {/* 색인 대상인 클러스터에서만 광고를 띄운다 → shared/ui/AdSenseLoader */}
-      {isIndexableCluster(cluster) && <AdSenseLoader />}
-
+    // 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다.
+    // 색인 대상인 클러스터에서만 광고를 띄운다 → shared/ui/AdSenseLoader
+    <AppShell
+      back={{
+        href: datePath(cluster.bucketDate),
+        label: formatBucketDateShort(cluster.bucketDate),
+      }}
+      ads={isIndexableCluster(cluster)}
+    >
       <JsonLd
         data={clusterCollectionSchema({
           id: cluster.id,
@@ -99,22 +101,8 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
         })}
       />
 
-      {/* 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다. */}
-      <SiteHeader
-        user={sessionUser}
-        signOut={signOutAction}
-        back={{
-          href: datePath(cluster.bucketDate),
-          label: formatBucketDateShort(cluster.bucketDate),
-        }}
-      />
-
-      {/* 상세와 댓글이 같은 container를 공유한다. 본문이 컨테이너 밖에 있으면
-          목록 페이지와 좌우 여백이 어긋나 상세만 화면에 꽉 찬다. */}
-      <main className={layout.container}>
-        <ClusterDetailView cluster={cluster} />
-        <ClusterComments clusterId={cluster.id} signedIn={Boolean(sessionUser)} />
-      </main>
-    </div>
+      <ClusterDetailView cluster={cluster} />
+      <ClusterComments clusterId={cluster.id} signedIn={Boolean(sessionUser)} />
+    </AppShell>
   );
 }

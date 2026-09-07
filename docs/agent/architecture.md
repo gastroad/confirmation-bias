@@ -56,7 +56,7 @@ RSS 피드
 ```
 shared/          — 프레임워크 무관 유틸 / 스타일
   lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
-  styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts
+  styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts(page·gutters·container·prose)
   ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지), AdSenseLoader(콘텐츠 페이지 전용)
 entities/        — 도메인 모델 + dumb UI
   outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts, ui/, index.ts
@@ -74,7 +74,10 @@ widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-comments/
   outlet-profile/  — 언론사 페이지 본문(통계·추이 차트·중복 매체·최근 이슈)
   site-header/     — 모든 페이지가 공유하는 지면 머리(브랜드 락업·백링크·주요 메뉴·프로필)
+  site-footer/     — 지면 바닥(약관·방침·문의). 루트 레이아웃이 한 번만 세운다
 app/             — Next.js App Router
+  _shell.tsx     — **모든 페이지의 셸**(세션 조회 → 헤더 → main). 페이지는 본문만 넘긴다
+  _session.ts    — getUser = cache(getSessionUser). 요청당 인증 왕복 1회
   page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
   d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
   clusters/[id]/ — 클러스터 상세
@@ -94,6 +97,8 @@ proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름
 
 - `server/` import는 API 라우트(`src/app/api/**`)와 서버 컴포넌트만. entities/widgets/features는 `entities/*/api.ts` 클라이언트 fetcher로 HTTP 호출 (DB 직접 접근 금지)
 - `features/`는 상태·인터랙션 허용(entities의 `ui/` dumb 규칙과 다름). 필터·정렬 등도 여기에 추가
+- **셸이 위젯이 아니라 `app/`에 있는 이유가 이 규칙이다.** 셸은 세션을 읽어야 하는데
+  `server/` 접근은 app 레이어에만 허용된다. 위젯(`site-header`)은 세션을 props로 받는다.
 
 ## 중심선(meridian) — 화면의 축
 
@@ -128,10 +133,33 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
 편향 수치는 `calcTilt`(진보% − 보수%)이고, `TILT_BALANCE_THRESHOLD`(±5%p) 안이면 "균형"으로
 본다. 이 임계값은 디자인이 아니라 **서비스의 주장**이라 화면(목록 헤더)에 그대로 노출한다.
 
+## 페이지 셸 — 세션·헤더·본문 컨테이너를 한 곳에
+
+**페이지는 본문만 쓴다.** 세션 조회 · `<SiteHeader>` · `<main class=container>`는
+`app/_shell.tsx`의 `AppShell`이 세운다. 페이지가 넘기는 것은 다섯 개뿐이다.
+
+| prop    | 뜻                                                                    |
+| ------- | --------------------------------------------------------------------- |
+| `back`  | 돌아갈 곳이 홈이 아닐 때만 (`{ href, label }`)                        |
+| `title` | 브랜드 자리에 다른 이름을 세우는 화면(관리 콘솔)                      |
+| `hero`  | 홈만. 로고를 크게 세우고 태그라인을 단다                              |
+| `prose` | 읽는 글(소개·약관·방침). 본문 열을 좁힌다                             |
+| `ads`   | 색인 기준을 넘긴 콘텐츠 페이지에서만 true → `shared/ui/AdSenseLoader` |
+
+- **셸을 복붙하면 반드시 드리프트가 난다.** 13개 페이지가 각자 들고 있던 동안 회원 탈퇴
+  화면은 헤더가 통째로 빠졌고(돌아갈 길이 푸터뿐이었다), 약관·방침·소개는 자체 컨테이너를
+  써 헤더·푸터와 세로줄이 어긋났다. 2026-09-07에 셸로 모으며 함께 고쳤다.
+- 세션은 `app/_session.ts`의 `getUser`(= `cache(getSessionUser)`)로 읽는다. 셸과 본문이
+  각자 `@server/auth`를 부르면 인증 서버를 두 번 왕복한다(실측 ~80ms).
+  **세션이 필요한 페이지는 `@server/auth`가 아니라 `getUser`를 부른다.**
+- ⚠️ 셸이 세션 쿠키를 읽으므로 **셸을 쓰는 페이지는 전부 동적**이다. 다른 동적 API를 쓰지
+  않는 화면(약관·방침·소개·주간·언론사·탈퇴·auth)은 `dynamic = "force-dynamic"`을 스스로
+  선언해야 한다 — 라우트 세그먼트 설정은 page/layout 파일에서만 읽히므로 셸이 대신 못 한다.
+
 ## 헤더 — 주요 메뉴는 머리에 둔다
 
-헤더 마크업은 `widgets/site-header` 한 곳에 있다. 페이지는 `back`·`title`·`hero`만 넘긴다
-(예전엔 13개 페이지가 같은 `<header>`를 각자 들고 있었다).
+헤더 마크업은 `widgets/site-header` 한 곳에 있다. 세션은 셸이 읽어 props로 내려준다
+(위젯은 `server/`를 만지지 않는다).
 
 - **주간 리포트·언론사는 헤더의 주요 메뉴다**(2026-09-07에 푸터에서 올렸다). 홈은 날짜별
   목록이라 이 둘은 **다른 축의 읽을거리**인데, 지면 바닥에 두면 존재 자체가 발견되지 않는다.
@@ -145,11 +173,20 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
 
 ## 지면 여백과 푸터
 
-- 좌우 여백은 `layout.css.ts`의 `GUTTER`(18 / 28 / 36px) 하나에서 나오고 `headerInner`·
-  `container`·`footerInner`가 **같은 값**을 쓴다. 셋이 갈리면 헤더·본문·푸터의 세로줄이 어긋난다.
-  넓은 화면에서 `maxWidth`(64rem)에 닿기 전까지는 이 값이 유일한 여백이다.
-- **페이지 본문은 반드시 `layout.container` 안에 둔다.** 클러스터 상세가 이걸 빼먹어 혼자
-  full-bleed로 렌더됐다(#21에서 수정). 상세와 댓글은 같은 `container`를 공유한다.
-- 푸터는 root layout(`app/layout.tsx`)에 있어 모든 페이지에 뜬다. `body`가 flex column이고
-  `layout.page`(및 `status.css`의 `root`)가 `flex: 1 0 auto`라 내용이 짧아도 푸터가 화면
-  아래에 붙는다 — `minHeight: 100vh`로 두면 빈 화면을 한 번 스크롤해야 푸터가 나온다.
+`shared/styles/layout.css.ts`에는 **공용 지면 규칙만** 둔다 — `page` · `gutters` ·
+`container` · `prose` 넷. 헤더·푸터 전용 스타일은 각 위젯 옆에 있다.
+
+- 좌우 여백은 `gutters` 하나에서 나온다(`GUTTER` 18 / 28 / 36px + `maxWidth` 64rem).
+  헤더(`site-header`)·본문(`container`)·푸터(`site-footer`)가 **이 스타일을 합성해** 쓰므로
+  값이 갈릴 수 없다. 세로 여백만 합성하는 쪽이 정한다(shorthand 충돌을 피해 가로만 둔다).
+- **페이지 본문은 반드시 `layout.container` 안에 둔다** — 이제 셸이 보장한다. 예전엔
+  클러스터 상세가 이걸 빼먹어 혼자 full-bleed로 렌더됐다(#21에서 수정).
+- **읽는 글은 컨테이너째 좁히지 않는다.** `maxWidth`를 760으로 덮으면 상자가 가운데로 다시
+  정렬돼 글이 헤더의 세로줄보다 오른쪽에서 시작한다. `container` **안에** `prose`(760px)를
+  두어 왼쪽 끝은 브랜드 락업과 같은 자리에 두고 오른쪽으로만 덜 뻗게 한다.
+  `e2e/navigation.spec.ts`가 세 페이지의 이 정렬을 지킨다.
+- 푸터는 `widgets/site-footer`이고 root layout(`app/layout.tsx`)이 세운다 — 셸이 아니라
+  루트에 두는 이유는 셸을 쓰지 않는 상태 화면(error·not-found·loading)에도 떠야 해서다.
+  `body`가 flex column이고 `layout.page`(및 `status.css`의 `root`)가 `flex: 1 0 auto`라
+  내용이 짧아도 푸터가 화면 아래에 붙는다 — `minHeight: 100vh`로 두면 빈 화면을 한 번
+  스크롤해야 푸터가 나온다.

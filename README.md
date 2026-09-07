@@ -168,7 +168,9 @@ confirmation-bias/
 ├── prisma/            schema.prisma · seed.ts
 ├── src/               Next.js 앱 (FSD 구조)
 │   ├── app/           App Router (/ · /d/[date] · /clusters/[id] · /auth · /admin · API)
-│   ├── widgets/       cluster-feed · cluster-detail · cluster-comments
+│   │                  _shell.tsx — 모든 페이지가 공유하는 셸(세션·헤더·본문 컨테이너)
+│   ├── widgets/       cluster-feed · cluster-detail · cluster-comments · outlet-profile
+│   │                  site-header · site-footer (지면 머리·바닥)
 │   ├── features/      outlet-filter · date-nav · profile-menu · auth-form (상태·인터랙션)
 │   ├── entities/      outlet · article · cluster · comment (model · lib · api · ui)
 │   └── shared/        프레임워크 무관 유틸 · 스타일(vanilla-extract)

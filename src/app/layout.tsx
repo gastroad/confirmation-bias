@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_KR, IBM_Plex_Mono } from "next/font/google";
-import Link from "next/link";
 
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { websiteSchema } from "@/shared/seo/schemas";
@@ -11,11 +10,10 @@ import {
   SITE_DESCRIPTION,
   SITE_LOCALE,
   SITE_KEYWORDS,
-  CONTACT_EMAIL,
   ADSENSE_CLIENT,
 } from "@/shared/config/site";
 import { ThemeScript } from "@/shared/ui";
-import * as layout from "@/shared/styles/layout.css";
+import { SiteFooter } from "@/widgets/site-footer";
 import { Providers } from "./providers";
 import "./global.css";
 
@@ -100,32 +98,7 @@ export default function RootLayout({
             루트에 두면 /auth·/account·/admin 같은 콘텐츠 없는 화면에도 광고가 붙는다. */}
         <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
-        <footer className={layout.footer}>
-          <div className={layout.footerInner}>
-            <span>
-              © {new Date().getFullYear()} {SITE_NAME}
-            </span>
-            {/* 주간 리포트·언론사는 헤더의 주요 메뉴로 옮겼다 → widgets/site-header.
-                푸터에는 지면 자체가 아니라 지면에 대한 고지(약관·방침·문의)만 남긴다. */}
-            <nav className={layout.footerLinks}>
-              <Link className={layout.footerLink} href="/">
-                홈
-              </Link>
-              <Link className={layout.footerLink} href="/about">
-                소개 및 방법론
-              </Link>
-              <Link className={layout.footerLink} href="/terms">
-                이용약관
-              </Link>
-              <Link className={layout.footerLink} href="/privacy">
-                개인정보처리방침
-              </Link>
-              <a className={layout.footerLink} href={`mailto:${CONTACT_EMAIL}`}>
-                문의
-              </a>
-            </nav>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSessionUser } from "@server/auth";
-import { signOutAction } from "../../auth/actions";
-import { AdSenseLoader } from "@/shared/ui";
 import { OUTLET_MAP, buildOutletSummary } from "@/entities/outlet";
-import { SiteHeader } from "@/widgets/site-header";
 import { OutletProfileView } from "@/widgets/outlet-profile";
+import { AppShell } from "../../_shell";
 import { getOutletProfile, TREND_DAYS } from "../_data";
-import * as layout from "@/shared/styles/layout.css";
 
 type Params = Promise<{ id: string }>;
 
@@ -35,31 +31,19 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-// 헤더 프로필 메뉴가 세션(쿠키)을 읽어 어차피 동적이다.
+// 셸이 세션 쿠키를 읽어 어차피 동적이다 → app/_shell.tsx
 export const dynamic = "force-dynamic";
 
 export default async function OutletDetailPage({ params }: { params: Params }) {
   const { id } = await params;
   if (!OUTLET_MAP[id]) notFound();
 
-  const [sessionUser, profile] = await Promise.all([getSessionUser(), getOutletProfile(id)]);
+  const profile = await getOutletProfile(id);
   if (!profile) notFound();
 
-  const hasContent = profile.stats.articleCount > 0;
-
   return (
-    <div className={layout.page}>
-      {hasContent && <AdSenseLoader />}
-
-      <SiteHeader
-        user={sessionUser}
-        signOut={signOutAction}
-        back={{ href: "/outlets", label: "언론사" }}
-      />
-
-      <main className={layout.container}>
-        <OutletProfileView profile={profile} trendDays={TREND_DAYS} />
-      </main>
-    </div>
+    <AppShell back={{ href: "/outlets", label: "언론사" }} ads={profile.stats.articleCount > 0}>
+      <OutletProfileView profile={profile} trendDays={TREND_DAYS} />
+    </AppShell>
   );
 }

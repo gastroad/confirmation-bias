@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSessionUser, isAdmin } from "@server/auth";
-import { signOutAction } from "../auth/actions";
+import { isAdmin } from "@server/auth";
+import { getUser } from "../_session";
+import { AppShell } from "../_shell";
 import { triggerCollectAction, triggerClusterAction } from "./actions";
 import { CollectPanel, ClusterPanel } from "./TriggerPanel";
 import * as styles from "./admin.css";
-import { SiteHeader } from "@/widgets/site-header";
-import * as layout from "@/shared/styles/layout.css";
 
 export const metadata: Metadata = {
   title: "관리",
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const sessionUser = await getSessionUser();
+  const sessionUser = await getUser();
   const hasToken = Boolean(process.env.GITHUB_DISPATCH_TOKEN);
 
   // proxy가 비로그인을 로그인 화면으로 보내므로 여기 오는 건 로그인은 된 사용자다.
@@ -26,59 +25,50 @@ export default async function AdminPage() {
   const denied = !isAdmin(sessionUser);
 
   return (
-    <div className={layout.page}>
-      <SiteHeader
-        user={sessionUser}
-        signOut={signOutAction}
-        back={{ href: "/", label: "홈" }}
-        title="관리"
-      />
+    <AppShell back={{ href: "/", label: "홈" }} title="관리">
+      {denied ? (
+        <p className={styles.warning}>
+          관리자 권한이 필요합니다. 계정에 <code>admin</code> 역할이 부여되어야 합니다.
+        </p>
+      ) : (
+        <>
+          {!hasToken && (
+            <p className={styles.warning}>
+              <code>GITHUB_DISPATCH_TOKEN</code>이 설정되지 않아 실행 요청이 실패합니다. 로컬은{" "}
+              <code>.env</code>, 배포는 Vercel 환경변수에 넣어주세요.
+            </p>
+          )}
 
-      <main className={layout.container}>
-        {denied ? (
-          <p className={styles.warning}>
-            관리자 권한이 필요합니다. 계정에 <code>admin</code> 역할이 부여되어야 합니다.
-          </p>
-        ) : (
-          <>
-            {!hasToken && (
-              <p className={styles.warning}>
-                <code>GITHUB_DISPATCH_TOKEN</code>이 설정되지 않아 실행 요청이 실패합니다. 로컬은{" "}
-                <code>.env</code>, 배포는 Vercel 환경변수에 넣어주세요.
-              </p>
-            )}
+          {/* Server Action을 클라이언트 패널에 주입한다. 패널이 server/를 직접 만지지 않게. */}
+          <CollectPanel action={triggerCollectAction} />
+          <ClusterPanel action={triggerClusterAction} />
 
-            {/* Server Action을 클라이언트 패널에 주입한다. 패널이 server/를 직접 만지지 않게. */}
-            <CollectPanel action={triggerCollectAction} />
-            <ClusterPanel action={triggerClusterAction} />
+          <section className={styles.section}>
+            <h2 className={styles.title}>차단 기사</h2>
+            <p className={styles.desc}>
+              저작권자의 표시 중단 요청을 처리합니다. 등록하면 수집된 기사가 삭제되고 이후
+              수집에서도 제외됩니다.
+            </p>
+            <div className={styles.row}>
+              <Link href="/admin/blocked" className={styles.button}>
+                차단 기사 관리로 이동
+              </Link>
+            </div>
+          </section>
 
-            <section className={styles.section}>
-              <h2 className={styles.title}>차단 기사</h2>
-              <p className={styles.desc}>
-                저작권자의 표시 중단 요청을 처리합니다. 등록하면 수집된 기사가 삭제되고 이후
-                수집에서도 제외됩니다.
-              </p>
-              <div className={styles.row}>
-                <Link href="/admin/blocked" className={styles.button}>
-                  차단 기사 관리로 이동
-                </Link>
-              </div>
-            </section>
-
-            <section className={styles.section}>
-              <h2 className={styles.title}>댓글 관리</h2>
-              <p className={styles.desc}>
-                전체 댓글을 최신순으로 훑어보고 삭제합니다. 신고·스팸 대응용입니다.
-              </p>
-              <div className={styles.row}>
-                <Link href="/admin/comments" className={styles.button}>
-                  댓글 관리로 이동
-                </Link>
-              </div>
-            </section>
-          </>
-        )}
-      </main>
-    </div>
+          <section className={styles.section}>
+            <h2 className={styles.title}>댓글 관리</h2>
+            <p className={styles.desc}>
+              전체 댓글을 최신순으로 훑어보고 삭제합니다. 신고·스팸 대응용입니다.
+            </p>
+            <div className={styles.row}>
+              <Link href="/admin/comments" className={styles.button}>
+                댓글 관리로 이동
+              </Link>
+            </div>
+          </section>
+        </>
+      )}
+    </AppShell>
   );
 }

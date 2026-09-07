@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSessionUser } from "@server/auth";
-import { signOutAction } from "../auth/actions";
-import { SiteHeader } from "@/widgets/site-header";
-import { AdSenseLoader } from "@/shared/ui";
+import { AppShell } from "../_shell";
 import {
   LeaningBar,
   LEANING_GROUP_LABELS,
@@ -16,7 +13,6 @@ import type { ClusterSummary } from "@/entities/cluster";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { SITE_NAME } from "@/shared/config/site";
 import { getWeeklyReport, WEEK_DAYS, TOP_SPLIT, TOP_SHARED, SPLIT_MIN_ARTICLES } from "./_data";
-import * as layout from "@/shared/styles/layout.css";
 import * as styles from "./weekly.css";
 
 export const metadata: Metadata = {
@@ -26,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: { type: "article", url: "/weekly", title: `주간 리포트 — ${SITE_NAME}` },
 };
 
-// 헤더 프로필 메뉴가 세션(쿠키)을 읽어 어차피 동적이다.
+// 셸이 세션 쿠키를 읽어 어차피 동적이다 → app/_shell.tsx
 export const dynamic = "force-dynamic";
 
 function TiltText({ tilt }: { tilt: number }) {
@@ -71,66 +67,60 @@ function IssueList({ items }: { items: ClusterSummary[] }) {
 }
 
 export default async function WeeklyPage() {
-  const [sessionUser, report] = await Promise.all([getSessionUser(), getWeeklyReport()]);
+  const report = await getWeeklyReport();
 
   return (
-    <div className={layout.page}>
-      {report && report.clusterCount > 0 && <AdSenseLoader />}
-
-      <SiteHeader user={sessionUser} signOut={signOutAction} />
-
-      <main className={layout.container}>
-        <section className={styles.intro}>
-          {report && (
-            <p className={styles.period}>
-              {report.from} — {report.to}
-            </p>
-          )}
-          <h2 className={styles.title}>주간 리포트</h2>
-          {report ? (
-            <>
-              <p className={styles.lead}>
-                최근 {WEEK_DAYS}일 동안 비교가 성립한 이슈{" "}
-                <strong>{report.clusterCount.toLocaleString()}건</strong>(기사{" "}
-                {report.articleCount.toLocaleString()}건) 가운데,{" "}
-                <strong>진영 간 보도량이 가장 크게 갈린 이슈</strong>와{" "}
-                <strong>세 진영이 모두 다룬 이슈</strong>를 골랐습니다.
-              </p>
-              <p className={styles.criteria}>
-                <strong>선별 기준</strong> — 기사 {INDEX_MIN_ARTICLES}건 이상이면서 서로 다른 진영이
-                2개 이상 등장한 이슈만 후보로 둡니다. 편중 목록은 여기에 더해{" "}
-                <strong>기사 {SPLIT_MIN_ARTICLES}건 이상</strong>만 봅니다 — 3~4건짜리는 한 건만
-                갈려도 ±75%p가 나와 수치가 과장됩니다. 그중 진보 비율 − 보수 비율(%p)이 ±
-                {TILT_BALANCE_THRESHOLD}%p를 넘는 것을 절댓값이 큰 순, 동률이면 보도량이 많은 순으로
-                놓습니다. 사람이 고르지 않고 이 규칙만으로 뽑습니다.
-              </p>
-            </>
-          ) : (
-            <p className={styles.lead}>아직 수집된 기사가 없습니다.</p>
-          )}
-        </section>
-
+    <AppShell ads={Boolean(report && report.clusterCount > 0)}>
+      <section className={styles.intro}>
         {report && (
-          <>
-            <section className={styles.section}>
-              <h3 className={styles.heading}>진영 간 보도량이 갈린 이슈</h3>
-              <p className={styles.sectionNote}>
-                한쪽이 크게 앞선 순서입니다. 막대가 중심선에서 벗어난 만큼이 그 차이입니다.
-              </p>
-              <IssueList items={report.split} />
-            </section>
-
-            <section className={styles.section}>
-              <h3 className={styles.heading}>세 진영이 모두 다룬 이슈</h3>
-              <p className={styles.sectionNote}>
-                진보·중도·보수가 함께 보도한 이슈를 보도량 순으로 놓았습니다. 성향과 무관하게 무게가
-                실린 사건입니다.
-              </p>
-              <IssueList items={report.shared} />
-            </section>
-          </>
+          <p className={styles.period}>
+            {report.from} — {report.to}
+          </p>
         )}
-      </main>
-    </div>
+        <h2 className={styles.title}>주간 리포트</h2>
+        {report ? (
+          <>
+            <p className={styles.lead}>
+              최근 {WEEK_DAYS}일 동안 비교가 성립한 이슈{" "}
+              <strong>{report.clusterCount.toLocaleString()}건</strong>(기사{" "}
+              {report.articleCount.toLocaleString()}건) 가운데,{" "}
+              <strong>진영 간 보도량이 가장 크게 갈린 이슈</strong>와{" "}
+              <strong>세 진영이 모두 다룬 이슈</strong>를 골랐습니다.
+            </p>
+            <p className={styles.criteria}>
+              <strong>선별 기준</strong> — 기사 {INDEX_MIN_ARTICLES}건 이상이면서 서로 다른 진영이
+              2개 이상 등장한 이슈만 후보로 둡니다. 편중 목록은 여기에 더해{" "}
+              <strong>기사 {SPLIT_MIN_ARTICLES}건 이상</strong>만 봅니다 — 3~4건짜리는 한 건만
+              갈려도 ±75%p가 나와 수치가 과장됩니다. 그중 진보 비율 − 보수 비율(%p)이 ±
+              {TILT_BALANCE_THRESHOLD}%p를 넘는 것을 절댓값이 큰 순, 동률이면 보도량이 많은 순으로
+              놓습니다. 사람이 고르지 않고 이 규칙만으로 뽑습니다.
+            </p>
+          </>
+        ) : (
+          <p className={styles.lead}>아직 수집된 기사가 없습니다.</p>
+        )}
+      </section>
+
+      {report && (
+        <>
+          <section className={styles.section}>
+            <h3 className={styles.heading}>진영 간 보도량이 갈린 이슈</h3>
+            <p className={styles.sectionNote}>
+              한쪽이 크게 앞선 순서입니다. 막대가 중심선에서 벗어난 만큼이 그 차이입니다.
+            </p>
+            <IssueList items={report.split} />
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.heading}>세 진영이 모두 다룬 이슈</h3>
+            <p className={styles.sectionNote}>
+              진보·중도·보수가 함께 보도한 이슈를 보도량 순으로 놓았습니다. 성향과 무관하게 무게가
+              실린 사건입니다.
+            </p>
+            <IssueList items={report.shared} />
+          </section>
+        </>
+      )}
+    </AppShell>
   );
 }
