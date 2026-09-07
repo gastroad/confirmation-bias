@@ -50,8 +50,11 @@ FSD 아키텍처 규칙에 맞춰 `src/entities/` 아래에 새 도메인 Entity
 
 ## 규칙
 
-- **entity가 다른 entity를 import하지 않는다**(cross-entity 금지).
-  예외: `entities/cluster/model.ts`가 `OutletMetadata` 타입만 참조하는 것은 허용.
+- **entity가 다른 entity를 배럴로 import하지 않는다**(같은 레이어라 FSD가 금지한다).
+  꼭 필요하면 **`@x` 공개 API**로만 연다 — 여는 쪽에 `entities/<대상>/@x/<쓰는쪽>.ts`를
+  만들고 필요한 것만 re-export한 뒤 `@/entities/<대상>/@x/<쓰는쪽>`으로 부른다.
+  `eslint.config.mjs`가 강제하므로 배럴로 부르면 lint 에러다. 방향은 비순환으로 유지한다.
+  → `docs/agent/conventions.md`의 "cross-entity"
 - 캐시가 필요하면 **DTO 경계**(API 라우트·서버 컴포넌트)에 건다. `server/queries`에 걸면
   `unstable_cache`의 JSON 직렬화로 `Date`가 문자열이 되어 매핑이 깨진다.
   → `docs/agent/caching.md`

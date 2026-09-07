@@ -1,7 +1,5 @@
 import { OUTLET_MAP } from "@/entities/outlet";
 
-export const OUTLETS_PARAM = "outlets";
-
 /**
  * `?outlets=chosun,hani` 값을 유효한 언론사 id 배열로 파싱한다.
  * 서버(page)와 클라이언트(OutletFilter) 양쪽에서 같은 규칙을 쓰기 위한 순수 함수.

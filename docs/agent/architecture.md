@@ -55,12 +55,14 @@ RSS 피드
 
 ```
 shared/          — 프레임워크 무관 유틸 / 스타일
+  config/        — site.ts(SEO·브랜드), search-params.ts(URL 쿼리 파라미터 이름)
   lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts(page·gutters·container·prose)
   ui/            — Logo, Skeleton, icons, ThemeScript(FOUC 방지), AdSenseLoader(콘텐츠 페이지 전용)
-entities/        — 도메인 모델 + dumb UI
+entities/        — 도메인 모델 + dumb UI ( @x/ = 형제 entity 전용 공개 API )
   outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts, ui/, index.ts
-  article/       — model.ts, index.ts
+                   @x/article.ts · @x/cluster.ts — 대상별로 여는 범위를 다르게 적는다
+  article/       — model.ts, @x/cluster.ts, index.ts
   cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙), api.ts, ui/, index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
@@ -93,10 +95,16 @@ app/             — Next.js App Router
 proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
 ```
 
-**레이어 의존 방향:** `app → widgets → features → entities → shared` (단방향)
+**레이어 의존 방향:** `app → widgets → features → entities → shared` (단방향).
+**`eslint.config.mjs`가 강제한다** — 아래 항목은 문서가 아니라 lint 에러다.
 
 - `server/` import는 API 라우트(`src/app/api/**`)와 서버 컴포넌트만. entities/widgets/features는 `entities/*/api.ts` 클라이언트 fetcher로 HTTP 호출 (DB 직접 접근 금지)
 - `features/`는 상태·인터랙션 허용(entities의 `ui/` dumb 규칙과 다름). 필터·정렬 등도 여기에 추가
+- **entity끼리는 `@x`로만 연결한다.** 같은 레이어라 배럴로 서로 부를 수 없다. 방향은
+  `outlet ← article ← cluster`(비순환), `comment`는 독립 → [conventions.md](./conventions.md)의 "cross-entity"
+- **URL 쿼리 파라미터 이름은 `shared/config/search-params.ts`.** entities(fetcher)·features(필터
+  UI)·app(API 라우트)이 함께 쓰는 계약이라 가장 아래에 둔다. features에 있던 동안
+  `entities/cluster/api.ts`가 `"outlets"`를 문자열로 다시 박았다
 - **셸이 위젯이 아니라 `app/`에 있는 이유가 이 규칙이다.** 셸은 세션을 읽어야 하는데
   `server/` 접근은 app 레이어에만 허용된다. 위젯(`site-header`)은 세션을 props로 받는다.
 

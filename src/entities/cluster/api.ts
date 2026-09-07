@@ -1,3 +1,9 @@
+import {
+  OUTLETS_PARAM,
+  DATE_PARAM,
+  CURSOR_PARAM,
+  LIMIT_PARAM,
+} from "@/shared/config/search-params";
 import type { ClustersPage, ClusterStats, DaySummary } from "./model";
 
 // 클라이언트 전용 fetcher. DB 접근은 server/ + API 라우트가 담당하고,
@@ -18,10 +24,10 @@ export async function fetchClustersPage({
   date,
 }: FetchClustersParams = {}): Promise<ClustersPage> {
   const params = new URLSearchParams();
-  if (cursor) params.set("cursor", cursor);
-  if (limit) params.set("limit", String(limit));
-  if (outletIds && outletIds.length > 0) params.set("outlets", outletIds.join(","));
-  if (date) params.set("date", date);
+  if (cursor) params.set(CURSOR_PARAM, cursor);
+  if (limit) params.set(LIMIT_PARAM, String(limit));
+  if (outletIds && outletIds.length > 0) params.set(OUTLETS_PARAM, outletIds.join(","));
+  if (date) params.set(DATE_PARAM, date);
 
   const res = await fetch(`/api/clusters?${params.toString()}`);
   if (!res.ok) throw new Error(`클러스터 목록 조회 실패 (${res.status})`);
@@ -33,8 +39,8 @@ export async function fetchClusterStats(
   date?: string
 ): Promise<ClusterStats> {
   const params = new URLSearchParams();
-  if (outletIds && outletIds.length > 0) params.set("outlets", outletIds.join(","));
-  if (date) params.set("date", date);
+  if (outletIds && outletIds.length > 0) params.set(OUTLETS_PARAM, outletIds.join(","));
+  if (date) params.set(DATE_PARAM, date);
   const qs = params.toString();
 
   const res = await fetch(`/api/clusters/stats${qs ? `?${qs}` : ""}`);

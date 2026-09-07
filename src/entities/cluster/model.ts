@@ -1,5 +1,9 @@
-import type { Leaning, LeaningDistribution, LeaningGroupRatios } from "@/entities/outlet";
-import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article";
+import type {
+  Leaning,
+  LeaningDistribution,
+  LeaningGroupRatios,
+} from "@/entities/outlet/@x/cluster";
+import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article/@x/cluster";
 
 export interface ClusterSummary {
   id: string;

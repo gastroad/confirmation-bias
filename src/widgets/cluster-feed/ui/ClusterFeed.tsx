@@ -18,7 +18,8 @@ import {
   partitionBySpread,
   type ClusterSummary,
 } from "@/entities/cluster";
-import { OUTLETS_PARAM, parseOutletParam } from "@/features/outlet-filter";
+import { parseOutletParam } from "@/features/outlet-filter";
+import { OUTLETS_PARAM } from "@/shared/config/search-params";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
 import { Skeleton } from "@/shared/ui";
 import * as styles from "./ClusterFeed.css";

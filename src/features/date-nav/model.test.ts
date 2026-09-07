@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { parseDateParam, datePath, DATE_PARAM } from "./model";
+import { parseDateParam, datePath } from "./model";
+import { DATE_PARAM } from "@/shared/config/search-params";
 
 describe("parseDateParam", () => {
   it("YYYY-MM-DD를 UTC 자정 Date로 만든다 — @db.Date 컬럼과 맞춘다", () => {

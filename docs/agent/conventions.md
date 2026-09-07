@@ -2,12 +2,13 @@
 
 ## Import 경로
 
-| 상황                                                | 사용할 alias                        |
-| --------------------------------------------------- | ----------------------------------- |
-| `src/` 내부에서 `src/` 참조                         | `@/`                                |
-| API 라우트(`src/app/api`)·서버 컴포넌트 → `server/` | `@server/`                          |
-| `server/` 내부에서 `server/` 참조                   | 상대 경로 (`../db`, `./similarity`) |
-| `scripts/`, `prisma/` → `server/`                   | `../server/db` 등 상대 경로         |
+| 상황                                                | 사용할 alias                          |
+| --------------------------------------------------- | ------------------------------------- |
+| `src/` 내부에서 `src/` 참조                         | `@/`                                  |
+| API 라우트(`src/app/api`)·서버 컴포넌트 → `server/` | `@server/`                            |
+| `server/` 내부에서 `server/` 참조                   | 상대 경로 (`../db`, `./similarity`)   |
+| `scripts/`, `prisma/` → `server/`                   | `../server/db` 등 상대 경로           |
+| entity → 형제 entity                                | `@/entities/<슬라이스>/@x/<자기이름>` |
 
 **절대 금지:** entities·widgets·features·클라이언트 컴포넌트에서 `server/` 직접 import.
 이들은 DB가 필요하면 `entities/*/api.ts`의 클라이언트 fetcher로 API 라우트를 호출한다.
@@ -17,11 +18,44 @@
 
 ## FSD 엄격 규칙
 
-- 각 레이어는 자신보다 **아래 레이어만** import한다.
-- entity가 다른 entity를 import하면 안 된다 (cross-entity 금지).
-  - 예외: `entities/cluster/model.ts`가 `OutletMetadata` 타입만 참조하는 것은 허용.
-- 레이어 공개 API는 반드시 `index.ts` 배럴을 통해 노출한다.
+**이 절은 `eslint.config.mjs`가 강제한다.** 문서에만 있던 동안 어긴 코드가 조용히
+들어왔다(2026-09-07에 룰 추가). 위반 메시지가 이 문서를 가리킨다.
+
+- 각 레이어는 자신보다 **아래 레이어만** import한다 (app → widgets → features → entities → shared).
+- 레이어 공개 API는 반드시 `index.ts` 배럴을 통해 노출한다. 배럴을 우회한 deep import
+  (`@/entities/outlet/model`)는 금지.
 - `ui/` 폴더 안 컴포넌트는 props만 받는 dumb 컴포넌트. 상태·fetch 금지.
+
+### cross-entity — `@x`로만 연다
+
+같은 레이어의 슬라이스끼리는 서로 import하지 않는다. FSD 원문이 "layers **strictly
+below**"만 허용하기 때문이고, `entities/outlet`과 `entities/cluster`는 같은 레이어다.
+
+그런데 이 서비스의 도메인에서는 그걸 없애는 게 불가능하다. `cluster`는 기사의
+`outletId`를 성향으로 바꿔야 분포·편향을 계산하는데, 그 사전이 `OUTLET_MAP`이다.
+FSD도 이 상황을 알고 예외를 하나 만들어 뒀다 — **`@x` cross-import 공개 API**이고,
+"eliminating cross-imports is often unreasonable"한 **entities 레이어에서만** 쓸 수 있다.
+
+여는 쪽이 **대상별로** 공개 범위를 파일에 적는다.
+
+```
+entities/outlet/
+  @x/article.ts    → OutletMetadata 1개          (기사는 언론사를 표시만 한다)
+  @x/cluster.ts    → 성향 분류 체계 + OUTLET_MAP  (UI·언론사 집계는 안 연다)
+  index.ts         → 그 외 전부 (31개)
+entities/article/
+  @x/cluster.ts    → ArticleWithOutlet, TimelinePoint
+```
+
+```ts
+// entities/cluster/lib.ts
+import { OUTLET_MAP, calcTilt } from "@/entities/outlet/@x/cluster";
+```
+
+- **배럴로 형제를 부르면 lint 에러다.** `@/entities/outlet`은 entities 안에서 막혀 있다.
+- `@x`는 **형제 entity 전용 통로**다. features·widgets·app에서는 막힌다 — 그쪽은 배럴을 쓴다.
+- 현재 방향은 `outlet ← article ← cluster`이고 `comment`는 독립이다. **비순환을 유지한다** —
+  `@x` 파일을 서로 만들면 순환이 생기고, ESLint는 그건 못 잡는다.
 
 ## 데이터 패칭
 
@@ -44,6 +78,7 @@
 | BE 파이프라인 로직           | `server/clustering/`                                              |
 | 일회성 실행 스크립트         | `scripts/`                                                        |
 | 사이트 전역 상수(SEO·브랜드) | `src/shared/config/site.ts`                                       |
+| URL 쿼리 파라미터 이름       | `src/shared/config/search-params.ts`                              |
 | 구조화 데이터·JSON-LD        | `src/shared/seo/`                                                 |
 | 새 페이지                    | `src/app/<route>/page.tsx` — 본문만 쓰고 `AppShell`로 감싼다      |
 | 페이지가 쓸 세션             | `src/app/_session.ts`의 `getUser` (`@server/auth` 직접 호출 금지) |

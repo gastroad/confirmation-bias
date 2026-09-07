@@ -3,7 +3,13 @@ import { findClusterSummaryPage } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { toClusterSummary } from "@/entities/cluster";
 import { parseOutletParam } from "@/features/outlet-filter";
-import { DATE_PARAM, parseDateParam } from "@/features/date-nav";
+import { parseDateParam } from "@/features/date-nav";
+import {
+  OUTLETS_PARAM,
+  DATE_PARAM,
+  CURSOR_PARAM,
+  LIMIT_PARAM,
+} from "@/shared/config/search-params";
 import type { ClustersPage } from "@/entities/cluster";
 
 // **DTO로 바꾼 뒤에 캐시한다.** unstable_cache는 반환값을 JSON 직렬화하므로 Prisma row를
@@ -30,10 +36,10 @@ const getPage = unstable_cache(
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const cursor = searchParams.get("cursor") ?? undefined;
-  const limitParam = searchParams.get("limit");
+  const cursor = searchParams.get(CURSOR_PARAM) ?? undefined;
+  const limitParam = searchParams.get(LIMIT_PARAM);
   const limit = limitParam ? Number(limitParam) : undefined;
-  const outletIds = parseOutletParam(searchParams.get("outlets"));
+  const outletIds = parseOutletParam(searchParams.get(OUTLETS_PARAM));
   const bucketDate = parseDateParam(searchParams.get(DATE_PARAM));
 
   const body = await getPage(

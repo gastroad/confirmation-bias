@@ -8,9 +8,9 @@ import {
   LEANING_GROUPS,
   LEANING_GROUP_ORDER,
   GROUP_BY_LEANING,
-} from "@/entities/outlet";
-import type { Leaning, LeaningDistribution, LeaningGroup } from "@/entities/outlet";
-import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article";
+} from "@/entities/outlet/@x/cluster";
+import type { Leaning, LeaningDistribution, LeaningGroup } from "@/entities/outlet/@x/cluster";
+import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article/@x/cluster";
 import type { ClusterSummary, ClusterDetail, ClusterStats, DaySummary } from "./model";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
 
