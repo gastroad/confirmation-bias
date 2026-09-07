@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { emptyDistribution, GROUP_BY_LEANING, LEANING_GROUPS, OUTLET_MAP } from "@/entities/outlet";
-import type { LeaningDistribution } from "@/entities/outlet";
+import {
+  emptyDistribution,
+  GROUP_BY_LEANING,
+  LEANING_GROUPS,
+  OUTLET_MAP,
+} from "@/entities/outlet/@x/cluster";
+import type { LeaningDistribution } from "@/entities/outlet/@x/cluster";
 import {
   countLeaningGroups,
   isIndexableCluster,

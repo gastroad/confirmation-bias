@@ -1,4 +1,4 @@
-import type { OutletMetadata } from "@/entities/outlet";
+import type { OutletMetadata } from "@/entities/outlet/@x/article";
 
 /**
  * 화면에 싣는 기사 정보. **발췌(`description`)는 담지 않는다.**

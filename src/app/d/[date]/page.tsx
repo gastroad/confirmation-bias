@@ -5,7 +5,8 @@ import { getDayNav } from "../../_day-nav-data";
 import { AppShell } from "../../_shell";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
-import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
+import { OutletFilter, parseOutletParam } from "@/features/outlet-filter";
+import { OUTLETS_PARAM } from "@/shared/config/search-params";
 import { formatBucketDateLabel, isValidBucketDate } from "@/shared/lib/bucket-date";
 
 type Params = Promise<{ date: string }>;

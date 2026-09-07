@@ -8,6 +8,9 @@ RSS 수집(3시간마다) → KST 하루치 배치 클러스터링(하루 1회) 
 ## Quick Rules
 
 - FSD 아키텍처 엄격 적용 (`src/`). 레이어 경계를 절대 역방향으로 넘지 않는다.
+  경계는 **`eslint.config.mjs`가 강제한다** — 어기면 lint 에러이고 메시지가 문서를 가리킨다.
+- entity끼리는 배럴로 서로 부르지 않는다. 같은 레이어라서 FSD가 금지한다. 불가피하면
+  **`@x` 공개 API**로만 연다(`@/entities/outlet/@x/cluster`). → `docs/agent/conventions.md`의 "cross-entity"
 - DB 조회 등 BE 로직은 `server/`에만. `server/`를 import할 수 있는 곳은 **API 라우트(`src/app/api/**`)와 서버 컴포넌트**뿐. entities·widgets·features 등 UI/클라이언트 레이어는 `server/`를 import하지 않고 `entities/\*/api.ts`의 클라이언트 fetcher로 HTTP 호출한다.
 - 데이터 흐름: 클라이언트(react-query) → API 라우트 → `server/queries` → DB. 클라이언트는 파라미터만 보낸다.
 - 새 페이지는 셸(`src/app/_shell.tsx`의 `AppShell`)로 감싸고 **본문만 쓴다.** 세션·헤더·

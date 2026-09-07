@@ -1,6 +1,5 @@
 import { isValidBucketDate } from "@/shared/lib/bucket-date";
-
-export const DATE_PARAM = "date";
+import { OUTLETS_PARAM } from "@/shared/config/search-params";
 
 /**
  * `?date=2026-08-23` 값을 KST 기준일 Date로 파싱한다.
@@ -16,6 +15,6 @@ export function parseDateParam(value: string | undefined | null): Date | undefin
 
 /** 날짜별 페이지 경로. 목록의 날짜 축은 쿼리가 아니라 path로 둔다(canonical이 명확해진다). */
 export function datePath(date: string, outletIds: string[] = []): string {
-  const qs = outletIds.length > 0 ? `?outlets=${outletIds.join(",")}` : "";
+  const qs = outletIds.length > 0 ? `?${OUTLETS_PARAM}=${outletIds.join(",")}` : "";
   return `/d/${date}${qs}`;
 }

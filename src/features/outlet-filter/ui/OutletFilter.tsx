@@ -9,7 +9,8 @@ import {
   LEANING_COLORS,
 } from "@/entities/outlet";
 import { ChevronDownIcon } from "@/shared/ui";
-import { OUTLETS_PARAM, parseOutletParam } from "../model";
+import { OUTLETS_PARAM } from "@/shared/config/search-params";
+import { parseOutletParam } from "../model";
 import * as styles from "./OutletFilter.css";
 
 export function OutletFilter() {
