@@ -15,8 +15,3 @@ export interface ArticleWithOutlet {
   publishedAt: string;
   outlet: OutletMetadata;
 }
-
-export interface TimelinePoint {
-  hour: string;
-  count: number;
-}

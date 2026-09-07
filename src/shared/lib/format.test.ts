@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { formatRelative, formatDate } from "./format";
+import {
+  formatRelative,
+  formatDate,
+  kstMinuteOfDay,
+  formatClockTime,
+  formatDuration,
+} from "./format";
 
 const NOW = "2026-08-26T12:00:00.000Z";
 
@@ -86,5 +92,54 @@ describe("formatDate", () => {
     // KST 하루의 양 끝. 둘 다 2026-08-26 버킷에 속한다.
     expect(formatDate("2026-08-25T15:00:00.000Z")).toBe("8/26 00:00");
     expect(formatDate("2026-08-26T14:59:00.000Z")).toBe("8/26 23:59");
+  });
+});
+
+describe("kstMinuteOfDay", () => {
+  it("KST 자정으로부터의 분을 낸다", () => {
+    expect(kstMinuteOfDay("2026-08-29T15:00:00.000Z")).toBe(0); // KST 08-30 00:00
+    expect(kstMinuteOfDay("2026-08-30T02:36:00.000Z")).toBe(696); // KST 11:36
+    expect(kstMinuteOfDay("2026-08-30T14:59:00.000Z")).toBe(1439); // KST 23:59
+  });
+
+  it("실행 환경 타임존과 무관하게 같은 값을 낸다 — 서버가 UTC라도 축이 밀리지 않는다", () => {
+    const tz = process.env.TZ;
+    const results = ["UTC", "Asia/Seoul", "America/New_York", "Pacific/Auckland"].map((z) => {
+      process.env.TZ = z;
+      return kstMinuteOfDay("2026-08-30T02:36:00.000Z");
+    });
+    process.env.TZ = tz;
+    expect(new Set(results)).toEqual(new Set([696]));
+  });
+
+  it("formatDate와 같은 시각을 가리킨다 — 한 화면에 두 기준이 있으면 안 된다", () => {
+    const iso = "2026-08-25T20:00:00.000Z";
+    expect(formatDate(iso)).toBe("8/26 05:00");
+    expect(formatClockTime(kstMinuteOfDay(iso))).toBe("05:00");
+  });
+});
+
+describe("formatClockTime", () => {
+  it("시·분을 두 자리로 채운다", () => {
+    expect(formatClockTime(0)).toBe("00:00");
+    expect(formatClockTime(65)).toBe("01:05");
+    expect(formatClockTime(1439)).toBe("23:59");
+  });
+});
+
+describe("formatDuration", () => {
+  it("1시간 미만은 분으로만 적는다", () => {
+    expect(formatDuration(0)).toBe("0분");
+    expect(formatDuration(5)).toBe("5분");
+    expect(formatDuration(59)).toBe("59분");
+  });
+
+  it("정각이면 분을 붙이지 않는다", () => {
+    expect(formatDuration(60)).toBe("1시간");
+    expect(formatDuration(840)).toBe("14시간");
+  });
+
+  it("시간과 분을 함께 적는다", () => {
+    expect(formatDuration(95)).toBe("1시간 35분");
   });
 });

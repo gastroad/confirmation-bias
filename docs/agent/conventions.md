@@ -162,6 +162,9 @@ import { OUTLET_MAP, calcTilt } from "@/entities/outlet/@x/cluster";
 - `calcBarGeometry`(`entities/outlet/model.ts`) — 중심선 기하. 막대의 `left`·`transform-origin`.
   `LeaningBar`는 이 값을 인라인 스타일로 옮기기만 한다.
 - `groupArticlesByLeaning`(`entities/cluster/lib.ts`) — 상세 페이지의 세 갈래 열.
+- `calcLagGeometry`(`entities/cluster/lib.ts`) — 보도 시차 스트립의 점 좌표(KST 자정으로부터의
+  분 → %)와 진영별 격차. 서버에서 계산해 인라인 스타일로 내려보내므로 **스트립은 클라이언트
+  컴포넌트가 아니다** — recharts를 쓰던 시절의 `TimelineChart`는 그래서 `"use client"`였다.
 
 `unstable_cache`가 JSON 직렬화하는 경계가 DTO 매핑이므로, 그 테스트는
 `JSON.parse(JSON.stringify(dto))`가 원본과 같은지까지 본다. → [caching.md](./caching.md)

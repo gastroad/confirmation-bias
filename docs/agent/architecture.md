@@ -65,8 +65,8 @@ entities/        — 도메인 모델 + dumb UI ( @x/ = 형제 entity 전용 공
                    ui/(LeaningBar·TiltLabel), index.ts
                    @x/article.ts · @x/cluster.ts — 대상별로 여는 범위를 다르게 적는다
   article/       — model.ts, @x/cluster.ts, index.ts
-  cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙), api.ts,
-                   ui/(ClusterCard — 목록 항목의 본문), index.ts
+  cluster/       — model.ts(+색인 기준), lib.ts(DTO 매핑·색인 판정·선별 규칙·보도 시차 기하),
+                   api.ts, ui/(ClusterCard — 목록 항목의 본문), index.ts
   comment/       — model.ts, lib.ts(canDelete 계산), api.ts, index.ts
 features/        — 사용자 인터랙션 (상태 가능)
   outlet-filter/ — model.ts(parseOutletParam), ui/, index.ts
@@ -75,7 +75,7 @@ features/        — 사용자 인터랙션 (상태 가능)
   auth-form/     — model.ts(AuthFormState), ui/(AuthForm), index.ts
 widgets/         — 페이지 조각 (여러 entity 조합)
   cluster-feed/
-  cluster-detail/
+  cluster-detail/  — 상세 본문. LagStrip(보도 시차)이 "세 갈래 제목" 바로 위에 선다
   cluster-comments/
   outlet-profile/  — 언론사 페이지 본문(통계·추이 차트·중복 매체·최근 이슈)
   site-header/     — 모든 페이지가 공유하는 지면 머리(브랜드 락업·백링크·주요 메뉴·프로필)

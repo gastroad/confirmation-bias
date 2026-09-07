@@ -6,8 +6,8 @@ import {
   tiltSide,
 } from "@/entities/outlet";
 import type { Leaning, LeaningGroup } from "@/entities/outlet";
-import { TimelineChart } from "./TimelineChart";
-import { groupArticlesByLeaning } from "@/entities/cluster";
+import { LagStrip } from "./LagStrip";
+import { groupArticlesByLeaning, calcLagGeometry } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { formatDate } from "@/shared/lib/format";
 import { formatBucketDateNumeric } from "@/shared/lib/bucket-date";
@@ -50,6 +50,7 @@ function Verdict({ cluster }: { cluster: ClusterDetail }) {
 
 export function ClusterDetailView({ cluster }: Props) {
   const byGroup = groupArticlesByLeaning(cluster.articles);
+  const lag = calcLagGeometry(cluster.articles);
 
   return (
     <div className={styles.root}>
@@ -66,6 +67,13 @@ export function ClusterDetailView({ cluster }: Props) {
         <LeaningBar distribution={cluster.leaningDistribution} showLabels large />
         <Verdict cluster={cluster} />
       </section>
+
+      {lag.first && (
+        <section className={styles.section}>
+          <h3 className={styles.heading}>보도 시차</h3>
+          <LagStrip lag={lag} />
+        </section>
+      )}
 
       <section className={styles.section}>
         <h3 className={styles.heading}>같은 사건, 세 갈래 제목</h3>
@@ -104,13 +112,6 @@ export function ClusterDetailView({ cluster }: Props) {
               )}
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h3 className={styles.heading}>시간대별 보도량</h3>
-        <div className={styles.chart}>
-          <TimelineChart data={cluster.timeline} />
         </div>
       </section>
     </div>

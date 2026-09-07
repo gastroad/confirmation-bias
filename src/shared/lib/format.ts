@@ -25,3 +25,29 @@ export function formatDate(iso: string): string {
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${hh}:${mm}`;
 }
+
+/**
+ * ISO → KST 자정으로부터의 분(0–1439).
+ *
+ * 보도 시차 스트립의 가로 좌표가 이 값이다. 클러스터의 단위가 KST 하루이므로
+ * 하루 안에서의 위치는 절대 시각이 아니라 이 상대 분으로 재야 축과 어긋나지 않는다.
+ */
+export function kstMinuteOfDay(iso: string): number {
+  const d = toKst(iso);
+  return d.getUTCHours() * 60 + d.getUTCMinutes();
+}
+
+/** 696 → "11:36". 하루 안의 시각을 자릿수 고정으로 적는다. */
+export function formatClockTime(minuteOfDay: number): string {
+  const hh = String(Math.floor(minuteOfDay / 60)).padStart(2, "0");
+  const mm = String(minuteOfDay % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+/** 95 → "1시간 35분". 시각이 아니라 **격차**를 적는 자리에 쓴다. */
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}분`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}

@@ -49,10 +49,7 @@ describe("GET /api/clusters/[id]", () => {
     expect(body.bucketDate).toBe("2026-08-26");
     expect(body.articles).toHaveLength(2);
     expect(body.articles[0].publishedAt).toBe("2026-08-26T01:30:00.000Z");
-    expect(body.timeline).toEqual([
-      { hour: "2026-08-26T01:00:00.000Z", count: 1 },
-      { hour: "2026-08-26T03:00:00.000Z", count: 1 },
-    ]);
+    expect(body).not.toHaveProperty("timeline");
   });
 
   it("없으면 404다 — 빈 상세를 200으로 주지 않는다", async () => {
