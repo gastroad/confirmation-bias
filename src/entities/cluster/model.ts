@@ -3,7 +3,7 @@ import type {
   LeaningDistribution,
   LeaningGroupRatios,
 } from "@/entities/outlet/@x/cluster";
-import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article/@x/cluster";
+import type { ArticleWithOutlet } from "@/entities/article/@x/cluster";
 
 export interface ClusterSummary {
   id: string;
@@ -23,7 +23,6 @@ export interface ClusterSummary {
 
 export interface ClusterDetail extends ClusterSummary {
   articles: ArticleWithOutlet[];
-  timeline: TimelinePoint[];
 }
 
 /** 커서 페이지네이션 응답 (무한 스크롤) */

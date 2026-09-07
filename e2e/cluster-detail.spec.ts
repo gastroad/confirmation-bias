@@ -11,6 +11,12 @@ import {
 const detailTitle = (page: import("@playwright/test").Page) =>
   page.getByRole("heading", { level: 2 }).first();
 
+/** "같은 사건, 세 갈래 제목" 절. 스트립과 열이 같은 문구를 쓰므로 범위를 갈라야 한다. */
+const columnsSection = (page: import("@playwright/test").Page) =>
+  page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "같은 사건, 세 갈래 제목" }) });
+
 /** 색인 기준을 넘긴 클러스터를 열고, 없으면 스킵한다. */
 async function openIndexable(
   page: import("@playwright/test").Page,
@@ -72,7 +78,8 @@ test.describe("클러스터 상세", () => {
     test.skip(silent === 0, "이 클러스터는 세 진영이 모두 보도했다");
 
     await page.goto(`/clusters/${cluster!.id}`);
-    await expect(page.getByText("보도 없음")).toHaveCount(silent);
+    // "보도 없음"은 보도 시차 스트립의 빈 레인에도 뜨므로 절로 범위를 좁힌다.
+    await expect(columnsSection(page).getByText("보도 없음")).toHaveCount(silent);
   });
 
   test("원문 링크는 새 탭으로 열고 rel로 참조를 끊는다", async ({ page, request }) => {
@@ -83,9 +90,23 @@ test.describe("클러스터 상세", () => {
     expect(await external.getAttribute("href")).toMatch(/^https?:\/\//);
   });
 
-  test("시간대별 보도량 절을 싣는다", async ({ page, request }) => {
+  test("보도 시차 절을 '세 갈래 제목' 바로 위에 세운다", async ({ page, request }) => {
     await openIndexable(page, request);
-    await expect(page.getByRole("heading", { name: "시간대별 보도량" })).toBeVisible();
+
+    // 순서가 곧 읽는 차례다 — 언제 갈렸는지를 본 뒤 무엇을 다르게 썼는지 읽는다.
+    await expect(page.getByRole("heading", { level: 3 })).toHaveText([
+      "보도 시차",
+      "같은 사건, 세 갈래 제목",
+    ]);
+  });
+
+  test("보도 시차는 최초 보도와 KST 0–24시 축을 함께 적는다", async ({ page, request }) => {
+    await openIndexable(page, request);
+
+    await expect(page.getByText(/^최초 \d{2}:\d{2} /).first()).toBeVisible();
+    for (const tick of ["0시", "6시", "12시", "18시", "24시"]) {
+      await expect(page.getByText(tick, { exact: true })).toBeVisible();
+    }
   });
 
   test("헤더에서 그날 목록으로 돌아간다 — 홈은 최신만 보여주므로 맥락이 끊긴다", async ({

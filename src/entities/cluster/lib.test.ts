@@ -18,6 +18,7 @@ import {
   toDaySummary,
   toClusterStats,
   groupArticlesByLeaning,
+  calcLagGeometry,
 } from "./lib";
 import type { ClusterSummary } from "./model";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
@@ -404,36 +405,6 @@ describe("toClusterDetail", () => {
     expect(detail.leaningDistribution.center).toBe(0);
   });
 
-  it("타임라인을 시간 단위로 묶는다", () => {
-    const detail = toClusterDetail(
-      detailRow([
-        detailArticle({ id: "a1", publishedAt: "2026-08-26T01:05:00.000Z" }),
-        detailArticle({ id: "a2", publishedAt: "2026-08-26T01:55:00.000Z" }),
-        detailArticle({ id: "a3", publishedAt: "2026-08-26T03:10:00.000Z" }),
-      ])
-    );
-    expect(detail.timeline).toEqual([
-      { hour: "2026-08-26T01:00:00.000Z", count: 2 },
-      { hour: "2026-08-26T03:00:00.000Z", count: 1 },
-    ]);
-  });
-
-  it("타임라인은 입력 순서와 무관하게 시간 오름차순이다", () => {
-    const detail = toClusterDetail(
-      detailRow([
-        detailArticle({ id: "a1", publishedAt: "2026-08-26T22:00:00.000Z" }),
-        detailArticle({ id: "a2", publishedAt: "2026-08-26T02:00:00.000Z" }),
-        detailArticle({ id: "a3", publishedAt: "2026-08-26T09:00:00.000Z" }),
-      ])
-    );
-    const hours = detail.timeline.map((p) => p.hour);
-    expect(hours).toEqual([...hours].sort());
-  });
-
-  it("기사가 없으면 타임라인도 비어 있다", () => {
-    expect(toClusterDetail(detailRow([])).timeline).toEqual([]);
-  });
-
   it("JSON 왕복에도 값이 보존된다 (상세는 6시간 캐시된다)", () => {
     const dto = toClusterDetail(detailRow([detailArticle()]));
     expect(JSON.parse(JSON.stringify(dto))).toEqual(dto);
@@ -609,5 +580,136 @@ describe("groupArticlesByLeaning", () => {
     const ids = groupArticlesByLeaning(articles).flatMap((c) => c.articles.map((a) => a.id));
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toHaveLength(3);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// calcLagGeometry — 상세 페이지의 "보도 시차" 스트립
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("calcLagGeometry", () => {
+  it("진보 → 중도 → 보수 순으로 세 레인을 낸다 (막대의 좌우 스펙트럼과 같은 순서)", () => {
+    expect(calcLagGeometry([]).lanes.map((l) => l.group)).toEqual([
+      "progressive",
+      "neutral",
+      "conservative",
+    ]);
+  });
+
+  it("점의 가로 위치는 KST 자정으로부터의 분이다", () => {
+    // UTC 02:36 = KST 11:36 = 696분. 696 / 1440 = 48.33%
+    const { lanes } = calcLagGeometry([art("donga", "2026-08-30T02:36:00.000Z")]);
+    const [dot] = lanes.find((l) => l.group === "conservative")!.dots;
+    expect(dot.time).toBe("11:36");
+    expect(dot.left).toBeCloseTo(48.333, 3);
+  });
+
+  it("KST 하루의 양 끝이 0%와 100% 안에 들어온다", () => {
+    const { lanes } = calcLagGeometry([
+      art("hani", "2026-08-29T15:00:00.000Z"), // KST 08-30 00:00
+      art("khan", "2026-08-30T14:59:00.000Z"), // KST 08-30 23:59
+    ]);
+    const dots = lanes.find((l) => l.group === "progressive")!.dots;
+    expect(dots.map((d) => d.time)).toEqual(["00:00", "23:59"]);
+    expect(dots[0].left).toBe(0);
+    expect(dots[1].left).toBeCloseTo(99.93, 2);
+  });
+
+  /**
+   * 서버 컴포넌트가 그리는 값이라 Vercel(UTC)에서 계산된다. 환경 타임존을 따르면
+   * 아래 세 열의 기사 시각(KST 고정)과 점의 위치가 어긋난다.
+   */
+  it("실행 환경 타임존과 무관하게 같은 좌표를 낸다", () => {
+    const tz = process.env.TZ;
+    const results = ["UTC", "Asia/Seoul", "America/New_York", "Pacific/Auckland"].map((z) => {
+      process.env.TZ = z;
+      return calcLagGeometry([art("chosun", "2026-08-30T02:36:00.000Z")]).first;
+    });
+    process.env.TZ = tz;
+
+    expect(new Set(results.map((r) => r!.time))).toEqual(new Set(["11:36"]));
+  });
+
+  it("최초 보도는 가장 이른 기사의 시각과 매체다", () => {
+    const lag = calcLagGeometry([
+      art("khan", "2026-08-30T05:00:00.000Z"),
+      art("donga", "2026-08-30T02:36:00.000Z"),
+      art("sbs", "2026-08-30T03:06:00.000Z"),
+    ]);
+    expect(lag.first).toEqual({ time: "11:36", outletName: "동아일보" });
+  });
+
+  it("최초 대비 격차를 분으로 잰다 — 먼저 쓴 진영은 0이다", () => {
+    const lag = calcLagGeometry([
+      art("donga", "2026-08-30T02:36:00.000Z"), // 보수 11:36
+      art("khan", "2026-08-30T02:41:00.000Z"), // 진보 11:41
+      art("sbs", "2026-08-30T03:06:00.000Z"), // 중도 12:06
+    ]);
+    const gap = Object.fromEntries(lag.lanes.map((l) => [l.group, l.gapMinutes]));
+    expect(gap).toEqual({ conservative: 0, progressive: 5, neutral: 30 });
+  });
+
+  it("보도하지 않은 진영은 빈 레인으로 남긴다 — 침묵이 이 화면이 보여주려는 것이다", () => {
+    const lag = calcLagGeometry([art("hani", "2026-08-30T02:00:00.000Z")]);
+    const neutral = lag.lanes.find((l) => l.group === "neutral")!;
+    expect(neutral.dots).toEqual([]);
+    expect(neutral.firstTime).toBeNull();
+    expect(neutral.gapMinutes).toBeNull();
+  });
+
+  it("ranked는 첫 보도가 이른 순이고 보도 없는 진영은 맨 뒤다", () => {
+    const lag = calcLagGeometry([
+      art("khan", "2026-08-30T05:48:00.000Z"), // 진보 14:48
+      art("newsis", "2026-08-29T15:50:00.000Z"), // 중도 00:50
+      art("segye", "2026-08-30T04:11:00.000Z"), // 보수 13:11
+    ]);
+    expect(lag.ranked.map((l) => l.group)).toEqual(["neutral", "conservative", "progressive"]);
+
+    const silent = calcLagGeometry([
+      art("segye", "2026-08-30T04:11:00.000Z"),
+      art("khan", "2026-08-30T02:00:00.000Z"),
+    ]);
+    expect(silent.ranked.map((l) => l.group)).toEqual([
+      "progressive",
+      "conservative",
+      "neutral", // 보도 없음
+    ]);
+  });
+
+  it("레인 안의 점은 시각 오름차순이고 첫 점만 isFirst다", () => {
+    const lag = calcLagGeometry([
+      art("khan", "2026-08-30T07:20:00.000Z"),
+      art("hani", "2026-08-30T02:00:00.000Z"),
+      art("khan", "2026-08-30T04:31:00.000Z"),
+    ]);
+    const dots = lag.lanes.find((l) => l.group === "progressive")!.dots;
+    expect(dots.map((d) => d.time)).toEqual(["11:00", "13:31", "16:20"]);
+    expect(dots.map((d) => d.isFirst)).toEqual([true, false, false]);
+  });
+
+  it("같은 시각에 몰린 점은 흩뜨리지 않는다 — 겹침 자체가 '그 시간에 몰렸다'는 신호다", () => {
+    const lag = calcLagGeometry([
+      art("sbs", "2026-08-30T03:06:00.000Z"),
+      art("newsis", "2026-08-30T03:06:00.000Z"),
+    ]);
+    const dots = lag.lanes.find((l) => l.group === "neutral")!.dots;
+    expect(dots.map((d) => d.left)).toEqual([dots[0].left, dots[0].left]);
+    // 동시 보도는 둘 다 그 진영의 첫 보도다.
+    expect(dots.every((d) => d.isFirst)).toBe(true);
+  });
+
+  it("명단에 없는 매체는 어느 레인에도 넣지 않는다 — 진영을 모르면 시차를 말할 수 없다", () => {
+    const lag = calcLagGeometry([
+      art("newcomer", "2026-08-29T15:10:00.000Z"), // KST 00:10, unknown
+      art("hani", "2026-08-30T02:00:00.000Z"),
+    ]);
+    expect(lag.lanes.flatMap((l) => l.dots)).toHaveLength(1);
+    // 최초 보도도 아래 세 열과 같은 모집단에서 고른다.
+    expect(lag.first).toEqual({ time: "11:00", outletName: "한겨레신문" });
+  });
+
+  it("성향을 아는 기사가 없으면 최초 보도가 없다 — 섹션 자체를 세우지 않는 조건이다", () => {
+    expect(calcLagGeometry([]).first).toBeNull();
+    expect(calcLagGeometry([art("newcomer", "2026-08-30T02:00:00.000Z")]).first).toBeNull();
   });
 });

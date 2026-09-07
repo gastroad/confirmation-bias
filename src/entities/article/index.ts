@@ -1,1 +1,1 @@
-export type { ArticleWithOutlet, TimelinePoint } from "./model";
+export type { ArticleWithOutlet } from "./model";

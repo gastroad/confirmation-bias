@@ -153,7 +153,3 @@ export const columnEmpty = style({
   fontSize: 12.5,
   color: vars.color.textFaint,
 });
-
-export const chart = style({
-  color: vars.color.chartLine,
-});

@@ -10,7 +10,8 @@ import {
   GROUP_BY_LEANING,
 } from "@/entities/outlet/@x/cluster";
 import type { Leaning, LeaningDistribution, LeaningGroup } from "@/entities/outlet/@x/cluster";
-import type { ArticleWithOutlet, TimelinePoint } from "@/entities/article/@x/cluster";
+import type { ArticleWithOutlet } from "@/entities/article/@x/cluster";
+import { kstMinuteOfDay, formatClockTime } from "@/shared/lib/format";
 import type { ClusterSummary, ClusterDetail, ClusterStats, DaySummary } from "./model";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
 
@@ -97,17 +98,6 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     };
   });
 
-  const hourMap = new Map<string, number>();
-  for (const a of row.articles) {
-    const hour = new Date(a.publishedAt);
-    hour.setMinutes(0, 0, 0);
-    const key = hour.toISOString();
-    hourMap.set(key, (hourMap.get(key) ?? 0) + 1);
-  }
-  const timeline: TimelinePoint[] = Array.from(hourMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([hour, count]) => ({ hour, count }));
-
   const ratios = calcLeaningGroupRatios(dist);
 
   return {
@@ -125,7 +115,6 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     leaningGroupRatios: ratios,
     tilt: calcTilt(ratios),
     articles,
-    timeline,
   };
 }
 
@@ -270,4 +259,96 @@ export function groupArticlesByLeaning(articles: readonly ArticleWithOutlet[]): 
       outletCount: new Set(inGroup.map((a) => a.outlet.id)).size,
     };
   });
+}
+
+const MINUTES_PER_DAY = 24 * 60;
+
+export interface LagDot {
+  id: string;
+  /** 트랙 좌측에서의 위치(%). KST 00:00이 0%, 24:00이 100%. */
+  left: number;
+  leaning: Leaning;
+  outletName: string;
+  /** "11:36" (KST) */
+  time: string;
+  /** 이 진영의 첫 보도. 점이 겹쳐도 어디서 시작했는지 남는다. */
+  isFirst: boolean;
+}
+
+export interface LagLane {
+  group: LeaningGroup;
+  /** 보도 시각 오름차순 */
+  dots: LagDot[];
+  /** 이 진영의 첫 보도 시각("11:36"). 보도가 없으면 null */
+  firstTime: string | null;
+  /** 최초 보도와의 격차(분). 가장 먼저 쓴 진영은 0, 보도가 없으면 null */
+  gapMinutes: number | null;
+}
+
+export interface LagGeometry {
+  /** 화면에 세우는 순서 — 진보·중도·보수 (LeaningBar의 좌→우 스펙트럼과 같다) */
+  lanes: LagLane[];
+  /** 같은 lane 객체를 첫 보도가 이른 순으로. 시차는 순서대로 읽어야 문장이 된다 */
+  ranked: LagLane[];
+  /** 이 사건의 최초 보도. 성향을 아는 기사가 하나도 없으면 null */
+  first: { time: string; outletName: string } | null;
+}
+
+/**
+ * 진영별 보도 시차를 점 스트립의 기하로 옮긴다.
+ *
+ * 하루의 어느 시각에 누가 썼는지를 가로축 하나로 보여주는 것이 이 화면의 주장이므로,
+ * **좌표는 KST 자정으로부터의 분**이다(절대 시각이 아니다 — 클러스터의 단위가 KST 하루다).
+ * `calcBarGeometry`와 같은 이유로 JSX 밖에 둔다: 브라우저 없이 검증된다.
+ *
+ * 명단에 없는 매체(`unknown`)는 어느 레인에도 넣지 않는다 — 진영을 모르는 기사는 시차를
+ * 말할 수 없다. 그래서 "최초 보도"도 아래 세 열과 **같은 모집단**에서 고른다.
+ */
+export function calcLagGeometry(articles: readonly ArticleWithOutlet[]): LagGeometry {
+  const placed = articles
+    .filter((a) => GROUP_BY_LEANING[a.outlet.leaning] !== undefined)
+    .map((a) => ({ article: a, minute: kstMinuteOfDay(a.publishedAt) }))
+    .sort((a, b) => a.article.publishedAt.localeCompare(b.article.publishedAt));
+
+  const earliest = <T extends { minute: number }>(list: T[]): T | null =>
+    list.reduce<T | null>((min, x) => (min === null || x.minute < min.minute ? x : min), null);
+
+  const firstOverall = earliest(placed);
+
+  const lanes: LagLane[] = LEANING_GROUP_ORDER.map((group) => {
+    const inGroup = placed.filter(
+      ({ article }) => GROUP_BY_LEANING[article.outlet.leaning] === group
+    );
+    const lead = earliest(inGroup);
+
+    return {
+      group,
+      dots: inGroup.map(({ article, minute }) => ({
+        id: article.id,
+        left: (minute / MINUTES_PER_DAY) * 100,
+        leaning: article.outlet.leaning,
+        outletName: article.outlet.name,
+        time: formatClockTime(minute),
+        isFirst: minute === lead?.minute,
+      })),
+      firstTime: lead ? formatClockTime(lead.minute) : null,
+      gapMinutes: lead && firstOverall ? lead.minute - firstOverall.minute : null,
+    };
+  });
+
+  return {
+    lanes,
+    // 보도하지 않은 진영은 맨 뒤로. 침묵은 시차의 끝이 아니라 별도의 사실이다.
+    ranked: [...lanes].sort((a, b) =>
+      a.gapMinutes === null || b.gapMinutes === null
+        ? Number(a.gapMinutes === null) - Number(b.gapMinutes === null)
+        : a.gapMinutes - b.gapMinutes
+    ),
+    first: firstOverall
+      ? {
+          time: formatClockTime(firstOverall.minute),
+          outletName: firstOverall.article.outlet.name,
+        }
+      : null,
+  };
 }
