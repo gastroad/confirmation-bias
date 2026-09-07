@@ -152,6 +152,11 @@ npm run format:check
 **`main` 워크트리는 "무엇을 할지"를 정하는 자리다.** 방향이 정해지면 작업 자체는 별도
 워크트리의 독립 세션이 이어받는다. 인계는 `/handoff` 슬래시 커맨드가 수행한다.
 
+이 경계는 훅이 지킨다 — `.claude/hooks/guard-worktree.sh`가 `main` 워크트리에서의 편집을
+차단하고(`Edit`/`Write`), Bash로 새어 나간 변경은 지면이 더러워진 직후에 알린다. auto
+모드에는 권한 프롬프트라는 멈춤 지점이 없어 판단에 맡기면 그냥 지나치기 때문이다.
+의도적인 예외는 `CB_ALLOW_MAIN_EDIT=1`.
+
 ### Orca로 생성 (기본 경로)
 
 ```bash
