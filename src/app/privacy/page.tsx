@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { getSessionUser } from "@server/auth";
-import { signOutAction } from "../auth/actions";
-import { SiteHeader } from "@/widgets/site-header";
+import { AppShell } from "../_shell";
 import { SITE_NAME, CONTACT_EMAIL } from "@/shared/config/site";
-import * as layout from "@/shared/styles/layout.css";
 import * as styles from "./privacy.css";
 
 // 시행일. 방침 내용을 실질적으로 바꾸면 이 날짜를 갱신한다.
@@ -16,179 +13,172 @@ export const metadata: Metadata = {
   openGraph: { type: "article", url: "/privacy", title: `개인정보처리방침 — ${SITE_NAME}` },
 };
 
-// 헤더 프로필 메뉴가 세션(쿠키)을 읽어 어차피 동적이다. 명시하지 않으면 빌드가 정적 렌더를
-// 시도하다 실패하며 로그를 남긴다. (내용 자체는 정적이라 캐싱 여지가 있다 — 별도 과제)
+// 셸이 세션 쿠키를 읽어 어차피 동적이다 → app/_shell.tsx
+// (내용 자체는 정적이라 캐싱 여지가 있다 — 별도 과제)
 export const dynamic = "force-dynamic";
 
-export default async function PrivacyPage() {
-  const sessionUser = await getSessionUser();
-
+export default function PrivacyPage() {
   return (
-    <div className={layout.page}>
-      <SiteHeader user={sessionUser} signOut={signOutAction} />
+    <AppShell prose>
+      <h1 className={styles.title}>개인정보처리방침</h1>
+      <p className={styles.meta}>시행일: {EFFECTIVE_DATE}</p>
 
-      <article className={styles.article}>
-        <h1 className={styles.title}>개인정보처리방침</h1>
-        <p className={styles.meta}>시행일: {EFFECTIVE_DATE}</p>
+      <p className={styles.lead}>
+        {SITE_NAME}(&ldquo;서비스&rdquo;)는 이용자의 개인정보를 소중히 다룹니다. 본 방침은 서비스가
+        어떤 정보를 수집하고, 쿠키와 광고를 어떻게 사용하며, 이용자가 어떤 권리를 갖는지 설명합니다.
+      </p>
 
-        <p className={styles.lead}>
-          {SITE_NAME}(&ldquo;서비스&rdquo;)는 이용자의 개인정보를 소중히 다룹니다. 본 방침은
-          서비스가 어떤 정보를 수집하고, 쿠키와 광고를 어떻게 사용하며, 이용자가 어떤 권리를 갖는지
-          설명합니다.
+      <section className={styles.section}>
+        <h2 className={styles.heading}>1. 수집하는 정보</h2>
+        <p className={styles.paragraph}>
+          서비스의 뉴스 열람 기능은 <strong>로그인 없이</strong> 이용할 수 있습니다. 다음 정보가
+          수집·처리됩니다.
         </p>
+        <ul className={styles.list}>
+          <li>
+            <strong>회원가입 시(선택적 이용)</strong>: 이메일 주소(필수), 이름(선택), 비밀번호.
+            비밀번호는 단방향 암호화되어 저장되며 서비스 운영자가 원문을 알 수 없습니다.
+          </li>
+          <li>
+            <strong>로그인 세션</strong>: 세션 식별자, 접속 IP 주소, 브라우저·기기 정보(User-Agent),
+            로그인 시각·만료 시각 (계정 보안 및 세션 관리 목적)
+          </li>
+          <li>
+            <strong>댓글 작성 시</strong>: 댓글 본문, 작성 시점의 표시명(이름 또는 이메일 아이디),
+            작성 시각. 이메일 주소 전체는 댓글에 저장되지 않습니다.
+          </li>
+          <li>
+            접속 로그: IP 주소, 브라우저·기기 정보(User-Agent), 방문 페이지·시각 (호스팅 및 보안
+            목적)
+          </li>
+          <li>쿠키 및 유사 기술: 아래 &ldquo;쿠키와 광고&rdquo; 참조</li>
+        </ul>
+        <p className={styles.paragraph}>
+          회원가입은 <strong>선택 사항</strong>이며, 가입하지 않아도 뉴스 클러스터 열람 등 주요
+          기능을 모두 이용할 수 있습니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>1. 수집하는 정보</h2>
-          <p className={styles.paragraph}>
-            서비스의 뉴스 열람 기능은 <strong>로그인 없이</strong> 이용할 수 있습니다. 다음 정보가
-            수집·처리됩니다.
-          </p>
-          <ul className={styles.list}>
-            <li>
-              <strong>회원가입 시(선택적 이용)</strong>: 이메일 주소(필수), 이름(선택), 비밀번호.
-              비밀번호는 단방향 암호화되어 저장되며 서비스 운영자가 원문을 알 수 없습니다.
-            </li>
-            <li>
-              <strong>로그인 세션</strong>: 세션 식별자, 접속 IP 주소, 브라우저·기기
-              정보(User-Agent), 로그인 시각·만료 시각 (계정 보안 및 세션 관리 목적)
-            </li>
-            <li>
-              <strong>댓글 작성 시</strong>: 댓글 본문, 작성 시점의 표시명(이름 또는 이메일 아이디),
-              작성 시각. 이메일 주소 전체는 댓글에 저장되지 않습니다.
-            </li>
-            <li>
-              접속 로그: IP 주소, 브라우저·기기 정보(User-Agent), 방문 페이지·시각 (호스팅 및 보안
-              목적)
-            </li>
-            <li>쿠키 및 유사 기술: 아래 &ldquo;쿠키와 광고&rdquo; 참조</li>
-          </ul>
-          <p className={styles.paragraph}>
-            회원가입은 <strong>선택 사항</strong>이며, 가입하지 않아도 뉴스 클러스터 열람 등 주요
-            기능을 모두 이용할 수 있습니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>2. 쿠키와 광고 (Google AdSense)</h2>
+        <p className={styles.paragraph}>
+          서비스는 Google AdSense를 통해 광고를 게재합니다. Google 및 그 파트너는 쿠키를 사용해
+          이용자의 이전 방문 기록을 바탕으로 광고를 제공할 수 있습니다.
+        </p>
+        <ul className={styles.list}>
+          <li>
+            유럽 경제 지역(EEA)·영국·스위스 이용자에게는{" "}
+            <strong>Google 인증 동의 관리 플랫폼(CMP)</strong>을 통해 개인화 광고·쿠키에 대한 동의를
+            받습니다. 동의는 언제든지 변경하거나 철회할 수 있습니다.
+          </li>
+          <li>
+            개인화 광고는{" "}
+            <a
+              className={styles.link}
+              href="https://www.google.com/settings/ads"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google 광고 설정
+            </a>
+            에서 끌 수 있습니다.
+          </li>
+          <li>
+            제3자 공급업체의 쿠키 사용에 관한 내용은{" "}
+            <a
+              className={styles.link}
+              href="https://policies.google.com/technologies/partner-sites"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google의 파트너 사이트 정책
+            </a>
+            을 참고하세요.
+          </li>
+        </ul>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>2. 쿠키와 광고 (Google AdSense)</h2>
-          <p className={styles.paragraph}>
-            서비스는 Google AdSense를 통해 광고를 게재합니다. Google 및 그 파트너는 쿠키를 사용해
-            이용자의 이전 방문 기록을 바탕으로 광고를 제공할 수 있습니다.
-          </p>
-          <ul className={styles.list}>
-            <li>
-              유럽 경제 지역(EEA)·영국·스위스 이용자에게는{" "}
-              <strong>Google 인증 동의 관리 플랫폼(CMP)</strong>을 통해 개인화 광고·쿠키에 대한
-              동의를 받습니다. 동의는 언제든지 변경하거나 철회할 수 있습니다.
-            </li>
-            <li>
-              개인화 광고는{" "}
-              <a
-                className={styles.link}
-                href="https://www.google.com/settings/ads"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Google 광고 설정
-              </a>
-              에서 끌 수 있습니다.
-            </li>
-            <li>
-              제3자 공급업체의 쿠키 사용에 관한 내용은{" "}
-              <a
-                className={styles.link}
-                href="https://policies.google.com/technologies/partner-sites"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Google의 파트너 사이트 정책
-              </a>
-              을 참고하세요.
-            </li>
-          </ul>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>3. 분석 도구</h2>
+        <p className={styles.paragraph}>
+          현재 서비스는 별도의 웹 분석(애널리틱스) 도구를 사용하지 않습니다. 향후 트래픽 측정
+          목적으로 분석 도구를 도입할 경우, 관련 쿠키는 동의를 기반으로 사용되며 본 방침을 갱신해
+          고지합니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>3. 분석 도구</h2>
-          <p className={styles.paragraph}>
-            현재 서비스는 별도의 웹 분석(애널리틱스) 도구를 사용하지 않습니다. 향후 트래픽 측정
-            목적으로 분석 도구를 도입할 경우, 관련 쿠키는 동의를 기반으로 사용되며 본 방침을 갱신해
-            고지합니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>4. 제3자 서비스</h2>
+        <p className={styles.paragraph}>서비스는 다음 외부 제공업체를 이용합니다.</p>
+        <ul className={styles.list}>
+          <li>Google AdSense — 광고 게재 및 관련 쿠키</li>
+          <li>Vercel — 웹 호스팅 및 접속 로그 처리</li>
+          <li>Neon — 뉴스 기사·클러스터 데이터 저장(개인정보 아님) 및 계정·세션 정보 저장</li>
+          <li>OpenAI — 뉴스 기사 본문의 임베딩 생성(개인정보 미포함)</li>
+        </ul>
+        <p className={styles.paragraph}>
+          서비스가 표시하는 뉴스 기사 링크는 각 언론사의 외부 사이트로 연결되며, 해당 사이트의
+          개인정보 처리에는 각 사이트의 정책이 적용됩니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>4. 제3자 서비스</h2>
-          <p className={styles.paragraph}>서비스는 다음 외부 제공업체를 이용합니다.</p>
-          <ul className={styles.list}>
-            <li>Google AdSense — 광고 게재 및 관련 쿠키</li>
-            <li>Vercel — 웹 호스팅 및 접속 로그 처리</li>
-            <li>Neon — 뉴스 기사·클러스터 데이터 저장(개인정보 아님) 및 계정·세션 정보 저장</li>
-            <li>OpenAI — 뉴스 기사 본문의 임베딩 생성(개인정보 미포함)</li>
-          </ul>
-          <p className={styles.paragraph}>
-            서비스가 표시하는 뉴스 기사 링크는 각 언론사의 외부 사이트로 연결되며, 해당 사이트의
-            개인정보 처리에는 각 사이트의 정책이 적용됩니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>5. 데이터 보관 및 국외 이전</h2>
+        <p className={styles.paragraph}>
+          계정 정보(이메일·이름·비밀번호 해시)는 <strong>회원 탈퇴 시까지</strong> 보관하며, 탈퇴 시
+          지체 없이 파기합니다. 로그인 세션 정보는 세션 만료(최대 7일) 후 삭제됩니다.
+        </p>
+        <p className={styles.paragraph}>
+          <strong>탈퇴 시 댓글 처리</strong>: 작성하신 댓글의 <strong>본문은 남고</strong>, 이를
+          식별하는 정보(계정 식별자·표시명)는 삭제되어 &ldquo;탈퇴한 사용자&rdquo;로 표시됩니다.
+          다른 이용자가 남긴 대화의 맥락을 보존하기 위한 처리이며, 탈퇴 후에는 해당 댓글을 회원님과
+          연결할 수 없습니다. 본문까지 삭제를 원하시면 탈퇴 전 직접 삭제하시거나 아래 문의처로
+          요청해 주세요.
+        </p>
+        <p className={styles.paragraph}>
+          접속 로그 및 쿠키 데이터는 위 제3자 서비스가 각자의 정책에 따라 보관합니다.
+        </p>
+        <p className={styles.paragraph}>
+          <strong>국외 이전</strong>: 서비스의 데이터베이스와 인증 서버는 Neon(미국 Neon Inc.)의
+          싱가포르 리전에 위치하며, 계정·세션 정보가 해당 서버에 저장·처리됩니다. 웹 호스팅은
+          Vercel(미국)을 이용합니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>5. 데이터 보관 및 국외 이전</h2>
-          <p className={styles.paragraph}>
-            계정 정보(이메일·이름·비밀번호 해시)는 <strong>회원 탈퇴 시까지</strong> 보관하며, 탈퇴
-            시 지체 없이 파기합니다. 로그인 세션 정보는 세션 만료(최대 7일) 후 삭제됩니다.
-          </p>
-          <p className={styles.paragraph}>
-            <strong>탈퇴 시 댓글 처리</strong>: 작성하신 댓글의 <strong>본문은 남고</strong>, 이를
-            식별하는 정보(계정 식별자·표시명)는 삭제되어 &ldquo;탈퇴한 사용자&rdquo;로 표시됩니다.
-            다른 이용자가 남긴 대화의 맥락을 보존하기 위한 처리이며, 탈퇴 후에는 해당 댓글을
-            회원님과 연결할 수 없습니다. 본문까지 삭제를 원하시면 탈퇴 전 직접 삭제하시거나 아래
-            문의처로 요청해 주세요.
-          </p>
-          <p className={styles.paragraph}>
-            접속 로그 및 쿠키 데이터는 위 제3자 서비스가 각자의 정책에 따라 보관합니다.
-          </p>
-          <p className={styles.paragraph}>
-            <strong>국외 이전</strong>: 서비스의 데이터베이스와 인증 서버는 Neon(미국 Neon Inc.)의
-            싱가포르 리전에 위치하며, 계정·세션 정보가 해당 서버에 저장·처리됩니다. 웹 호스팅은
-            Vercel(미국)을 이용합니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>6. 이용자의 권리</h2>
+        <p className={styles.paragraph}>
+          이용자는 관련 법령(EU GDPR, 대한민국 개인정보 보호법 등)에 따라 자신의 개인정보에 대한
+          열람, 정정, 삭제, 처리 제한 및 동의 철회를 요청할 수 있습니다. 요청은 아래 문의처로
+          보내주시기 바랍니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>6. 이용자의 권리</h2>
-          <p className={styles.paragraph}>
-            이용자는 관련 법령(EU GDPR, 대한민국 개인정보 보호법 등)에 따라 자신의 개인정보에 대한
-            열람, 정정, 삭제, 처리 제한 및 동의 철회를 요청할 수 있습니다. 요청은 아래 문의처로
-            보내주시기 바랍니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>7. 아동의 개인정보</h2>
+        <p className={styles.paragraph}>
+          서비스는 만 14세 미만 아동을 대상으로 하지 않으며, 아동의 개인정보를 고의로 수집하지
+          않습니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>7. 아동의 개인정보</h2>
-          <p className={styles.paragraph}>
-            서비스는 만 14세 미만 아동을 대상으로 하지 않으며, 아동의 개인정보를 고의로 수집하지
-            않습니다.
-          </p>
-        </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>8. 방침의 변경</h2>
+        <p className={styles.paragraph}>
+          본 방침은 법령·서비스 변경에 따라 개정될 수 있으며, 개정 시 본 페이지에 게시합니다.
+        </p>
+      </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.heading}>8. 방침의 변경</h2>
-          <p className={styles.paragraph}>
-            본 방침은 법령·서비스 변경에 따라 개정될 수 있으며, 개정 시 본 페이지에 게시합니다.
-          </p>
-        </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.heading}>9. 문의처</h2>
-          <p className={styles.paragraph}>
-            개인정보 처리에 관한 문의는{" "}
-            <a className={styles.link} href={`mailto:${CONTACT_EMAIL}`}>
-              {CONTACT_EMAIL}
-            </a>{" "}
-            로 연락해 주세요.
-          </p>
-        </section>
-      </article>
-    </div>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>9. 문의처</h2>
+        <p className={styles.paragraph}>
+          개인정보 처리에 관한 문의는{" "}
+          <a className={styles.link} href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>{" "}
+          로 연락해 주세요.
+        </p>
+      </section>
+    </AppShell>
   );
 }

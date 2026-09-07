@@ -1,15 +1,6 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/theme.css";
 
-export const article = style({
-  width: "100%",
-  maxWidth: 760,
-  margin: "0 auto",
-  padding: "32px 16px 64px",
-  color: vars.color.text,
-  lineHeight: 1.7,
-});
-
 export const title = style({
   fontSize: 28,
   fontWeight: 700,

@@ -12,6 +12,9 @@
 **절대 금지:** entities·widgets·features·클라이언트 컴포넌트에서 `server/` 직접 import.
 이들은 DB가 필요하면 `entities/*/api.ts`의 클라이언트 fetcher로 API 라우트를 호출한다.
 
+세션도 같은 규칙이다. 위젯은 세션을 읽지 않고 props로 받는다(`SiteHeader`의 `user`).
+읽는 쪽은 app 레이어의 셸이다 → [architecture.md](./architecture.md)의 "페이지 셸".
+
 ## FSD 엄격 규칙
 
 - 각 레이어는 자신보다 **아래 레이어만** import한다.
@@ -29,19 +32,21 @@
 
 ## 파일 생성 위치 결정 기준
 
-| 추가할 것                    | 어디에                                   |
-| ---------------------------- | ---------------------------------------- |
-| 새 도메인 타입               | `src/entities/<name>/model.ts`           |
-| 새 도메인 UI (props-only)    | `src/entities/<name>/ui/<Component>.tsx` |
-| 페이지 수준 UI 조합          | `src/widgets/<name>/ui/<Widget>.tsx`     |
-| 날짜·문자열 유틸             | `src/shared/lib/`                        |
-| DB 쿼리 (순수 Prisma)        | `server/queries/<name>.ts`               |
-| row→DTO 도메인 매핑          | `src/entities/<name>/lib.ts`             |
-| 클라이언트 fetcher           | `src/entities/<name>/api.ts`             |
-| BE 파이프라인 로직           | `server/clustering/`                     |
-| 일회성 실행 스크립트         | `scripts/`                               |
-| 사이트 전역 상수(SEO·브랜드) | `src/shared/config/site.ts`              |
-| 구조화 데이터·JSON-LD        | `src/shared/seo/`                        |
+| 추가할 것                    | 어디에                                                            |
+| ---------------------------- | ----------------------------------------------------------------- |
+| 새 도메인 타입               | `src/entities/<name>/model.ts`                                    |
+| 새 도메인 UI (props-only)    | `src/entities/<name>/ui/<Component>.tsx`                          |
+| 페이지 수준 UI 조합          | `src/widgets/<name>/ui/<Widget>.tsx`                              |
+| 날짜·문자열 유틸             | `src/shared/lib/`                                                 |
+| DB 쿼리 (순수 Prisma)        | `server/queries/<name>.ts`                                        |
+| row→DTO 도메인 매핑          | `src/entities/<name>/lib.ts`                                      |
+| 클라이언트 fetcher           | `src/entities/<name>/api.ts`                                      |
+| BE 파이프라인 로직           | `server/clustering/`                                              |
+| 일회성 실행 스크립트         | `scripts/`                                                        |
+| 사이트 전역 상수(SEO·브랜드) | `src/shared/config/site.ts`                                       |
+| 구조화 데이터·JSON-LD        | `src/shared/seo/`                                                 |
+| 새 페이지                    | `src/app/<route>/page.tsx` — 본문만 쓰고 `AppShell`로 감싼다      |
+| 페이지가 쓸 세션             | `src/app/_session.ts`의 `getUser` (`@server/auth` 직접 호출 금지) |
 
 ## 코드 스타일
 

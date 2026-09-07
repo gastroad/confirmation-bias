@@ -1,13 +1,9 @@
 import { Suspense } from "react";
 import { getDayNav, getLatestDate } from "./_day-nav-data";
-import { getSessionUser } from "@server/auth";
-import { SiteHeader } from "@/widgets/site-header";
+import { AppShell } from "./_shell";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
-import { AdSenseLoader } from "@/shared/ui";
-import { signOutAction } from "./auth/actions";
-import * as layout from "@/shared/styles/layout.css";
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
@@ -18,35 +14,28 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const outletsParam = sp[OUTLETS_PARAM];
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
-  const sessionUser = await getSessionUser();
   const date = await getLatestDate();
   const nav = date ? await getDayNav(date) : null;
 
   return (
-    <div className={layout.page}>
-      {/* 최신 날짜에 색인 대상 이슈가 있을 때만 광고를 띄운다 → shared/ui/AdSenseLoader */}
-      {nav && nav.indexableClusterCount > 0 && <AdSenseLoader />}
+    // 최신 날짜에 색인 대상 이슈가 있을 때만 광고를 띄운다 → shared/ui/AdSenseLoader
+    <AppShell hero ads={Boolean(nav && nav.indexableClusterCount > 0)}>
+      {nav && (
+        <DateNav
+          date={nav.date}
+          prevDate={nav.prevDate}
+          nextDate={nav.nextDate}
+          clusterCount={nav.clusterCount}
+          articleCount={nav.articleCount}
+          outletIds={outletIds}
+        />
+      )}
 
-      <SiteHeader user={sessionUser} signOut={signOutAction} hero />
-
-      <main className={layout.container}>
-        {nav && (
-          <DateNav
-            date={nav.date}
-            prevDate={nav.prevDate}
-            nextDate={nav.nextDate}
-            clusterCount={nav.clusterCount}
-            articleCount={nav.articleCount}
-            outletIds={outletIds}
-          />
-        )}
-
-        {/* OutletFilter / ClusterFeed가 useSearchParams를 쓰므로 Suspense 경계가 필요 */}
-        <Suspense fallback={null}>
-          <OutletFilter />
-          <ClusterFeed date={date ?? undefined} />
-        </Suspense>
-      </main>
-    </div>
+      {/* OutletFilter / ClusterFeed가 useSearchParams를 쓰므로 Suspense 경계가 필요 */}
+      <Suspense fallback={null}>
+        <OutletFilter />
+        <ClusterFeed date={date ?? undefined} />
+      </Suspense>
+    </AppShell>
   );
 }
