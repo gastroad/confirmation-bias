@@ -22,6 +22,52 @@ test.describe("정적 페이지", () => {
   });
 });
 
+// 주간 리포트·언론사는 날짜별 목록(홈)만으로는 닿지 않는 다른 축의 읽을거리다.
+// 푸터에 있던 동안은 존재 자체가 발견되지 않아 헤더로 올렸다 → widgets/site-header.
+test.describe("헤더 주요 메뉴", () => {
+  test("모든 페이지의 헤더에서 주간 리포트·언론사로 갈 수 있다", async ({ page }) => {
+    for (const path of ["/", "/weekly", "/outlets", "/about"]) {
+      await page.goto(path);
+      const header = page.getByRole("banner");
+
+      await expect(header.getByRole("link", { name: "주간 리포트" }), path).toHaveAttribute(
+        "href",
+        "/weekly"
+      );
+      await expect(header.getByRole("link", { name: "언론사" }), path).toHaveAttribute(
+        "href",
+        "/outlets"
+      );
+    }
+  });
+
+  test("보고 있는 자리를 aria-current로 알린다", async ({ page }) => {
+    await page.goto("/weekly");
+    const header = page.getByRole("banner");
+
+    await expect(header.getByRole("link", { name: "주간 리포트" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    await expect(header.getByRole("link", { name: "언론사" })).not.toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  test("가장 좁은 화면에서도 헤더가 한 줄에 들어간다", async ({ page }) => {
+    // 백링크·브랜드·메뉴가 한 줄에 서는 최악의 조합(백링크가 있는 화면) + 320px.
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.goto("/d/2020-01-01");
+
+    const header = (await page.getByRole("banner").boundingBox())!;
+    expect(header.height).toBeLessThan(80);
+
+    const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(docWidth).toBeLessThanOrEqual(320);
+  });
+});
+
 test.describe("푸터", () => {
   test("모든 페이지에 뜬다", async ({ page }) => {
     for (const path of ["/", "/weekly", "/outlets", "/about"]) {

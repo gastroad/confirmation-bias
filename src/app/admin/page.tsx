@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser, isAdmin } from "@server/auth";
-import { ProfileMenu } from "@/features/profile-menu";
-import { Logo } from "@/shared/ui";
 import { signOutAction } from "../auth/actions";
 import { triggerCollectAction, triggerClusterAction } from "./actions";
 import { CollectPanel, ClusterPanel } from "./TriggerPanel";
 import * as styles from "./admin.css";
+import { SiteHeader } from "@/widgets/site-header";
 import * as layout from "@/shared/styles/layout.css";
 
 export const metadata: Metadata = {
@@ -28,19 +27,12 @@ export default async function AdminPage() {
 
   return (
     <div className={layout.page}>
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 홈
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>관리</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        user={sessionUser}
+        signOut={signOutAction}
+        back={{ href: "/", label: "홈" }}
+        title="관리"
+      />
 
       <main className={layout.container}>
         {denied ? (

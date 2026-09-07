@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser } from "@server/auth";
-import { ProfileMenu } from "@/features/profile-menu";
 import { signOutAction } from "../auth/actions";
-import { AdSenseLoader, Logo } from "@/shared/ui";
+import { SiteHeader } from "@/widgets/site-header";
+import { AdSenseLoader } from "@/shared/ui";
 import { OUTLET_MAP, LEANING_COLORS, sortOutletsByVolume, ratioPercent } from "@/entities/outlet";
 import { SITE_NAME } from "@/shared/config/site";
 import { getOutletStats } from "./_data";
@@ -29,19 +29,7 @@ export default async function OutletsPage() {
     <div className={layout.page}>
       {active.length > 0 && <AdSenseLoader />}
 
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 홈
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>{SITE_NAME}</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader user={sessionUser} signOut={signOutAction} />
 
       <main className={layout.container}>
         <section className={styles.intro}>

@@ -1,18 +1,17 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { getSessionUser } from "@server/auth";
 import { toClusterDetail, isIndexableCluster } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
+import { SiteHeader } from "@/widgets/site-header";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ClusterComments } from "@/widgets/cluster-comments";
-import { ProfileMenu } from "@/features/profile-menu";
 import { datePath } from "@/features/date-nav";
-import { AdSenseLoader, Logo } from "@/shared/ui";
+import { AdSenseLoader } from "@/shared/ui";
 import { formatBucketDateShort } from "@/shared/lib/bucket-date";
 import { JsonLd } from "@/shared/seo/JsonLd";
 import { clusterCollectionSchema, clusterBreadcrumbSchema } from "@/shared/seo/schemas";
@@ -100,20 +99,15 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
         })}
       />
 
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          {/* 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다. */}
-          <Link href={datePath(cluster.bucketDate)} className={layout.backLink}>
-            ← {formatBucketDateShort(cluster.bucketDate)}
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>확증편향</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      {/* 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다. */}
+      <SiteHeader
+        user={sessionUser}
+        signOut={signOutAction}
+        back={{
+          href: datePath(cluster.bucketDate),
+          label: formatBucketDateShort(cluster.bucketDate),
+        }}
+      />
 
       {/* 상세와 댓글이 같은 container를 공유한다. 본문이 컨테이너 밖에 있으면
           목록 페이지와 좌우 여백이 어긋나 상세만 화면에 꽉 찬다. */}

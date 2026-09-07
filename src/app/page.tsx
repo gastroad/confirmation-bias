@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { getDayNav, getLatestDate } from "./_day-nav-data";
 import { getSessionUser } from "@server/auth";
+import { SiteHeader } from "@/widgets/site-header";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
-import { ProfileMenu } from "@/features/profile-menu";
-import { AdSenseLoader, Logo } from "@/shared/ui";
+import { AdSenseLoader } from "@/shared/ui";
 import { signOutAction } from "./auth/actions";
 import * as layout from "@/shared/styles/layout.css";
 
@@ -27,16 +27,7 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
       {/* 최신 날짜에 색인 대상 이슈가 있을 때만 광고를 띄운다 → shared/ui/AdSenseLoader */}
       {nav && nav.indexableClusterCount > 0 && <AdSenseLoader />}
 
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Logo size={28} className={layout.logo} />
-          <h1 className={layout.brand}>확증편향</h1>
-          <p className={layout.brandSub}>언론사 성향별 뉴스 보도 분석</p>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader user={sessionUser} signOut={signOutAction} hero />
 
       <main className={layout.container}>
         {nav && (

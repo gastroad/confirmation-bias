@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@server/auth";
-import { ProfileMenu } from "@/features/profile-menu";
 import { signOutAction } from "./actions";
-import { Logo } from "@/shared/ui";
+import { SiteHeader } from "@/widgets/site-header";
 import * as layout from "@/shared/styles/layout.css";
 
 // 로그인/가입 화면은 색인할 이유가 없다.
@@ -23,19 +21,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
 
   return (
     <div className={layout.page}>
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 홈
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>확증편향</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={null} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader user={null} signOut={signOutAction} />
 
       <main className={layout.container}>{children}</main>
     </div>

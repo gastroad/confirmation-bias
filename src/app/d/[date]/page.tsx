@@ -1,14 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDayNav } from "../../_day-nav-data";
 import { getSessionUser } from "@server/auth";
+import { SiteHeader } from "@/widgets/site-header";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
 import { OutletFilter, parseOutletParam, OUTLETS_PARAM } from "@/features/outlet-filter";
-import { ProfileMenu } from "@/features/profile-menu";
-import { AdSenseLoader, Logo } from "@/shared/ui";
+import { AdSenseLoader } from "@/shared/ui";
 import { formatBucketDateLabel, isValidBucketDate } from "@/shared/lib/bucket-date";
 import { signOutAction } from "../../auth/actions";
 import * as layout from "@/shared/styles/layout.css";
@@ -66,19 +65,7 @@ export default async function DatePage({
       {/* 색인 대상인 날짜에서만 광고를 띄운다 → shared/ui/AdSenseLoader */}
       {nav.indexableClusterCount > 0 && <AdSenseLoader />}
 
-      <header className={layout.header}>
-        <div className={layout.headerInner}>
-          <Link href="/" className={layout.backLink}>
-            ← 최신
-          </Link>
-          <span className={layout.divider}>|</span>
-          <Logo size={20} className={layout.logo} />
-          <h1 className={layout.brandSmall}>확증편향</h1>
-          <div className={layout.headerActions}>
-            <ProfileMenu user={sessionUser} signOut={signOutAction} />
-          </div>
-        </div>
-      </header>
+      <SiteHeader user={sessionUser} signOut={signOutAction} back={{ href: "/", label: "최신" }} />
 
       <main className={layout.container}>
         <DateNav
