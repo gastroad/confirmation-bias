@@ -8,8 +8,11 @@ vi.mock("next/cache", () => ({
   unstable_cache: <T extends (...args: never[]) => unknown>(fn: T) => fn,
 }));
 
+// 라우트는 app 레이어 공용 캐시(`_cluster-data`)를 거쳐 쿼리에 닿는다. 그 모듈이
+// findClusterStats도 함께 import하므로 모킹에서 빠뜨리면 "No export named" 로 터진다.
 const findClusterSummaryPage = vi.hoisted(() => vi.fn());
-vi.mock("@server/queries/clusters", () => ({ findClusterSummaryPage }));
+const findClusterStats = vi.hoisted(() => vi.fn());
+vi.mock("@server/queries/clusters", () => ({ findClusterSummaryPage, findClusterStats }));
 
 const { GET } = await import("./route");
 

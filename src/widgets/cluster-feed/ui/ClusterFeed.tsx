@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   LeaningBar,
@@ -13,13 +12,12 @@ import {
 } from "@/entities/outlet";
 import {
   ClusterCard,
+  clusterQueryKeys,
   fetchClustersPage,
   fetchClusterStats,
   partitionBySpread,
   type ClusterSummary,
 } from "@/entities/cluster";
-import { parseOutletParam } from "@/features/outlet-filter";
-import { OUTLETS_PARAM } from "@/shared/config/search-params";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
 import { Button, Skeleton } from "@/shared/ui";
 import * as styles from "./ClusterFeed.css";
@@ -32,7 +30,7 @@ const SKELETON_COUNT = 5;
  */
 function DaySpectrum({ outletIds, date }: { outletIds: string[]; date?: string }) {
   const { data } = useQuery({
-    queryKey: ["cluster-stats", outletIds.join(","), date ?? ""],
+    queryKey: clusterQueryKeys.stats(outletIds, date),
     queryFn: () => fetchClusterStats(outletIds, date),
   });
 
@@ -111,16 +109,22 @@ function SkeletonList() {
 interface ClusterFeedProps {
   /** 지정하면 그 KST 하루만 보여준다. 없으면 전 기간 최신순. */
   date?: string;
+  /**
+   * 언론사 필터. **`useSearchParams`로 직접 읽지 않고 페이지에서 받는다** — 그 훅을 부르는
+   * 순간 이 서브트리가 셸에서 떨어져 나가 `<div hidden>`으로 지연 렌더되고, 초기 HTML에
+   * 이슈가 한 건도 남지 않는다(그래서 광고가 뜨는 페이지의 본문이 132자였다).
+   * 필터를 바꾸면 `OutletFilter`가 URL을 갈아 서버가 다시 그리므로 값은 그대로 따라온다.
+   * → src/app/_feed-seed.ts
+   */
+  outletIds?: string[];
 }
 
-export function ClusterFeed({ date }: ClusterFeedProps = {}) {
-  const searchParams = useSearchParams();
-  const outletIds = parseOutletParam(searchParams.get(OUTLETS_PARAM));
+export function ClusterFeed({ date, outletIds = [] }: ClusterFeedProps = {}) {
   const isFiltered = outletIds.length > 0;
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: ["clusters", outletIds.join(","), date ?? ""],
+      queryKey: clusterQueryKeys.page(outletIds, date),
       queryFn: ({ pageParam }) => fetchClustersPage({ cursor: pageParam, outletIds, date }),
       initialPageParam: null as string | null,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -133,7 +137,7 @@ export function ClusterFeed({ date }: ClusterFeedProps = {}) {
 
   // DaySpectrum과 같은 쿼리 키라 react-query가 합쳐 준다(추가 요청 없음).
   const { data: stats } = useQuery({
-    queryKey: ["cluster-stats", outletIds.join(","), date ?? ""],
+    queryKey: clusterQueryKeys.stats(outletIds, date),
     queryFn: () => fetchClusterStats(outletIds, date),
   });
 

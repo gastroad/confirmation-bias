@@ -7,8 +7,29 @@ import { CACHE_TTL, DTO_VERSION } from "@server/cache";
 import { INDEX_CRITERIA } from "@/entities/cluster";
 import { SITE_URL, absoluteUrl } from "@/shared/config/site";
 
-// 크롤러가 올 때마다 1만 건을 조회할 이유가 없다. Date를 넘기지 않도록 ISO 문자열로 뽑는다
-// (unstable_cache는 반환값을 JSON 직렬화한다).
+/**
+ * ⚠️ **이 라우트를 정적으로 두면 안 된다.**
+ *
+ * `sitemap.ts`는 Next의 특수 Route Handler이고 **기본이 캐시(정적 프리렌더)** 다 —
+ * dynamic config를 쓰지 않으면 빌드 시점 결과가 그대로 굳는다. 2026-09-07 배포의 빌드
+ * 결과가 **45일간 그대로 서빙됐다**(클러스터 2,463 · 날짜 71 — 실제 DB는 4,417 · 116).
+ *
+ * 매일 기사를 쌓는 사이트가 sitemap을 45일 동안 바꾸지 않은 셈이고, 그 사이 신규 색인 대상
+ * 1,954개와 날짜 45개가 **Google에 제출조차 되지 않았다.** AdSense 2차 거절 사유의
+ * "지속적인 콘텐츠 큐레이션 및 구조적 유지관리"에 정면으로 걸린다.
+ *
+ * 홈 엔트리의 `lastModified`가 `new Date()`라 **렌더 시각이 그대로 박힌다** — 라이브
+ * sitemap이 언제 만들어진 것인지 그 값으로 확인할 수 있다(진단 방법은 caching.md).
+ *
+ * 시간 기반 `revalidate`에 기대지 않는 이유: 파이프라인이 GitHub Actions에서 **DB에 직접
+ * 쓰므로** 배포된 앱은 데이터가 바뀐 것을 통보받지 못한다(`revalidateTag` 호출부가 없다 →
+ * caching.md). 그래서 **라우트는 매 요청 돌리고**, DB 비용은 아래 `unstable_cache`(6h)가
+ * 막는다 — 크롤러가 몰려도 조회는 6시간에 한 번이다.
+ * → docs/agent/adsense-compliance.md의 P0-7
+ */
+export const dynamic = "force-dynamic";
+
+// Date를 넘기지 않도록 ISO 문자열로 뽑는다 (unstable_cache는 반환값을 JSON 직렬화한다).
 //
 // **색인 기준을 넘긴 클러스터만 싣는다**(→ entities/cluster의 INDEX_MIN_ARTICLES 주석).
 // 날짜 페이지도 같은 기준으로 거른다 — 껍데기만 모인 날짜를 상위 허브로 내보낼 이유가 없다.

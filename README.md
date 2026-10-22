@@ -48,8 +48,9 @@ RSS 피드
     └─ 배치 임베딩(100건/req) → 응집 클러스터링 → 트랜잭션으로 재생성 (멱등)
               │
               └─▶ server/queries  순수 Prisma 조회 (커서 페이지네이션·집계)
-                    └─▶ API 라우트  파라미터 파싱 + 도메인 매핑 → JSON
-                          └─▶ 클라이언트 (react-query)  무한 스크롤 피드
+                    └─▶ app/_cluster-data.ts  DTO 변환 + 캐시 (라우트·SSR 공용)
+                          ├─▶ 서버 컴포넌트  첫 페이지를 초기 HTML에 싣는다
+                          └─▶ API 라우트 → 클라이언트 (react-query)  2페이지부터·필터
 ```
 
 **클러스터링** — KST 하루치를 모아 **average linkage 응집 클러스터링(HAC)** 을 한 번 돌립니다.
@@ -169,6 +170,7 @@ confirmation-bias/
 ├── src/               Next.js 앱 (FSD 구조)
 │   ├── app/           App Router (/ · /d/[date] · /clusters/[id] · /auth · /admin · API)
 │   │                  _shell.tsx — 모든 페이지가 공유하는 셸(세션·헤더·본문 컨테이너)
+│   │                  _cluster-data.ts · _feed-seed.ts — 목록 캐시 + 첫 화면 SSR
 │   ├── widgets/       cluster-feed · cluster-detail · cluster-comments · outlet-profile
 │   │                  site-header · site-footer (지면 머리·바닥)
 │   ├── features/      outlet-filter · date-nav · profile-menu · auth-form (상태·인터랙션)
@@ -180,6 +182,8 @@ confirmation-bias/
 
 데이터 흐름은 **클라이언트(react-query) → API 라우트 → `server/queries` → DB**로,
 UI 레이어는 DB에 직접 접근하지 않고 `entities/*/api.ts` 클라이언트 fetcher로 호출합니다.
+목록의 **첫 페이지만 서버 컴포넌트가 미리 그려** 초기 HTML에 싣고(크롤러가 읽을 콘텐츠가
+있어야 합니다), 이어지는 페이지와 필터 전환은 클라이언트가 맡습니다.
 
 ## 📰 분류 대상 언론사
 

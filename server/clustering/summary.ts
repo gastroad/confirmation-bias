@@ -63,9 +63,15 @@ function formatKstTime(d: Date): string {
   return `${hh}:${mm}`;
 }
 
-function nameList(names: string[]): string {
+/**
+ * 이름 나열. 접을 때 `withCount`가 false면 **개수를 적지 않는다** — 바깥에서 이미 "N곳"이라고
+ * 말한 자리에 넣으면 건수가 두 번 나온다("진보 성향 매체 7곳(한겨레신문·경향신문·미디어오늘 등 7곳)").
+ * meta description으로 그대로 나가는 문장이라 색인 대상 절반에 이 중복이 있었다(2026-09-07).
+ */
+function nameList(names: string[], withCount = true): string {
   if (names.length <= MAX_NAMES) return names.join("·");
-  return `${names.slice(0, MAX_NAMES).join("·")} 등 ${names.length}곳`;
+  const head = names.slice(0, MAX_NAMES).join("·");
+  return withCount ? `${head} 등 ${names.length}곳` : `${head} 등`;
 }
 
 interface GroupStat {
@@ -123,8 +129,10 @@ function silenceSentence(stats: GroupStat[]): string | null {
 
   if (silentGroups.length === 1) {
     const s = silentGroups[0];
+    // 괄호 밖에서 이미 건수를 말했으므로 안에서는 다시 세지 않는다.
     return `${GROUP_LABEL[s.group]} 성향 매체 ${s.silent.length}곳(${nameList(
-      s.silent.map((o) => o.name)
+      s.silent.map((o) => o.name),
+      false
     )})에서는 관련 보도가 확인되지 않았습니다.`;
   }
   if (silentGroups.length > 1) {

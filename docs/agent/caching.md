@@ -47,16 +47,49 @@ unstable_cache(fn, ["clusters-page", DTO_VERSION], { ... });
 - 배포 후에는 **화면이 실제로 부르는 URL**로 확인한다. 파라미터 없는 요청은 다른 캐시 항목이다.
 - TTL이 목록 1시간·상세 6시간이라 그냥 두면 그 시간 내내 깨진 화면이 보인다.
 
+## ⚠️ 태그는 달려 있지만 아무도 무효화하지 않는다 (2026-10-22 발견)
+
+`"clusters"`·`"days"` 태그가 **9곳**의 `unstable_cache`에 선언돼 있는데 **`revalidateTag`를
+부르는 코드가 한 줄도 없다.** `revalidatePath`는 `/admin/*`에만 쓰인다.
+
+파이프라인(`collect.yml`·`cluster-daily.yml`)은 **GitHub Actions에서 DB에 직접 쓴다.** 배포된
+Next 앱을 거치지 않으므로 앱은 데이터가 바뀐 것을 알 길이 없다. 결과적으로 **유일한 갱신
+수단이 시간 기반 `revalidate`**다.
+
+동적 페이지는 그래도 돈다(TTL 1시간). 그런데 **정적 프리렌더 라우트는 멈춘다** —
+`sitemap.xml`이 빌드 시점(2026-09-07) 값으로 **45일간 고정**돼 있었다. 홈 엔트리의
+`lastModified`가 `new Date()`라 렌더 시각이 박히는데 그게 그 배포의 빌드 시각이었다.
+
+```bash
+# 라이브 sitemap이 언제 렌더된 것인지 — 홈 엔트리의 lastmod가 곧 렌더 시각이다
+curl -s https://www.confirmationbias.app/sitemap.xml | grep -A1 '<loc>https://www.confirmationbias.app</loc>'
+```
+
+→ 조치는 [adsense-compliance.md](./adsense-compliance.md)의 **P0-7**에 있다(파이프라인이 끝나면
+무효화 라우트를 호출 + sitemap을 정적에서 빼기).
+
+**새 캐시에 태그를 달 때 이걸 기억한다.** 태그는 무효화 호출이 있을 때만 의미가 있다.
+호출부가 없으면 태그는 주석일 뿐이고, 실제 수명은 `revalidate` 값 하나로 정해진다.
+
 ## 어디에 무엇을
 
-| 위치                                  | 캐시 대상     | TTL |
-| ------------------------------------- | ------------- | --- |
-| `src/app/api/clusters/route.ts`       | 목록 DTO      | 1h  |
-| `src/app/api/clusters/stats/route.ts` | 집계 DTO      | 1h  |
-| `src/app/api/days/route.ts`           | 날짜 목록 DTO | 1h  |
-| `src/app/clusters/[id]/page.tsx`      | 상세 DTO      | 6h  |
-| `src/app/sitemap.ts`                  | 사이트맵 항목 | 6h  |
-| `src/app/_day-nav-data.ts`            | 날짜 내비     | 1h  |
+| 위치                             | 캐시 대상       | TTL |
+| -------------------------------- | --------------- | --- |
+| `src/app/_cluster-data.ts`       | 목록 · 집계 DTO | 1h  |
+| `src/app/api/days/route.ts`      | 날짜 목록 DTO   | 1h  |
+| `src/app/clusters/[id]/page.tsx` | 상세 DTO        | 6h  |
+| `src/app/sitemap.ts`             | 사이트맵 항목   | 6h  |
+| `src/app/_day-nav-data.ts`       | 날짜 내비       | 1h  |
+
+### 목록·집계 캐시는 라우트가 아니라 `_cluster-data.ts`에 있다 (2026-10-22 이동)
+
+전엔 `api/clusters/route.ts`·`api/clusters/stats/route.ts`가 각자 `unstable_cache`를 들고
+있었다. 첫 화면을 서버에서 그리기 시작하면서(→ [adsense-compliance.md](./adsense-compliance.md)의
+P0-5) **서버 컴포넌트와 API 라우트가 같은 데이터를 쓰게** 됐는데, 캐시가 라우트 파일 안에
+있으면 두 경로가 각자 캐시 항목을 만들어 같은 값을 DB에서 두 번 읽는다.
+
+키(`clusters-page`·`clusters-stats`)와 TTL은 그대로 옮겼으므로 **캐시 항목은 갈리지 않는다.**
+`_feed-seed.ts`(SSR)와 두 라우트가 이 한 모듈을 부른다.
 
 수명은 `server/cache.ts`의 `CACHE_TTL`에 모아 둔다.
 

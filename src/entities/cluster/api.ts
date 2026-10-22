@@ -9,6 +9,18 @@ import type { ClustersPage, ClusterStats, DaySummary } from "./model";
 // 클라이언트 전용 fetcher. DB 접근은 server/ + API 라우트가 담당하고,
 // 여기서는 파라미터만 실어 HTTP로 호출한다.
 
+/**
+ * 목록·집계의 react-query 키. **위젯(클라이언트)과 app 레이어(첫 화면 SSR seed)가 함께
+ * 쓰는 계약이라 여기 둔다** — 키가 한 글자라도 어긋나면 서버가 심어 둔 데이터를 위젯이
+ * 못 찾아 초기 HTML이 다시 스켈레톤으로 돌아간다. → src/app/_feed-seed.ts
+ */
+export const clusterQueryKeys = {
+  page: (outletIds: string[], date?: string) =>
+    ["clusters", outletIds.join(","), date ?? ""] as const,
+  stats: (outletIds: string[], date?: string) =>
+    ["cluster-stats", outletIds.join(","), date ?? ""] as const,
+};
+
 interface FetchClustersParams {
   cursor?: string | null;
   limit?: number;
