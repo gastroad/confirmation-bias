@@ -191,7 +191,10 @@ orca worktree create \
 - `--base-branch`는 생략한다. 리포 기본 base(`main`)를 쓴다.
 - 넘기는 프롬프트에 `CLAUDE.md`·`docs/agent/*` 내용을 복붙하지 않는다. 새 세션이 자동으로 읽는다.
 
-머지 후 정리:
+머지 후에는 작업한 세션에서 **`/handback`** 을 실행한다. 워크트리 lineage에 기록된
+`createdByTerminalHandle`(= `/handoff`를 실행한 터미널)을 찾아 PR·직접 한 일·남은 판단을 한 줄로
+돌려보낸다. 워크트리는 작업한 쪽이 지우지 않는다 — 자기가 서 있는 디렉토리를 지우면 보고가
+닿기 전에 세션이 끊길 수 있고, `git pull`은 어차피 main에서 해야 한다. 받은 쪽이 정리한다:
 
 ```bash
 git pull                                        # main 워크트리에서
