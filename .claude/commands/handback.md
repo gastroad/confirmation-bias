@@ -55,7 +55,7 @@ orca terminal list --worktree "id:<parentWorktreeId>" --json
 - 쓰지 않을 것: 변경 파일 목록, 구현 세부, 테스트 개수 — PR에 있다
 
 **한 줄로 쓴다(줄바꿈 금지).** `terminal send`는 받는 쪽 TUI에 글자를 타이핑하는 것이라 줄바꿈이
-중간에 입력을 끊을 수 있다. 항목은 ` / `로 나눈다. 형식:
+중간에 입력을 끊을 수 있다. 항목은 `/`로 나눈다. 형식:
 
 ```
 [handback] <브랜치> 작업이 머지됐습니다(PR #<번호> <URL>). <바뀐 것 한 줄> / 직접 한 일: <…> / 남은 판단: <…> / 정리: main 워크트리에서 git pull 후 orca worktree rm --worktree branch:<브랜치>
