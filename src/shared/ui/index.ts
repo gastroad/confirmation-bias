@@ -4,6 +4,7 @@ export { Skeleton } from "./Skeleton";
 export { Logo } from "./Logo";
 export { ThemeScript } from "./ThemeScript";
 export { AdSenseLoader } from "./AdSenseLoader";
+export { TagManager, TagManagerNoScript } from "./TagManager";
 export {
   SunIcon,
   MoonIcon,

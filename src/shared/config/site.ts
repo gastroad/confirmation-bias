@@ -24,6 +24,11 @@ export const CONTACT_EMAIL = "contact@confirmationbias.app";
 // Google AdSense 게시자 ID(코드용, ca-pub-…). 공개값(광고 코드로 노출됨). ads.txt와도 공유.
 export const ADSENSE_CLIENT = "ca-pub-8694059194416409";
 
+// Google Tag Manager 컨테이너 ID. 공개값. GA4 태그는 이 컨테이너 안에서 설정한다.
+// 로더(shared/ui/TagManager)는 Vercel Production에서만 렌더한다 — 프리뷰·로컬 방문이
+// 실측 지표에 섞이지 않게.
+export const GTM_ID = "GTM-MSS2QKH9";
+
 export const SITE_KEYWORDS = [
   "뉴스 클러스터링",
   "언론사 성향",

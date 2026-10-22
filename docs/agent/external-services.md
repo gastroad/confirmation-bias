@@ -24,8 +24,8 @@ confirmation-bias 실서비스는 **6개 외부 서비스**로 구성된다. 이
 - **OpenAI**는 파이프라인(GitHub Actions)에서만 호출된다. 웹(Vercel)은 OpenAI를 쓰지 않는다.
 - **GitHub**은 세 역할을 겸한다: 소스 저장소 · 자동화 실행처(Actions) · `/admin`이 부르는
   `workflow_dispatch` API.
-- 위 그림에 없는 둘: **Neon Auth**(인증. Neon 안이지만 별도 엔드포인트)와
-  **ImprovMX**(문의 메일 포워딩). 아래에 정리한다.
+- 위 그림에 없는 것: **Neon Auth**(인증. Neon 안이지만 별도 엔드포인트),
+  **ImprovMX**(문의 메일 포워딩), **AdSense·GTM/GA4**(브라우저에서 직접 Google로). 아래에 정리한다.
 
 ---
 
@@ -117,6 +117,18 @@ confirmation-bias 실서비스는 **6개 외부 서비스**로 구성된다. 이
 | 점검 지점 | 광고 미표시→사이트 승인 상태 / 동의 배너 미표시→AdSense "개인정보 보호 및 메시지" |
 
 > 상세 배선은 [infrastructure.md](./infrastructure.md) 수익화 절.
+
+### 6-1. Google Tag Manager · GA4 — 이용 측정
+
+| 항목      | 값                                                                                  |
+| --------- | ----------------------------------------------------------------------------------- |
+| 역할      | 이용 측정. "실제적인 사용자 관심"의 근거 (AdSense 재심사)                           |
+| 컨테이너  | `site.ts`의 `GTM_ID` (`GTM-MSS2QKH9`, 공개값). GA4 태그는 GTM 안에서 설정           |
+| 배선      | 루트 `layout.tsx`의 `TagManager` — **Vercel Production에서만** 렌더                 |
+| 대시보드  | https://tagmanager.google.com · https://analytics.google.com                        |
+| 점검 지점 | 수집 0→GTM 컨테이너 게시 여부·Google 태그 존재 / EEA만 0→CMP 동의 / 프리뷰는 원래 0 |
+
+> 동의·지표 정의·콘솔 할 일은 [analytics.md](./analytics.md).
 
 ### 7. GitHub — 저장소 + 자동화
 

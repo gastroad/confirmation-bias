@@ -58,10 +58,11 @@ RSS 피드
 ```
 shared/          — 프레임워크 무관 유틸 / 스타일
   config/        — site.ts(SEO·브랜드), search-params.ts(URL 쿼리 파라미터 이름)
-  lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts
+  lib/           — format.ts, bucket-date.ts, theme.ts(테마 저장·구독), useInfiniteScroll.ts,
+                   gtm.ts(동의 기본값 → GTM 로드 순서)
   styles/        — theme.css.ts(토큰·라이트/다크), layout.css.ts(page·gutters·container·prose)
   ui/            — Button(모든 버튼의 단일 출처), Logo, Skeleton, icons, ThemeScript(FOUC 방지),
-                   AdSenseLoader(콘텐츠 페이지 전용)
+                   AdSenseLoader(콘텐츠 페이지 전용), TagManager(루트 — GTM→GA4)
 entities/        — 도메인 모델 + dumb UI ( @x/ = 형제 entity 전용 공개 API )
   outlet/        — model.ts(순수·css 무의존), lib.ts(집계 DTO·요약 문장), leaning-colors.ts,
                    ui/(LeaningBar·TiltLabel), index.ts

@@ -4,11 +4,11 @@ import { SITE_NAME, CONTACT_EMAIL } from "@/shared/config/site";
 import * as styles from "./privacy.css";
 
 // 시행일. 방침 내용을 실질적으로 바꾸면 이 날짜를 갱신한다.
-const EFFECTIVE_DATE = "2026년 7월 20일";
+const EFFECTIVE_DATE = "2026년 10월 23일";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
-  description: `${SITE_NAME}의 개인정보 수집·이용·쿠키 및 광고(Google AdSense)에 관한 처리방침입니다.`,
+  description: `${SITE_NAME}의 개인정보 수집·이용·쿠키, 광고(Google AdSense) 및 분석(Google 애널리틱스)에 관한 처리방침입니다.`,
   alternates: { canonical: "/privacy" },
   openGraph: { type: "article", url: "/privacy", title: `개인정보처리방침 — ${SITE_NAME}` },
 };
@@ -101,10 +101,41 @@ export default function PrivacyPage() {
       <section className={styles.section}>
         <h2 className={styles.heading}>3. 분석 도구</h2>
         <p className={styles.paragraph}>
-          현재 서비스는 별도의 웹 분석(애널리틱스) 도구를 사용하지 않습니다. 향후 트래픽 측정
-          목적으로 분석 도구를 도입할 경우, 관련 쿠키는 동의를 기반으로 사용되며 본 방침을 갱신해
-          고지합니다.
+          서비스는 이용 현황(방문 페이지, 체류 시간, 재방문 여부, 유입 경로 등)을 파악해 서비스를
+          개선하기 위해 <strong>Google 애널리틱스</strong>를 Google 태그 관리자를 통해 사용합니다.
+          Google 애널리틱스는 브라우저마다 임의의 식별자를 담은 쿠키를 저장해 재방문 여부를
+          구분하며, 이름·이메일 등 계정 정보는 전송하지 않습니다.
         </p>
+        <ul className={styles.list}>
+          <li>
+            EEA·영국·스위스 이용자의 경우 분석 쿠키는 위 CMP를 통한{" "}
+            <strong>동의를 받은 뒤에만</strong> 사용됩니다.
+          </li>
+          <li>
+            브라우저 설정에서 쿠키를 차단하거나{" "}
+            <a
+              className={styles.link}
+              href="https://tools.google.com/dlpage/gaoptout"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google 애널리틱스 차단 브라우저 부가기능
+            </a>
+            을 설치해 수집을 거부할 수 있습니다.
+          </li>
+          <li>
+            Google의 데이터 처리 방식은{" "}
+            <a
+              className={styles.link}
+              href="https://policies.google.com/technologies/partner-sites"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Google의 파트너 사이트 정책
+            </a>
+            을 참고하세요.
+          </li>
+        </ul>
       </section>
 
       <section className={styles.section}>
@@ -112,6 +143,7 @@ export default function PrivacyPage() {
         <p className={styles.paragraph}>서비스는 다음 외부 제공업체를 이용합니다.</p>
         <ul className={styles.list}>
           <li>Google AdSense — 광고 게재 및 관련 쿠키</li>
+          <li>Google 애널리틱스·Google 태그 관리자 — 이용 통계 수집 및 관련 쿠키</li>
           <li>Vercel — 웹 호스팅 및 접속 로그 처리</li>
           <li>Neon — 뉴스 기사·클러스터 데이터 저장(개인정보 아님) 및 계정·세션 정보 저장</li>
           <li>OpenAI — 뉴스 기사 본문의 임베딩 생성(개인정보 미포함)</li>
@@ -141,7 +173,7 @@ export default function PrivacyPage() {
         <p className={styles.paragraph}>
           <strong>국외 이전</strong>: 서비스의 데이터베이스와 인증 서버는 Neon(미국 Neon Inc.)의
           싱가포르 리전에 위치하며, 계정·세션 정보가 해당 서버에 저장·처리됩니다. 웹 호스팅은
-          Vercel(미국)을 이용합니다.
+          Vercel(미국)을, 이용 통계는 Google(미국)을 이용합니다.
         </p>
       </section>
 
