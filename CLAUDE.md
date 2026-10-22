@@ -20,6 +20,8 @@ RSS 수집(3시간마다) → KST 하루치 배치 클러스터링(하루 1회) 
 - 새 페이지는 셸(`src/app/_shell.tsx`의 `AppShell`)로 감싸고 **본문만 쓴다.** 세션·헤더·
   `<main>` 컨테이너는 셸이 세운다. 세션이 따로 필요하면 `app/_session.ts`의 `getUser`를
   쓴다(요청당 1회 캐시). → `docs/agent/architecture.md`의 "페이지 셸"
+- **측정(GTM→GA4)은 루트, 광고(AdSense)는 콘텐츠 페이지에만.** 반대 방향으로 옮기지 않는다.
+  동의 기본값은 GTM보다 먼저 들어가야 한다(`shared/lib/gtm.ts`). → `docs/agent/analytics.md`
 - 인증을 만질 때 `@neondatabase/auth`를 **직접 import하지 않는다.** SDK 의존은 `server/auth.ts`
   한 파일로 가둬 두었다(베타 버전이라 교체 여지를 남긴다). → `docs/agent/auth.md`
 - 캐시는 **DTO 경계**에 건다. `server/queries/*`(Prisma row)에 걸면 `unstable_cache`의 JSON

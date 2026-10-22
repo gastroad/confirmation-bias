@@ -12,7 +12,7 @@ import {
   SITE_KEYWORDS,
   ADSENSE_CLIENT,
 } from "@/shared/config/site";
-import { ThemeScript } from "@/shared/ui";
+import { ThemeScript, TagManager, TagManagerNoScript } from "@/shared/ui";
 import { SiteFooter } from "@/widgets/site-footer";
 import { Providers } from "./providers";
 import "./global.css";
@@ -93,9 +93,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
+        <TagManagerNoScript />
         <ThemeScript />
         {/* AdSense 로더는 여기 없다. 콘텐츠 페이지에서만 렌더한다 → shared/ui/AdSenseLoader.
-            루트에 두면 /auth·/account·/admin 같은 콘텐츠 없는 화면에도 광고가 붙는다. */}
+            루트에 두면 /auth·/account·/admin 같은 콘텐츠 없는 화면에도 광고가 붙는다.
+            측정(TagManager)은 반대로 여기 있어야 동선이 이어진다. */}
+        <TagManager />
         <JsonLd data={websiteSchema()} />
         <Providers>{children}</Providers>
         <SiteFooter />

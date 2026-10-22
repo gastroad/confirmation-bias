@@ -184,6 +184,13 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 - 개인화 광고·쿠키 고지는 `src/app/privacy/`(개인정보처리방침)에 포함.
 - 광고 유닛을 특정 위치에 넣으려면 AdSense에서 유닛 생성 후 `data-ad-slot` ID로 배치(현재는 자동 광고 기준).
 
+## 이용 측정 (GTM → GA4)
+
+루트 레이아웃의 `shared/ui/TagManager`가 GTM 컨테이너를 싣고, GA4 태그는 GTM 안에서 설정한다.
+**AdSense 로더와 달리 루트에 둔다**(동선이 이어져야 측정된다). Vercel Production에서만 렌더하고,
+EEA·영국·스위스는 Consent Mode 기본값 denied → Google CMP가 동의를 갱신한다.
+→ [analytics.md](./analytics.md)
+
 ## 중복 뉴스 제거
 
 - 현재: collect가 `Article.url @unique` + `createMany({ skipDuplicates })`로 URL 중복을 막고,
