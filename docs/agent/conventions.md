@@ -204,5 +204,6 @@ GitHub Actions runner는 **UTC**로 돈다. `bucket.ts`는 오프셋을 더한 �
   dev에서는 통과하고 프로덕션 빌드에서만 터진다.
 - 서버를 막 띄운 직후에는 콜드 스타트가 겹쳐 흔들린다 → `expect.timeout`을 10초로 뒀다.
 - **상태 코드는 `page.goto`가 아니라 `request.get`으로 본다.** 화면이 "찾을 수 없습니다"를
-  보여도 HTTP 200일 수 있다(Suspense 경계가 있으면 soft 404가 된다) →
-  [architecture.md](./architecture.md)의 "상태 코드는 Suspense 경계가 정한다"
+  보여도 HTTP 200일 수 있다 — Suspense 경계(`loading.tsx`)가 있으면 soft 404가 되고, 그래서
+  이 앱에는 `loading.tsx`가 없다 → [architecture.md](./architecture.md)의
+  "상태 코드는 Suspense 경계가 정한다"

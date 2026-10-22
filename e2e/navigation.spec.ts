@@ -168,23 +168,16 @@ test.describe("찾을 수 없는 페이지", () => {
    * `notFound()`가 화면과 robots 메타(noindex)는 맞지만 HTTP 200인 soft 404가 된다.
    * Next 문서가 "404 상태가 필요하면 본문이 스트리밍되기 전에 확인하라"고 명시한다.
    *
-   * 2026-10-22에 루트 `app/loading.tsx`를 **날짜 세그먼트로 내렸다**(P0-6). 그래서
-   * 지금은 갈린다:
+   * 2026-10-22에 `loading.tsx`를 **전부 제거했다**(P0-6). 그 전에는 루트에 있어
+   * `/clusters/<없는 id>`가 라이브에서 200을 냈다 — 기준 미달 페이지 22,691개를 404로
+   * 내리는 것이 P0-6인데 그게 soft 404면 아무 효과가 없다.
    *
-   * | 라우트           | 경계                        | 상태 |
-   * | ---------------- | --------------------------- | ---- |
-   * | `/clusters/[id]` | 없음                        | 404  |
-   * | `/d/[date]`      | `d/[date]/loading.tsx` 있음 | 200  |
-   *
-   * 클러스터 쪽이 중요한 이유: 기준 미달 페이지 22,691개를 404로 내리는 것이 P0-6이고,
-   * 그게 soft 404(200)면 아무 효과가 없다. 날짜는 수가 적고(127개) 전부 유효하므로
-   * 로딩 스켈레톤을 남기는 쪽을 택했다. → docs/agent/adsense-compliance.md의 P0-6
+   * **`loading.tsx`를 다시 추가하면 이 테스트들이 깨진다.** 그때는 기대값을 바꾸지 말고
+   * 왜 경계가 필요한지부터 따진다 — 경계 하나가 그 서브트리의 상태 코드와 초기 HTML을
+   * 동시에 바꾼다. → docs/agent/architecture.md의 "상태 코드는 Suspense 경계가 정한다"
    */
-  test("존재하지 않는 클러스터는 진짜 404다 — 경계가 없어야 상태 줄이 선다", async ({
-    page,
-    request,
-  }) => {
-    // 상태 코드는 request로 받는다(page.goto의 response도 되지만 의도를 분명히 한다).
+  test("존재하지 않는 클러스터는 진짜 404다", async ({ page, request }) => {
+    // 상태 코드는 request로 받는다 — 화면이 "찾을 수 없습니다"여도 200일 수 있다.
     expect((await request.get("/clusters/00000000-0000-0000-0000-000000000000")).status()).toBe(
       404
     );
@@ -193,16 +186,11 @@ test.describe("찾을 수 없는 페이지", () => {
     await expect(page.getByText("페이지를 찾을 수 없습니다")).toBeVisible();
   });
 
-  test("잘못된 날짜는 404 화면을 보여준다 (상태 코드는 200 — 로딩 경계를 남긴 대가)", async ({
-    page,
-  }) => {
-    const res = await page.goto("/d/2026-13-99");
+  test("잘못된 날짜도 진짜 404다", async ({ page, request }) => {
+    expect((await request.get("/d/2026-13-99")).status()).toBe(404);
+
+    await page.goto("/d/2026-13-99");
     await expect(page.getByText("페이지를 찾을 수 없습니다")).toBeVisible();
-    await expect(page.locator('head meta[name="robots"]').first()).toHaveAttribute(
-      "content",
-      /noindex/
-    );
-    expect(res?.status()).toBe(200);
   });
 });
 
