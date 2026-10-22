@@ -23,6 +23,11 @@ export interface ClusterSummary {
 
 export interface ClusterDetail extends ClusterSummary {
   articles: ArticleWithOutlet[];
+  /**
+   * 달린 댓글 수. 색인 기준 미달 페이지를 404로 내릴 때 **예외 판정에만** 쓴다
+   * (사람이 쓴 글이 달린 페이지는 남긴다) → `shouldRemoveCluster`
+   */
+  commentCount: number;
 }
 
 /** 커서 페이지네이션 응답 (무한 스크롤) */
@@ -43,6 +48,11 @@ export interface DaySummary {
 export interface ClusterStats {
   clusterCount: number;
   articleCount: number;
+  /**
+   * 색인 기준을 넘긴(= 비교가 성립하는) 이슈 수. **범위 전체 기준**이다 —
+   * 목록 머리가 이 값을 적으므로 무한 스크롤로 더 불러와도 흔들리지 않는다.
+   */
+  indexableClusterCount: number;
   leaningDistribution: LeaningDistribution;
   dominantLeaning: Leaning | null;
 }

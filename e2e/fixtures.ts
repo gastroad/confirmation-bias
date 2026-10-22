@@ -27,6 +27,8 @@ export interface ClusterSummary {
 export interface ClusterStats {
   clusterCount: number;
   articleCount: number;
+  /** 색인 기준을 넘긴 이슈 수. 목록 머리가 이 값을 적는다(범위 전체 기준). */
+  indexableClusterCount: number;
   leaningDistribution: Record<string, number>;
 }
 
@@ -134,18 +136,22 @@ export const parseLocaleNumber = (text: string): number => Number(text.replace(/
 export const PAGE_LIMIT = 20;
 
 /**
- * 목록 **첫 페이지에** 단독 보도가 섞여 있는 날짜.
+ * 목록 **첫 페이지에 색인 기준 미달 이슈가 섞여 있는** 날짜.
  *
- * 정렬이 기사 수 내림차순이라 1건짜리(=단독)는 뒤 페이지로 밀린다. 전체를 훑어
- * "단독이 존재한다"고 판단하면 화면 첫 페이지에는 없어 테스트가 헛돈다.
+ * 정렬이 기사 수 내림차순이라 작은 이슈는 뒤 페이지로 밀린다. 전체를 훑어 "미달이
+ * 존재한다"고 판단하면 화면 첫 페이지에는 없어 테스트가 헛돈다.
+ *
+ * ⚠️ **"단독 보도"(언론사 1곳)와 다른 집합이다** — 2개사가 다뤘지만 같은 진영이거나
+ * 기사가 3건 미만인 것도 미달이고, 실측으로 그런 것이 12%다. 화면은 색인 기준으로
+ * 가르므로(개별 페이지가 404라 링크를 걸 수 없다) 이쪽을 쓴다.
  */
-export async function findDayWithSoloOnFirstPage(
+export async function findDayWithThinOnFirstPage(
   request: APIRequestContext
-): Promise<{ date: string; soloCount: number } | null> {
+): Promise<{ date: string; thinCount: number } | null> {
   for (const day of await getDays(request)) {
     const { items } = await getClusters(request, day.date, PAGE_LIMIT);
-    const soloCount = items.filter((c) => c.outletCount === 1).length;
-    if (soloCount > 0) return { date: day.date, soloCount };
+    const thinCount = items.filter((c) => !isIndexable(c)).length;
+    if (thinCount > 0) return { date: day.date, thinCount };
   }
   return null;
 }

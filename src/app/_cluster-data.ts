@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { findClusterSummaryPage, findClusterStats } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
-import { toClusterSummary, toClusterStats } from "@/entities/cluster";
+import { toClusterSummary, toClusterStats, INDEX_CRITERIA } from "@/entities/cluster";
 import type { ClustersPage, ClusterStats } from "@/entities/cluster";
 
 /**
@@ -36,7 +36,11 @@ export const getClustersPage = unstable_cache(
 export const getClusterStats = unstable_cache(
   async (outletIds: string[], bucketDateIso: string | undefined): Promise<ClusterStats> =>
     toClusterStats(
-      await findClusterStats(outletIds, bucketDateIso ? new Date(bucketDateIso) : undefined)
+      await findClusterStats(
+        outletIds,
+        bucketDateIso ? new Date(bucketDateIso) : undefined,
+        INDEX_CRITERIA
+      )
     ),
   ["clusters-stats", DTO_VERSION],
   { revalidate: CACHE_TTL.clusterList, tags: ["clusters"] }

@@ -94,7 +94,8 @@ app/             — Next.js App Router
   about/         — 소개 및 방법론. 성향 분류 근거·클러스터링 방식·**한계 고지**
   outlets/       — 언론사 허브 + `[id]` 상세. `_data.ts`가 집계를 6시간 캐시
   weekly/        — 주간 리포트(선별 게재). 선별 규칙은 `entities/cluster`에, 화면에도 그대로 노출
-  error.tsx · loading.tsx · not-found.tsx — 상태 화면
+  error.tsx · not-found.tsx — 상태 화면
+  d/[date]/loading.tsx — **루트에 두지 않는다**(아래 "상태 코드" 참고)
   admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
 proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
@@ -208,6 +209,29 @@ page.tsx ──▶ seedClusterFeed(outletIds, date)   ← _feed-seed.ts
 > 동적이라서다). `/about`·`/weekly`처럼 클라이언트 훅이 없는 페이지도 같다. 콘텐츠는 **같은
 > 응답 본문에 실려 있고** JS를 실행하는 크롤러(Googlebot·AdsBot)는 최종 DOM을 본다 — 위
 > 변경이 고친 것은 "HTML에 아예 없던" 문제이고, 이 스트리밍 자체는 그 전부터의 구조다.
+
+## 상태 코드는 Suspense 경계가 정한다 (2026-10-22)
+
+**경계가 있으면 `notFound()`가 HTTP 200이 된다.** 응답이 200으로 먼저 스트리밍되고 그 뒤에는
+상태 줄을 되돌릴 수 없다 — 화면과 robots 메타(noindex)는 맞지만 **soft 404**다. Next 문서가
+"404 상태가 필요하면 본문이 스트리밍되기 전에 리소스 존재를 확인하라"고 명시한다.
+
+그래서 `loading.tsx`를 **루트에 두지 않는다.** 루트에 있던 동안 라이브
+`/clusters/<없는 id>`가 200을 냈다.
+
+| 라우트           | 경계                        | `notFound()` 결과 |
+| ---------------- | --------------------------- | ----------------- |
+| `/clusters/[id]` | 없음                        | **404** ✅        |
+| `/d/[date]`      | `d/[date]/loading.tsx` 있음 | 200 (soft)        |
+
+- **클러스터 쪽이 진짜 404여야 하는 이유**: 색인 기준 미달 페이지 22,691개를 사이트에서
+  없애는 것이 P0-6이고, soft 404면 아무 효과가 없다 → [adsense-compliance.md](./adsense-compliance.md)
+- **날짜는 경계를 남겼다**: 127개뿐이고 전부 유효한 날짜라 404가 필요 없다. 목록을 기다리는
+  동안의 스켈레톤이 더 값지다.
+- **부수 효과**: 루트 경계가 사라져 홈 본문이 `<div hidden>` 스트리밍을 타지 않고 HTML에
+  그대로 실린다(인라인 1,400자 = 전체 1,400자). "첫 화면은 서버에서 그린다"가 이것으로
+  완성된다. **날짜 페이지는 자체 경계가 있어 여전히 hidden 스트리밍이다**(인라인 39자).
+- `e2e/navigation.spec.ts`·`e2e/cluster-detail.spec.ts`가 두 라우트의 상태 코드를 못박아 둔다.
 
 ## 페이지 셸 — 세션·헤더·본문 컨테이너를 한 곳에
 

@@ -17,7 +17,12 @@ const req = (qs = "") => new Request(`http://localhost:3000/api/clusters/stats${
 
 beforeEach(() => {
   vi.clearAllMocks();
-  findClusterStats.mockResolvedValue({ clusterCount: 0, articleCount: 0, outletCounts: [] });
+  findClusterStats.mockResolvedValue({
+    clusterCount: 0,
+    articleCount: 0,
+    indexableClusterCount: 0,
+    outletCounts: [],
+  });
 });
 
 describe("GET /api/clusters/stats", () => {
@@ -30,13 +35,17 @@ describe("GET /api/clusters/stats", () => {
 
   it("파라미터가 없으면 전 기간·전체 매체다", async () => {
     await GET(req());
-    expect(findClusterStats.mock.calls.at(-1)).toEqual([[], undefined]);
+    // 세 번째 인자는 색인 기준(INDEX_CRITERIA) — "비교 가능한 이슈" 수를 같은 쿼리에서 센다.
+    const [outletIds, bucketDate, criteria] = findClusterStats.mock.calls.at(-1)!;
+    expect([outletIds, bucketDate]).toEqual([[], undefined]);
+    expect(criteria).toMatchObject({ minArticles: 3, minLeaningGroups: 2 });
   });
 
   it("언론사별 건수를 성향 분포 DTO로 합쳐 돌려준다", async () => {
     findClusterStats.mockResolvedValue({
       clusterCount: 12,
       articleCount: 30,
+      indexableClusterCount: 5,
       outletCounts: [
         { outletId: "hani", count: 10 },
         { outletId: "chosun", count: 20 },

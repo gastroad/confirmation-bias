@@ -12,10 +12,11 @@ import {
 } from "@/entities/outlet";
 import {
   ClusterCard,
+  INDEX_MIN_ARTICLES,
   clusterQueryKeys,
   fetchClustersPage,
   fetchClusterStats,
-  partitionBySpread,
+  partitionByIndexable,
   type ClusterSummary,
 } from "@/entities/cluster";
 import { useInfiniteScroll } from "@/shared/lib/useInfiniteScroll";
@@ -142,7 +143,10 @@ export function ClusterFeed({ date, outletIds = [] }: ClusterFeedProps = {}) {
   });
 
   const clusters = data?.pages.flatMap((p) => p.items) ?? [];
-  const { covered, solo } = partitionBySpread(clusters);
+  // 색인 기준으로 가른다 — thin 쪽은 상세 페이지가 404라 **링크를 걸 수 없다**.
+  // 단독 보도(언론사 1곳) 기준으로 가르면 비색인인데 2개사 이상인 3,254개가 본 목록에
+  // 남아 깨진 링크가 된다 → entities/cluster의 partitionByIndexable
+  const { comparable, thin } = partitionByIndexable(clusters);
 
   return (
     <>
@@ -150,7 +154,17 @@ export function ClusterFeed({ date, outletIds = [] }: ClusterFeedProps = {}) {
 
       <section>
         <div className={styles.listHead}>
-          <span>이슈 {stats ? stats.clusterCount.toLocaleString() : "—"}</span>
+          {/* **범위 전체 기준**이다(`stats`). 불러온 페이지로 세면 스크롤할 때마다 숫자가
+              바뀐다 — 아래 접힌 블록의 건수가 "불러온 것"이라 둘은 다른 수다. */}
+          <span>
+            비교 가능한 이슈 <b>{stats ? stats.indexableClusterCount.toLocaleString() : "—"}</b>
+            {stats && stats.clusterCount > stats.indexableClusterCount && (
+              <span className={styles.headAside}>
+                {" · 그 외 "}
+                {(stats.clusterCount - stats.indexableClusterCount).toLocaleString()}
+              </span>
+            )}
+          </span>
           <span>중도 기준 · ±{TILT_BALANCE_THRESHOLD}%p 이내는 균형</span>
         </div>
 
@@ -191,9 +205,9 @@ export function ClusterFeed({ date, outletIds = [] }: ClusterFeedProps = {}) {
           </div>
         ) : (
           <>
-            {covered.length > 0 && (
+            {comparable.length > 0 && (
               <ul className={styles.list}>
-                {covered.map((c) => (
+                {comparable.map((c) => (
                   <li key={c.id}>
                     <FeedCard cluster={c} />
                   </li>
@@ -201,19 +215,25 @@ export function ClusterFeed({ date, outletIds = [] }: ClusterFeedProps = {}) {
               </ul>
             )}
 
-            {solo.length > 0 && (
+            {/* 기준 미달 이슈. **링크를 걸지 않는다** — 상세 페이지가 404다.
+                감추는 게 아니라 분류하는 것이므로 건수와 제목은 그대로 밝힌다(P1-3). */}
+            {thin.length > 0 && (
               <details className={styles.soloBlock}>
                 <summary className={styles.soloSummary}>
-                  단독 보도 <b>{solo.length}</b>건
-                  <span className={styles.soloHint}>한 매체만 다룬 이슈 · 비교 대상 없음</span>
+                  비교가 성립하지 않는 이슈 <b>{thin.length}</b>건
+                  <span className={styles.soloHint}>
+                    기사 {INDEX_MIN_ARTICLES}건 미만이거나 한 진영만 다룸 · 개별 페이지 없음
+                  </span>
                 </summary>
                 <ul className={styles.soloList}>
-                  {solo.map((c) => (
+                  {thin.map((c) => (
                     <li key={c.id}>
-                      <Link href={`/clusters/${c.id}`} className={styles.soloItem}>
+                      <div className={styles.thinItem}>
                         <span className={styles.soloTitle}>{c.representativeTitle}</span>
-                        <span className={styles.soloCount}>{c.articleCount}건</span>
-                      </Link>
+                        <span className={styles.soloCount}>
+                          {c.articleCount}건 · {c.outletCount}개사
+                        </span>
+                      </div>
                     </li>
                   ))}
                 </ul>

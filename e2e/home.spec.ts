@@ -6,7 +6,8 @@ import {
   getStats,
   getClusters,
   parseLocaleNumber,
-  findDayWithSoloOnFirstPage,
+  findDayWithThinOnFirstPage,
+  isIndexable,
   PAGE_LIMIT,
 } from "./fixtures";
 
@@ -69,14 +70,26 @@ test.describe("홈 페이지", () => {
     await expect(page.getByText(/중도 기준 · ±5%p 이내는 균형/)).toBeVisible();
   });
 
-  test("이슈 수가 서버 집계와 일치한다", async ({ page, request }) => {
+  test("목록 머리의 이슈 수가 서버 집계와 일치한다 — 불러온 페이지가 아니라 범위 전체다", async ({
+    page,
+    request,
+  }) => {
     const latest = await getLatestDay(request);
     const stats = await getStats(request, latest.date);
     await page.goto("/");
 
-    const head = page.getByText(/^이슈 [\d,]+$/);
+    const head = page.getByText(/^비교 가능한 이슈 [\d,]+/);
     await expect(head).toBeVisible();
-    expect(parseLocaleNumber((await head.textContent())!)).toBe(stats.clusterCount);
+    const text = (await head.textContent())!;
+    // "비교 가능한 이슈 35 · 그 외 118" — 앞 숫자가 색인 대상 수다.
+    const [first] = text.replace(/^비교 가능한 이슈\s*/, "").split("·");
+    expect(parseLocaleNumber(first)).toBe(stats.indexableClusterCount);
+
+    if (stats.clusterCount > stats.indexableClusterCount) {
+      expect(text).toContain("그 외");
+      const rest = text.split("그 외")[1];
+      expect(parseLocaleNumber(rest)).toBe(stats.clusterCount - stats.indexableClusterCount);
+    }
   });
 });
 
@@ -95,42 +108,65 @@ test.describe("홈 — 클러스터 목록", () => {
     await expect(first).toContainText(/(진보 \+\d+|보수 \+\d+|균형)/);
   });
 
-  test("본 목록에는 2개사 이상이 다룬 이슈만 올린다", async ({ page, request }) => {
+  test("본 목록에는 색인 기준을 넘긴 이슈만 올린다 — 나머지는 개별 페이지가 없다", async ({
+    page,
+    request,
+  }) => {
     const latest = await getLatestDay(request);
     const { items } = await getClusters(request, latest.date);
-    const covered = items.filter((c) => c.outletCount >= 2);
-    test.skip(covered.length === 0, "비교 가능한 이슈가 없다");
+    const comparable = items.filter(isIndexable);
+    test.skip(comparable.length === 0, "비교 가능한 이슈가 없다");
 
     await page.goto("/");
-    // 첫 카드의 제목이 covered 집합에 있어야 한다
     const firstTitle = await page.locator('a[href^="/clusters/"] h3').first().textContent();
-    expect(covered.map((c) => c.representativeTitle)).toContain(firstTitle?.trim());
+    expect(comparable.map((c) => c.representativeTitle)).toContain(firstTitle?.trim());
   });
 
-  test("단독 보도는 감추지 않고 접어서 건수를 밝힌다", async ({ page, request }) => {
-    const day = await findDayWithSoloOnFirstPage(request);
-    test.skip(!day, "첫 페이지에 단독 보도가 걸리는 날짜가 없다");
+  test("목록이 링크하는 모든 이슈가 색인 기준을 넘는다 — 404로 가는 링크를 뿌리지 않는다", async ({
+    page,
+    request,
+  }) => {
+    const latest = await getLatestDay(request);
+    const { items } = await getClusters(request, latest.date, PAGE_LIMIT);
+    const thinTitles = new Set(
+      items.filter((c) => !isIndexable(c)).map((c) => c.representativeTitle)
+    );
+    test.skip(thinTitles.size === 0, "첫 페이지에 기준 미달 이슈가 없다");
+
+    await page.goto("/");
+    const linked = await page.locator('a[href^="/clusters/"] h3').allTextContents();
+    for (const t of linked) expect(thinTitles.has(t.trim())).toBe(false);
+  });
+
+  test("기준 미달 이슈는 감추지 않고 접어서 건수를 밝힌다 (링크 없이)", async ({
+    page,
+    request,
+  }) => {
+    const day = await findDayWithThinOnFirstPage(request);
+    test.skip(!day, "첫 페이지에 기준 미달 이슈가 걸리는 날짜가 없다");
 
     await page.goto(`/d/${day!.date}`);
-    const summary = page.getByText(/단독 보도/).first();
+    const summary = page.getByText(/비교가 성립하지 않는 이슈/).first();
     await expect(summary).toBeVisible();
-    await expect(summary).toContainText("한 매체만 다룬 이슈 · 비교 대상 없음");
-    await expect(summary).toContainText(String(day!.soloCount));
+    await expect(summary).toContainText("개별 페이지 없음");
+    await expect(summary).toContainText(String(day!.thinCount));
   });
 
-  test("단독 목록을 펼칠 수 있다", async ({ page, request }) => {
-    const day = await findDayWithSoloOnFirstPage(request);
-    test.skip(!day, "첫 페이지에 단독 보도가 걸리는 날짜가 없다");
+  test("미달 목록을 펼칠 수 있고 그 안에는 링크가 없다", async ({ page, request }) => {
+    const day = await findDayWithThinOnFirstPage(request);
+    test.skip(!day, "첫 페이지에 기준 미달 이슈가 걸리는 날짜가 없다");
 
     await page.goto(`/d/${day!.date}`);
     const details = page.locator("details").first();
     await expect(details).toHaveJSProperty("open", false);
     await page
-      .getByText(/단독 보도/)
+      .getByText(/비교가 성립하지 않는 이슈/)
       .first()
       .click();
     await expect(details).toHaveJSProperty("open", true);
-    await expect(details.getByRole("link").first()).toBeVisible();
+    // 제목은 보이지만 누를 수 있는 링크는 없다 — 상세 페이지가 404다
+    await expect(details.locator("li").first()).toBeVisible();
+    await expect(details.getByRole("link")).toHaveCount(0);
   });
 
   test("스크롤하면 다음 페이지를 이어 붙인다", async ({ page, request }) => {
