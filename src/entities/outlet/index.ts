@@ -12,6 +12,8 @@ export type {
   OutletProfile,
   BarGeometry,
   BarSegment,
+  TiltMethodVersion,
+  TiltWorkedExample,
 } from "./model";
 
 export {
@@ -30,6 +32,12 @@ export {
   tiltSide,
   TILT_BALANCE_THRESHOLD,
   calcBarGeometry,
+  OUTLET_ARTICLE_CAP,
+  countLeaningDistribution,
+  TILT_METHOD_VERSIONS,
+  TILT_METHOD_VERSION,
+  TILT_METHOD_EXAMPLE,
+  workTiltExample,
 } from "./model";
 
 export {

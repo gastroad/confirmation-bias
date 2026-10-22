@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "../_shell";
-import { TILT_BALANCE_THRESHOLD } from "@/entities/outlet";
+import { OUTLET_ARTICLE_CAP, TILT_BALANCE_THRESHOLD } from "@/entities/outlet";
 import { ClusterCard, INDEX_MIN_ARTICLES } from "@/entities/cluster";
 import type { ClusterSummary } from "@/entities/cluster";
 import { SITE_NAME } from "@/shared/config/site";
@@ -64,10 +64,14 @@ export default async function WeeklyPage() {
             <p className={styles.criteria}>
               <strong>선별 기준</strong> — 기사 {INDEX_MIN_ARTICLES}건 이상이면서 서로 다른 진영이
               2개 이상 등장한 이슈만 후보로 둡니다. 편중 목록은 여기에 더해{" "}
-              <strong>기사 {SPLIT_MIN_ARTICLES}건 이상</strong>만 봅니다 — 3~4건짜리는 한 건만
-              갈려도 ±75%p가 나와 수치가 과장됩니다. 그중 진보 비율 − 보수 비율(%p)이 ±
-              {TILT_BALANCE_THRESHOLD}%p를 넘는 것을 절댓값이 큰 순, 동률이면 보도량이 많은 순으로
-              놓습니다. 사람이 고르지 않고 이 규칙만으로 뽑습니다.
+              <strong>반영 기사 {SPLIT_MIN_ARTICLES}건 이상</strong>만 봅니다 — 3~4건짜리는 한 건만
+              갈려도 ±75%p가 나와 수치가 과장됩니다. 한 매체는 한 이슈에서 최대 {OUTLET_ARTICLE_CAP}
+              건까지만 셉니다. 그중 진보 기사 비율 − 보수 기사 비율(%p)이 ±{TILT_BALANCE_THRESHOLD}
+              %p를 넘는 것을 절댓값이 큰 순, 동률이면 보도량이 많은 순으로 놓습니다. 사람이 고르지
+              않고 이 규칙만으로 뽑습니다.{" "}
+              <Link href="/about#tilt" className={styles.criteriaLink}>
+                계산 방법
+              </Link>
             </p>
           </>
         ) : (

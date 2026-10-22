@@ -3,6 +3,7 @@ import {
   emptyDistribution,
   GROUP_BY_LEANING,
   LEANING_GROUPS,
+  OUTLET_ARTICLE_CAP,
   OUTLET_MAP,
 } from "@/entities/outlet/@x/cluster";
 import type { LeaningDistribution } from "@/entities/outlet/@x/cluster";
@@ -20,6 +21,7 @@ import {
   toClusterStats,
   groupArticlesByLeaning,
   calcLagGeometry,
+  findCappedOutlets,
 } from "./lib";
 import type { ClusterSummary } from "./model";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "./model";
@@ -111,6 +113,8 @@ function cluster(over: Partial<ClusterSummary> & { id: string }): ClusterSummary
     leaningGroupRatios: { progressive: 0.6, neutral: 0, conservative: 0.4 },
     tilt: 20,
     ...over,
+    // 상한에 걸린 매체가 없으면 두 값이 같다. 다른 경우만 테스트가 따로 적는다.
+    countedArticleCount: over.countedArticleCount ?? over.articleCount ?? 5,
   };
 }
 
@@ -247,6 +251,13 @@ describe("selectMostSplit", () => {
     expect(selectMostSplit(pool, { minArticles: 1, limit: 2 })).toHaveLength(2);
   });
 
+  it("표본 하한은 반영 기사 수로 잰다 — 한 매체의 연속 발행으로 '20건'이 되지 않는다", () => {
+    // 2026-10-23 1위였던 구성: 천지일보 포토 18건 + 2개사 1건씩 = 수집 20건, 반영 5건
+    const flood = cluster({ id: "flood", articleCount: 20, countedArticleCount: 5, tilt: -80 });
+    const out = selectMostSplit([flood], { minArticles: 6, limit: 10 });
+    expect(out).toEqual([]);
+  });
+
   it("입력 배열을 건드리지 않는다", () => {
     const input = [...pool];
     selectMostSplit(input, { minArticles: 1, limit: 10 });
@@ -335,6 +346,24 @@ describe("toClusterSummary", () => {
     expect(dto.leaningDistribution.unknown).toBe(1);
     expect(countLeaningGroups(dto.leaningDistribution)).toBe(0);
     expect(isIndexableCluster(dto)).toBe(false);
+  });
+
+  it("한 매체는 OUTLET_ARTICLE_CAP건까지만 분포에 반영한다 — articleCount는 수집 건수 그대로", () => {
+    const flood = Array.from({ length: 18 }, (_, i) => ({
+      outletId: "cheonji",
+      publishedAt: `2026-08-26T0${i % 10}:00:00Z`,
+    }));
+    const dto = toClusterSummary(
+      summaryRow([
+        ...flood,
+        { outletId: "hankyung", publishedAt: "2026-08-26T01:00:00Z" },
+        { outletId: "seoul", publishedAt: "2026-08-26T02:00:00Z" },
+      ])
+    );
+    expect(dto.articleCount).toBe(20);
+    expect(dto.countedArticleCount).toBe(OUTLET_ARTICLE_CAP + 2);
+    expect(dto.leaningDistribution).toEqual(dist({ right: OUTLET_ARTICLE_CAP + 1, center: 1 }));
+    expect(dto.tilt).toBeCloseTo(-80);
   });
 
   it("같은 매체가 여러 건 써도 outletCount는 하나로 센다", () => {
@@ -491,15 +520,30 @@ describe("toDaySummary", () => {
 });
 
 describe("toClusterStats", () => {
+  it("분포는 상한을 적용한 counted로, 총 기사 수는 수집 건수로 낸다", () => {
+    const stats = toClusterStats({
+      clusterCount: 2,
+      indexableClusterCount: 0,
+      articleCount: 21,
+      outletCounts: [
+        { outletId: "cheonji", count: 20, counted: 4 },
+        { outletId: "hani", count: 1, counted: 1 },
+      ],
+    });
+    expect(stats.leaningDistribution.right).toBe(4);
+    expect(stats.leaningDistribution.left).toBe(1);
+    expect(stats.articleCount).toBe(21);
+  });
+
   it("언론사별 건수를 성향 분포로 합친다", () => {
     const stats = toClusterStats({
       clusterCount: 10,
       indexableClusterCount: 0,
       articleCount: 30,
       outletCounts: [
-        { outletId: "hani", count: 5 },
-        { outletId: "ohmynews", count: 3 },
-        { outletId: "chosun", count: 8 },
+        { outletId: "hani", count: 5, counted: 5 },
+        { outletId: "ohmynews", count: 3, counted: 3 },
+        { outletId: "chosun", count: 8, counted: 8 },
       ],
     });
     expect(stats.leaningDistribution.left).toBe(8);
@@ -513,8 +557,8 @@ describe("toClusterStats", () => {
       indexableClusterCount: 0,
       articleCount: 9,
       outletCounts: [
-        { outletId: "hani", count: 2 },
-        { outletId: "chosun", count: 7 },
+        { outletId: "hani", count: 2, counted: 2 },
+        { outletId: "chosun", count: 7, counted: 7 },
       ],
     });
     expect(stats.dominantLeaning).toBe("right");
@@ -526,8 +570,8 @@ describe("toClusterStats", () => {
       indexableClusterCount: 0,
       articleCount: 100,
       outletCounts: [
-        { outletId: "ghost", count: 99 },
-        { outletId: "hani", count: 1 },
+        { outletId: "ghost", count: 99, counted: 99 },
+        { outletId: "hani", count: 1, counted: 1 },
       ],
     });
     expect(stats.leaningDistribution.unknown).toBe(99);
@@ -550,7 +594,7 @@ describe("toClusterStats", () => {
       clusterCount: 1,
       indexableClusterCount: 0,
       articleCount: 4,
-      outletCounts: [{ outletId: "ghost", count: 4 }],
+      outletCounts: [{ outletId: "ghost", count: 4, counted: 4 }],
     });
     expect(stats.dominantLeaning).toBeNull();
   });
@@ -576,6 +620,41 @@ const art = (outletId: string, publishedAt: string, title = `기사 ${++articleS
   url: `https://example.com/${articleSeq}`,
   publishedAt,
   outlet: outletOf(outletId),
+});
+
+describe("findCappedOutlets", () => {
+  const T = "2026-08-26T01:00:00Z";
+
+  it("상한을 넘긴 매체만, 많이 쓴 순으로", () => {
+    const articles = [
+      ...Array.from({ length: 18 }, () => art("cheonji", T)),
+      ...Array.from({ length: OUTLET_ARTICLE_CAP + 1 }, () => art("newsis", T)),
+      ...Array.from({ length: OUTLET_ARTICLE_CAP }, () => art("hani", T)),
+    ];
+    expect(findCappedOutlets(articles)).toEqual([
+      { outletId: "cheonji", outletName: "천지일보", articles: 18, counted: OUTLET_ARTICLE_CAP },
+      {
+        outletId: "newsis",
+        outletName: "뉴시스",
+        articles: OUTLET_ARTICLE_CAP + 1,
+        counted: OUTLET_ARTICLE_CAP,
+      },
+    ]);
+  });
+
+  it("상한 안이면 빈 목록 — 상세 페이지에 안내가 뜨지 않는다", () => {
+    expect(findCappedOutlets([art("hani", T), art("hani", T), art("chosun", T)])).toEqual([]);
+  });
+
+  it("상세 DTO의 countedArticleCount와 맞물린다", () => {
+    const articles = [...Array.from({ length: 10 }, () => art("cheonji", T)), art("hani", T)];
+    const capped = findCappedOutlets(articles);
+    const dropped = capped.reduce((n, c) => n + c.articles - c.counted, 0);
+    const dto = toClusterSummary(
+      summaryRow(articles.map((a) => ({ outletId: a.outlet.id, publishedAt: a.publishedAt })))
+    );
+    expect(dto.countedArticleCount).toBe(dto.articleCount - dropped);
+  });
 });
 
 describe("groupArticlesByLeaning", () => {

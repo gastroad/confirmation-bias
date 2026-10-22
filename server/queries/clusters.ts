@@ -190,32 +190,49 @@ export async function findClusterDetailRow(id: string) {
 
 /**
  * 필터 적용된 전체 집계(목록 전체 기준). 무한 스크롤로 일부만 로드해도
- * StatsBar가 정확한 총계를 보여줄 수 있도록 count/groupBy로 가볍게 계산한다.
+ * StatsBar가 정확한 총계를 보여줄 수 있도록 집계 쿼리로 가볍게 계산한다.
+ *
+ * 언론사별로 두 값을 낸다 — `count`(수집 기사 수)와 `counted`(클러스터마다 매체당
+ * `outletArticleCap`건까지만 센 합). 하루 스펙트럼이 이슈 카드의 막대와 **같은 규칙**이어야
+ * "아래 이슈들의 합"으로 읽힌다. 상한은 도메인 상수라 호출자가 넘긴다(`server/`는 `src/`를
+ * import할 수 없다).
  */
 export async function findClusterStats(
-  outletIds?: string[],
-  bucketDate?: Date,
-  criteria?: IndexCriteria
+  outletIds: string[] | undefined,
+  bucketDate: Date | undefined,
+  criteria: IndexCriteria | undefined,
+  outletArticleCap: number
 ) {
   const where = clusterWhere(outletIds, bucketDate);
+  const hasOutlets = Boolean(outletIds && outletIds.length > 0);
 
-  const [clusterCount, articleGroups, indexableClusterCount] = await Promise.all([
+  const [clusterCount, outletCounts, indexableClusterCount] = await Promise.all([
     db.cluster.count({ where }),
-    db.article.groupBy({
-      by: ["outletId"],
-      where: where ? { cluster: where } : { clusterId: { not: null } },
-      _count: { _all: true },
-    }),
+    db.$queryRawUnsafe<{ outletId: string; count: number; counted: number }[]>(
+      `WITH per AS (
+         SELECT a."outletId", count(*)::int AS n
+         FROM "Article" a
+         JOIN "Cluster" cl ON cl.id = a."clusterId"
+         WHERE ($1::date IS NULL OR cl."bucketDate" = $1::date)
+           AND ($2::boolean = false OR EXISTS (
+             SELECT 1 FROM "Article" f WHERE f."clusterId" = cl.id AND f."outletId" = ANY($3::text[])
+           ))
+         GROUP BY a."clusterId", a."outletId"
+       )
+       SELECT "outletId", sum(n)::int AS count, sum(least(n, $4::int))::int AS counted
+       FROM per
+       GROUP BY "outletId"`,
+      bucketDate ?? null,
+      hasOutlets,
+      outletIds ?? [],
+      outletArticleCap
+    ),
     // 목록 머리가 "비교 가능한 이슈 N · 그 외 M"을 적는다. 불러온 페이지가 아니라
     // **범위 전체** 기준이어야 스크롤에 따라 숫자가 흔들리지 않는다.
     criteria ? countIndexableClusters(criteria, { bucketDate, outletIds }) : Promise.resolve(0),
   ]);
 
-  const articleCount = articleGroups.reduce((sum, g) => sum + g._count._all, 0);
-  const outletCounts = articleGroups.map((g) => ({
-    outletId: g.outletId,
-    count: g._count._all,
-  }));
+  const articleCount = outletCounts.reduce((sum, g) => sum + g.count, 0);
 
   return { clusterCount, articleCount, outletCounts, indexableClusterCount };
 }

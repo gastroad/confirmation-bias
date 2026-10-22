@@ -1,13 +1,15 @@
+import Link from "next/link";
 import {
   LeaningBar,
   LEANING_GROUP_LABELS,
   LEANING_COLORS,
+  OUTLET_ARTICLE_CAP,
   calcTilt,
   tiltSide,
 } from "@/entities/outlet";
 import type { Leaning, LeaningGroup } from "@/entities/outlet";
 import { LagStrip } from "./LagStrip";
-import { groupArticlesByLeaning, calcLagGeometry } from "@/entities/cluster";
+import { groupArticlesByLeaning, calcLagGeometry, findCappedOutlets } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { formatDate } from "@/shared/lib/format";
 import { formatBucketDateNumeric } from "@/shared/lib/bucket-date";
@@ -48,6 +50,25 @@ function Verdict({ cluster }: { cluster: ClusterDetail }) {
   );
 }
 
+/**
+ * 상한에 걸린 매체를 밝힌다. 막대 라벨은 반영 기사 수라 아래 세 열의 건수와 다를 수 있고,
+ * 그 차이를 독자가 계산해 내게 두면 수치를 믿을 근거가 사라진다.
+ */
+function CapNote({ cluster }: { cluster: ClusterDetail }) {
+  const capped = findCappedOutlets(cluster.articles);
+  if (capped.length === 0) return null;
+
+  const list = capped.map((c) => `${c.outletName} ${c.articles}건`).join(" · ");
+  return (
+    <p className={styles.capNote}>
+      한 매체는 한 사건에서 최대 {OUTLET_ARTICLE_CAP}건까지만 셉니다. 이 사건에서는 {list}을{" "}
+      {capped.length > 1 && "각각 "}
+      {OUTLET_ARTICLE_CAP}건으로 셌습니다(반영 {cluster.countedArticleCount}건 / 수집{" "}
+      {cluster.articleCount}건). <Link href="/about#tilt">계산 방법</Link>
+    </p>
+  );
+}
+
 export function ClusterDetailView({ cluster }: Props) {
   const byGroup = groupArticlesByLeaning(cluster.articles);
   const lag = calcLagGeometry(cluster.articles);
@@ -66,6 +87,7 @@ export function ClusterDetailView({ cluster }: Props) {
       <section className={styles.section}>
         <LeaningBar distribution={cluster.leaningDistribution} showLabels large />
         <Verdict cluster={cluster} />
+        <CapNote cluster={cluster} />
       </section>
 
       {lag.first && (

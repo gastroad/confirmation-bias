@@ -59,6 +59,20 @@ globalStyle(`${verdict} b`, {
   color: vars.color.text,
 });
 
+// 막대 라벨의 건수와 아래 열의 건수가 다른 이유. 판정 바로 밑에 작게 둔다.
+export const capNote = style({
+  fontSize: 13,
+  lineHeight: 1.6,
+  color: vars.color.textMuted,
+  maxWidth: "60ch",
+});
+
+globalStyle(`${capNote} a`, {
+  color: "inherit",
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+});
+
 // 같은 사건을 성향별로 갈라 놓는다. 무엇을 다르게 썼는지가 레이아웃 자체가 된다.
 export const columns = style({
   display: "grid",

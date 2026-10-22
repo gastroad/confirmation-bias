@@ -6,6 +6,7 @@ import { LEANING_COLORS } from "../leaning-colors";
 import * as styles from "./LeaningBar.css";
 
 interface Props {
+  /** **반영 기사 수**의 분포(매체당 상한 적용) — 수집 기사 수가 아니다 → `countLeaningDistribution` */
   distribution: LeaningDistribution;
   showLabels?: boolean;
   /** 하루 전체 분포처럼 화면의 주장이 되는 자리에서 쓴다 */
@@ -38,7 +39,7 @@ export function LeaningBar({ distribution, showLabels = false, large = false }: 
               key={leaning}
               className={styles.segment}
               style={{ width: `${percent}%`, backgroundColor: LEANING_COLORS[leaning] }}
-              title={`${LEANING_LABELS[leaning]}: ${count}건 (${percent.toFixed(0)}%)`}
+              title={`${LEANING_LABELS[leaning]}: 반영 ${count}건 (${percent.toFixed(0)}%)`}
             />
           ))}
         </div>

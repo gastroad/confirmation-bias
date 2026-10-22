@@ -12,12 +12,19 @@ export interface ClusterSummary {
   /** 이 클러스터가 속한 KST 하루 ("YYYY-MM-DD") */
   bucketDate: string;
   articleCount: number;
+  /**
+   * 편중 계산에 반영된 기사 수. 매체당 `OUTLET_ARTICLE_CAP`건까지만 세므로 `articleCount`
+   * 이하다. 주간 리포트의 표본 하한이 이 값을 본다 — 한 매체가 18건을 낸 이슈는 "기사 20건"
+   * 이어도 비교의 표본은 5건이다.
+   */
+  countedArticleCount: number;
   /** 이 사건을 다룬 서로 다른 언론사 수 */
   outletCount: number;
   latestPublishedAt: string;
+  /** **반영 기사 수**의 성향 분포(매체당 상한 적용). 막대와 `tilt`가 이걸 쓴다 */
   leaningDistribution: LeaningDistribution;
   leaningGroupRatios: LeaningGroupRatios;
-  /** 진보 비율 − 보수 비율 (%p). 중심선에서 어느 쪽으로 얼마나 벗어났는지 */
+  /** 진보 비율 − 보수 비율 (%p, 반영 기사 수 기준). 중심선에서 어느 쪽으로 얼마나 벗어났는지 */
   tilt: number;
 }
 
@@ -53,6 +60,7 @@ export interface ClusterStats {
    * 목록 머리가 이 값을 적으므로 무한 스크롤로 더 불러와도 흔들리지 않는다.
    */
   indexableClusterCount: number;
+  /** 클러스터마다 매체당 상한을 적용해 합친 분포. 이슈 카드의 막대와 같은 규칙이다 */
   leaningDistribution: LeaningDistribution;
   dominantLeaning: Leaning | null;
 }

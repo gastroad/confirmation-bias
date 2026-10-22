@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 import { vars } from "@/shared/styles/theme.css";
 
 export const title = style({
@@ -160,4 +160,66 @@ export const note = style({
 export const mono = style({
   fontFamily: vars.font.mono,
   fontSize: "0.92em",
+});
+
+/** 계산 예시 표. 좁은 화면에서는 표만 가로로 밀린다(본문은 스크롤되지 않는다). */
+export const tableWrap = style({
+  overflowX: "auto",
+  marginBottom: 12,
+});
+
+export const table = style({
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: 14,
+  color: vars.color.textSecondary,
+});
+
+globalStyle(`${table} th, ${table} td`, {
+  textAlign: "left",
+  padding: "8px 10px",
+  borderBottom: `1px solid ${vars.color.border}`,
+  whiteSpace: "nowrap",
+});
+
+globalStyle(`${table} thead th`, {
+  fontSize: 13,
+  fontWeight: 600,
+  color: vars.color.text,
+});
+
+globalStyle(`${table} tfoot th, ${table} tfoot td`, {
+  fontWeight: 600,
+  color: vars.color.text,
+  borderBottom: "none",
+});
+
+// table 셀 선택자(위)보다 구체적이어야 정렬이 이긴다.
+export const num = style({});
+globalStyle(`${table} ${num}`, {
+  textAlign: "right",
+  fontVariantNumeric: "tabular-nums",
+});
+
+export const versions = style({
+  listStyle: "none",
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  marginBottom: 12,
+});
+
+export const version = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: 2,
+  fontSize: 14,
+  color: vars.color.textSecondary,
+  paddingLeft: 12,
+  borderLeft: `2px solid ${vars.color.border}`,
+});
+
+export const versionHead = style({
+  fontSize: 12.5,
+  color: vars.color.textFaint,
 });

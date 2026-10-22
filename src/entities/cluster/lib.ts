@@ -4,6 +4,8 @@ import {
   emptyDistribution,
   calcLeaningGroupRatios,
   calcTilt,
+  countLeaningDistribution,
+  OUTLET_ARTICLE_CAP,
   LEANING_ORDER,
   LEANING_GROUPS,
   LEANING_GROUP_ORDER,
@@ -51,12 +53,12 @@ function toDateString(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function toClusterSummary(row: SummaryRow): ClusterSummary {
-  const dist = emptyDistribution();
-  for (const a of row.articles) {
-    dist[leaningOf(a.outletId)]++;
-  }
+function sumDistribution(dist: LeaningDistribution): number {
+  return Object.values(dist).reduce((s, n) => s + n, 0);
+}
 
+export function toClusterSummary(row: SummaryRow): ClusterSummary {
+  const dist = countLeaningDistribution(row.articles.map((a) => a.outletId));
   const ratios = calcLeaningGroupRatios(dist);
 
   return {
@@ -65,6 +67,7 @@ export function toClusterSummary(row: SummaryRow): ClusterSummary {
     summary: row.summary,
     bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
+    countedArticleCount: sumDistribution(dist),
     outletCount: new Set(row.articles.map((a) => a.outletId)).size,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
@@ -77,12 +80,10 @@ export function toClusterSummary(row: SummaryRow): ClusterSummary {
 }
 
 export function toClusterDetail(row: DetailRow): ClusterDetail {
-  const dist = emptyDistribution();
+  const dist = countLeaningDistribution(row.articles.map((a) => a.outletId));
 
   const articles = row.articles.map((a) => {
     const meta = OUTLET_MAP[a.outletId];
-    const leaning = leaningOf(a.outletId);
-    dist[leaning]++;
 
     return {
       id: a.id,
@@ -107,6 +108,7 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     summary: row.summary,
     bucketDate: toDateString(row.bucketDate),
     articleCount: row.articles.length,
+    countedArticleCount: sumDistribution(dist),
     outletCount: new Set(row.articles.map((a) => a.outletId)).size,
     latestPublishedAt: latestIso(
       row.articles.map((a) => a.publishedAt.getTime()),
@@ -136,11 +138,12 @@ export function toClusterStats(raw: {
   clusterCount: number;
   articleCount: number;
   indexableClusterCount: number;
-  outletCounts: { outletId: string; count: number }[];
+  /** `counted`는 클러스터마다 매체당 상한을 적용해 합친 값(`findClusterStats`가 SQL로 센다) */
+  outletCounts: { outletId: string; count: number; counted: number }[];
 }): ClusterStats {
   const dist = emptyDistribution();
-  for (const { outletId, count } of raw.outletCounts) {
-    dist[leaningOf(outletId)] += count;
+  for (const { outletId, counted } of raw.outletCounts) {
+    dist[leaningOf(outletId)] += counted;
   }
 
   const dominantLeaning =
@@ -187,6 +190,37 @@ export const INDEX_CRITERIA = {
   minLeaningGroups: INDEX_MIN_LEANING_GROUPS,
   groupByLeaning: GROUP_BY_LEANING,
 } as const;
+
+/** `findClusterStats`에 넘기는 매체당 상한. `INDEX_CRITERIA`와 같은 이유로 값이 여기서 흘러 들어간다. */
+export const STATS_OUTLET_ARTICLE_CAP = OUTLET_ARTICLE_CAP;
+
+export interface CappedOutlet {
+  outletId: string;
+  outletName: string;
+  articles: number;
+  counted: number;
+}
+
+/**
+ * 상한에 걸려 일부만 센 매체. 상세 페이지가 "N건 중 3건만 셌다"고 밝히는 근거다 —
+ * 막대 라벨의 건수와 아래 열의 건수가 다른 이유를 화면이 스스로 말해야 한다.
+ */
+export function findCappedOutlets(articles: readonly ArticleWithOutlet[]): CappedOutlet[] {
+  const perOutlet = new Map<string, { name: string; n: number }>();
+  for (const a of articles) {
+    const prev = perOutlet.get(a.outlet.id);
+    perOutlet.set(a.outlet.id, { name: a.outlet.name, n: (prev?.n ?? 0) + 1 });
+  }
+  return [...perOutlet]
+    .filter(([, { n }]) => n > OUTLET_ARTICLE_CAP)
+    .sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0]))
+    .map(([outletId, { name, n }]) => ({
+      outletId,
+      outletName: name,
+      articles: n,
+      counted: OUTLET_ARTICLE_CAP,
+    }));
+}
 
 /**
  * 목록에서 **한 매체만 다룬 이슈**를 갈라낸다.
@@ -242,13 +276,19 @@ export function partitionByIndexable(clusters: ClusterSummary[]): {
  * `minArticles`를 색인 기준보다 높게 잡는 이유: 3~4건짜리는 한 건만 갈려도 ±75%p가 나와
  * 목록이 그런 것들로만 채워진다. 수치가 과장될 뿐 아니라 "여러 매체가 다뤘는데도 한쪽이
  * 압도했다"는 이 목록의 주장 자체가 성립하지 않는다.
+ *
+ * 하한은 **반영 기사 수**(`countedArticleCount`)로 잰다. 수집 기사 수로 재면 한 매체가 포토
+ * 18건을 낸 매체 3곳짜리 이슈가 "20건"으로 통과해 1위에 올랐다(2026-10-23) — 상한으로 수치를
+ * 깎아도 표본이 작다는 사실은 그대로라 ±75%p급으로 남는다.
  */
 export function selectMostSplit(
   clusters: readonly ClusterSummary[],
   { minArticles, limit }: { minArticles: number; limit: number }
 ): ClusterSummary[] {
   return clusters
-    .filter((c) => c.articleCount >= minArticles && Math.abs(c.tilt) >= TILT_BALANCE_THRESHOLD)
+    .filter(
+      (c) => c.countedArticleCount >= minArticles && Math.abs(c.tilt) >= TILT_BALANCE_THRESHOLD
+    )
     .slice()
     .sort((a, b) => Math.abs(b.tilt) - Math.abs(a.tilt) || b.articleCount - a.articleCount)
     .slice(0, limit);
