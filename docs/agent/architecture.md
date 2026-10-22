@@ -83,6 +83,8 @@ widgets/         — 페이지 조각 (여러 entity 조합)
 app/             — Next.js App Router
   _shell.tsx     — **모든 페이지의 셸**(세션 조회 → 헤더 → main). 페이지는 본문만 넘긴다
   _session.ts    — getUser = cache(getSessionUser). 요청당 인증 왕복 1회
+  _cluster-data.ts — 목록·집계 DTO 캐시. **API 라우트와 첫 화면 SSR이 함께 쓴다**
+  _feed-seed.ts  — 목록 첫 페이지를 서버에서 받아 dehydrate (초기 HTML에 이슈를 싣는다)
   page.tsx       — 홈. 최신 날짜를 직접 렌더(리다이렉트하지 않는다)
   d/[date]/      — 날짜별 목록 (YYYY-MM-DD)
   clusters/[id]/ — 클러스터 상세
@@ -171,6 +173,41 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
 10개 css.ts에 흩어져 있던 것을 2026-09-07에 모았다. 그중 7곳이 accent 배경 버튼을 각자
 정의했는데 패딩이 `8px 16px`·`9px 14px`·`9px 16px`·`10px 18px`·`11px 12px`로 다 달랐고
 disabled 투명도도 0.4/0.5/0.6으로 갈려 있었다.
+
+## 첫 화면은 서버에서 그린다 (2026-10-22)
+
+**목록이 초기 HTML에 들어 있어야 한다.** `ClusterFeed`는 react-query로 받는 클라이언트
+위젯이라, 전엔 초기 HTML에 스켈레톤만 있고 이슈가 한 건도 없었다 — 홈·날짜 페이지의 본문
+텍스트가 **132자**였고 광고가 뜨는 72개 페이지가 전부 그 상태였다. 심사 통보 항목
+"가치가 별로 없는 콘텐츠"와 겹치는 지점이다 → [adsense-compliance.md](./adsense-compliance.md).
+
+위젯을 서버 컴포넌트로 바꾸지 않았다. **같은 위젯이 서버에서도 데이터를 갖게** 했다.
+
+```
+page.tsx ──▶ seedClusterFeed(outletIds, date)   ← _feed-seed.ts
+               └─ getClustersPage / getClusterStats  ← _cluster-data.ts (라우트와 공용 캐시)
+                    └─ dehydrate()
+             <HydrationBoundary state={...}>
+               <ClusterFeed date outletIds />   ← 렌더 중에 hydrate되어 SSR에서 데이터를 본다
+```
+
+- **`ClusterFeed`는 `useSearchParams`를 부르지 않는다.** 그 훅을 부르면 서브트리가 셸에서
+  떨어져 나가 클라이언트에서만 렌더되고, 초기 HTML에 목록이 남지 않는다. 언론사 필터는
+  페이지가 `searchParams`로 읽어 **props로 내려준다.** 필터를 바꾸면 `OutletFilter`가 URL을
+  갈고 서버가 다시 그리므로 값은 그대로 따라온다.
+- **`Suspense`는 `OutletFilter`에만 씌운다.** 목록까지 그 안에 넣으면 경계째 지연 렌더로
+  밀린다. `HydrationBoundary`는 경계 **밖**이고, 페이지가 먼저 await해서 state를 넘긴다.
+- 쿼리 키는 `entities/cluster`의 `clusterQueryKeys` 하나에서 나온다. 씨앗과 위젯의 키가
+  한 글자라도 어긋나면 서버가 심어 둔 데이터를 위젯이 못 찾아 다시 스켈레톤이 된다.
+- `e2e/home.spec.ts`의 "첫 화면 SSR" 절이 이걸 지킨다 — **브라우저가 아니라 `request`로 날
+  HTML을 받아** 이슈 제목이 들어 있는지 본다(브라우저로 열면 react-query가 뒤이어 받아오므로
+  SSR과 클라이언트 렌더를 구분할 수 없다).
+
+> ⚠️ 이 앱의 페이지 본문은 **원래 전부** `<div hidden>`으로 스트리밍된 뒤 인라인 스크립트가
+> 제자리로 옮긴다(루트 `loading.tsx`가 만드는 Suspense 경계 + 셸이 쿠키를 읽어 전 페이지가
+> 동적이라서다). `/about`·`/weekly`처럼 클라이언트 훅이 없는 페이지도 같다. 콘텐츠는 **같은
+> 응답 본문에 실려 있고** JS를 실행하는 크롤러(Googlebot·AdsBot)는 최종 DOM을 본다 — 위
+> 변경이 고친 것은 "HTML에 아예 없던" 문제이고, 이 스트리밍 자체는 그 전부터의 구조다.
 
 ## 페이지 셸 — 세션·헤더·본문 컨테이너를 한 곳에
 

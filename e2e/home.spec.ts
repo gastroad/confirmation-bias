@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 import {
   getDays,
   getLatestDay,
@@ -180,6 +181,74 @@ test.describe("홈 — 날짜 이동", () => {
     await expect(page.getByRole("navigation", { name: "날짜 이동" })).toBeVisible();
     await expect(page.getByRole("banner")).toBeVisible();
     await expect(page.getByText(/중도 기준 · ±5%p 이내는 균형/)).toBeVisible();
+  });
+});
+
+/**
+ * **초기 HTML에 목록이 실려 있는가.** `page`가 아니라 `request`로 날 HTML을 받아 본다 —
+ * 브라우저로 열면 react-query가 뒤이어 받아오므로 둘을 구분할 수 없다.
+ *
+ * 광고가 뜨는 72개 페이지(홈 1 + 날짜 71)의 본문이 132자였다. 목록을 클라이언트가
+ * 그려 초기 HTML에 이슈가 한 건도 없었고, 그건 심사 통보 항목 "가치가 별로 없는
+ * 콘텐츠"와 정확히 겹친다. → docs/agent/adsense-compliance.md
+ */
+test.describe("첫 화면 SSR — 초기 HTML에 목록이 실린다", () => {
+  const bodyText = async (request: APIRequestContext, path: string) => {
+    const res = await request.get(path);
+    expect(res.ok()).toBe(true);
+    const html = await res.text();
+    const body = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)?.[1] ?? html;
+    return body
+      .replace(/<script[\s\S]*?<\/script>/g, "")
+      .replace(/<style[\s\S]*?<\/style>/g, "")
+      .replace(/<template[\s\S]*?<\/template>/g, "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;|&apos;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  test("홈의 초기 HTML이 첫 페이지 이슈 제목을 담는다", async ({ request }) => {
+    const latest = await getLatestDay(request);
+    const { items } = await getClusters(request, latest.date, PAGE_LIMIT);
+    test.skip(items.length === 0, "최신 날짜에 이슈가 없다");
+
+    const text = await bodyText(request, "/");
+    // 제목에 따옴표·특수문자가 섞이므로 앞 12자만 대조한다(엔티티 복원 차이를 피한다).
+    expect(text).toContain(items[0].representativeTitle.slice(0, 12));
+  });
+
+  test("날짜 페이지의 초기 HTML도 같다", async ({ request }) => {
+    const days = await getDays(request);
+    const target = days[1] ?? days[0];
+    const { items } = await getClusters(request, target.date, PAGE_LIMIT);
+    test.skip(items.length === 0, "그 날짜에 이슈가 없다");
+
+    const text = await bodyText(request, `/d/${target.date}`);
+    expect(text).toContain(items[0].representativeTitle.slice(0, 12));
+  });
+
+  test("하루 스펙트럼 문장도 초기 HTML에 있다 — 스켈레톤이 아니다", async ({ request }) => {
+    const latest = await getLatestDay(request);
+    const stats = await getStats(request, latest.date);
+    const text = await bodyText(request, "/");
+
+    expect(text).toContain("묶였습니다");
+    expect(text).toContain(`${stats.clusterCount.toLocaleString()}개 사건`);
+  });
+
+  test("언론사 필터도 서버가 반영한다 — 필터가 걸린 URL이 빈 지면으로 나가지 않는다", async ({
+    request,
+  }) => {
+    const latest = await getLatestDay(request);
+    const { items } = await getClusters(request, latest.date, PAGE_LIMIT);
+    test.skip(items.length === 0, "최신 날짜에 이슈가 없다");
+
+    const filtered = await bodyText(request, "/?outlets=hani,chosun");
+    expect(filtered).toContain("묶였습니다");
   });
 });
 

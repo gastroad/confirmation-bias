@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { HydrationBoundary } from "@tanstack/react-query";
 import { getDayNav, getLatestDate } from "./_day-nav-data";
+import { seedClusterFeed } from "./_feed-seed";
 import { AppShell } from "./_shell";
 import { ClusterFeed } from "@/widgets/cluster-feed";
 import { DateNav } from "@/features/date-nav";
@@ -16,7 +18,12 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
   const outletIds = parseOutletParam(typeof outletsParam === "string" ? outletsParam : undefined);
 
   const date = await getLatestDate();
-  const nav = date ? await getDayNav(date) : null;
+  // 목록의 첫 페이지를 여기서 받아 위젯에 심는다 — 그래야 초기 HTML에 이슈가 들어간다.
+  // 날짜 축과 함께 받아 왕복을 겹친다. → _feed-seed.ts
+  const [nav, feedState] = await Promise.all([
+    date ? getDayNav(date) : null,
+    seedClusterFeed(outletIds, date ?? undefined),
+  ]);
 
   return (
     // 최신 날짜에 색인 대상 이슈가 있을 때만 광고를 띄운다 → shared/ui/AdSenseLoader
@@ -32,11 +39,15 @@ export default async function HomePage({ searchParams }: { searchParams: Search 
         />
       )}
 
-      {/* OutletFilter / ClusterFeed가 useSearchParams를 쓰므로 Suspense 경계가 필요 */}
+      {/* Suspense는 useSearchParams를 쓰는 OutletFilter에만 씌운다. 목록까지 그 안에 넣으면
+          경계째 지연 렌더로 밀려 초기 HTML에서 <div hidden>에 갇힌다 → _feed-seed.ts */}
       <Suspense fallback={null}>
         <OutletFilter />
-        <ClusterFeed date={date ?? undefined} />
       </Suspense>
+
+      <HydrationBoundary state={feedState}>
+        <ClusterFeed date={date ?? undefined} outletIds={outletIds} />
+      </HydrationBoundary>
     </AppShell>
   );
 }

@@ -13,6 +13,10 @@ RSS 수집(3시간마다) → KST 하루치 배치 클러스터링(하루 1회) 
   **`@x` 공개 API**로만 연다(`@/entities/outlet/@x/cluster`). → `docs/agent/conventions.md`의 "cross-entity"
 - DB 조회 등 BE 로직은 `server/`에만. `server/`를 import할 수 있는 곳은 **API 라우트(`src/app/api/**`)와 서버 컴포넌트**뿐. entities·widgets·features 등 UI/클라이언트 레이어는 `server/`를 import하지 않고 `entities/\*/api.ts`의 클라이언트 fetcher로 HTTP 호출한다.
 - 데이터 흐름: 클라이언트(react-query) → API 라우트 → `server/queries` → DB. 클라이언트는 파라미터만 보낸다.
+  단 **목록의 첫 페이지는 서버가 그린다** — 광고·색인이 걸린 페이지의 초기 HTML에 콘텐츠가
+  없으면 AdSense 심사에서 "가치가 별로 없는 콘텐츠"가 된다. `app/_feed-seed.ts`로 심고,
+  목록 위젯에 **`useSearchParams`를 넣지 않는다**(서브트리가 클라이언트 전용으로 떨어져 나간다).
+  → `docs/agent/architecture.md`의 "첫 화면은 서버에서 그린다"
 - 새 페이지는 셸(`src/app/_shell.tsx`의 `AppShell`)로 감싸고 **본문만 쓴다.** 세션·헤더·
   `<main>` 컨테이너는 셸이 세운다. 세션이 따로 필요하면 `app/_session.ts`의 `getUser`를
   쓴다(요청당 1회 캐시). → `docs/agent/architecture.md`의 "페이지 셸"

@@ -123,6 +123,7 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 | 전역 메타데이터     | `src/app/layout.tsx`                          | metadataBase·title.template·OG·Twitter·robots·canonical·viewport                                                |
 | 페이지별 메타데이터 | `src/app/clusters/[id]/page.tsx`              | `generateMetadata`(제목=대표기사, canonical, og:type=article)                                                   |
 | 날짜별 페이지       | `src/app/d/[date]/page.tsx`                   | `/d/YYYY-MM-DD`. 색인 기준을 넘긴 이슈가 0개인 날짜는 `robots: noindex`                                         |
+| 첫 화면 SSR         | `src/app/_feed-seed.ts`                       | 홈·날짜 페이지의 목록 첫 페이지를 서버에서 그린다. 본문 132자 → 1,342자 (2026-10-22)                            |
 | robots.txt          | `src/app/robots.ts`                           | `/api/` 차단, sitemap 링크                                                                                      |
 | sitemap.xml         | `src/app/sitemap.ts`                          | 홈 + **색인 기준을 넘긴** 날짜·클러스터만. `revalidate=21600`(6h)로 크롤당 DB 조회 억제                         |
 | 색인 기준           | `src/entities/cluster/model.ts`               | 기사 3건 이상 & 성향 진영 2개 이상. 미달은 `noindex, follow` → [adsense-compliance.md](./adsense-compliance.md) |
@@ -153,17 +154,31 @@ Next.js Metadata API 기반. 단일 출처는 `src/shared/config/site.ts`(SITE_U
 > ⚠️ **2026-08-25 심사에서 정책 위반 2건(복제된 콘텐츠 · 가치가 별로 없는 콘텐츠)을 통보받았다.**
 > 광고 게재 전에 해결해야 한다. 진단과 작업 목록 → [adsense-compliance.md](./adsense-compliance.md)
 
-| 요소             | 위치                                | 비고                                                                          |
-| ---------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
-| 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT`        | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유            |
-| 로더 스크립트    | `src/shared/ui/AdSenseLoader.tsx`   | `next/script`(afterInteractive). 이게 광고+**CMP 동의 배너**를 로드           |
-| 로더 렌더 위치   | 홈 · `/d/[date]` · `/clusters/[id]` | **루트 레이아웃이 아니다.** 콘텐츠 페이지에서, 그것도 색인 기준을 넘겼을 때만 |
-| 사이트 확인 메타 | `layout.tsx` metadata.other         | `google-adsense-account` 메타. 소유 증명이라 루트에 그대로 둔다               |
-| ads.txt          | `public/ads.txt`                    | `google.com, pub-8694059194416409, DIRECT, f08c47fec0942fa0`                  |
+| 요소             | 위치                              | 비고                                                                      |
+| ---------------- | --------------------------------- | ------------------------------------------------------------------------- |
+| 게시자 ID        | `site.ts`의 `ADSENSE_CLIENT`      | `ca-pub-8694059194416409` (공개값). 로더·verification·ads.txt 공유        |
+| 로더 스크립트    | `src/shared/ui/AdSenseLoader.tsx` | `next/script`(afterInteractive). 이게 광고+**CMP 동의 배너**를 로드       |
+| 로더 렌더 위치   | 아래 6개 라우트                   | **루트 레이아웃이 아니다.** 콘텐츠 페이지에서, 그것도 읽을 것이 있을 때만 |
+| 사이트 확인 메타 | `layout.tsx` metadata.other       | `google-adsense-account` 메타. 소유 증명이라 루트에 그대로 둔다           |
+| ads.txt          | `public/ads.txt`                  | `google.com, pub-8694059194416409, DIRECT, f08c47fec0942fa0`              |
+
+**`ads` prop을 넘기는 라우트와 그 조건** (2026-10-22 실측 — 전엔 문서가 앞의 셋만 적고 있었다):
+
+| 라우트           | 조건                                    |
+| ---------------- | --------------------------------------- |
+| `/` (홈)         | 최신 날짜의 `indexableClusterCount > 0` |
+| `/d/[date]`      | 그 날짜의 `indexableClusterCount > 0`   |
+| `/clusters/[id]` | `isIndexableCluster(cluster)`           |
+| `/weekly`        | 리포트의 `clusterCount > 0`             |
+| `/outlets`       | 기사가 있는 언론사가 1곳 이상           |
+| `/outlets/[id]`  | 그 언론사의 `articleCount > 0`          |
 
 - **로더를 루트에 두지 않는다**(2026-08-27 변경). 루트 레이아웃에 있으면 `/auth/*`·`/account/*`·
   `/admin/*` 처럼 읽을 콘텐츠가 없는 화면에도 자동광고가 붙는데, 그것 자체가 별도의 정책
   위반 항목이다. 색인 기준 미달인 클러스터·날짜에서도 같은 이유로 렌더하지 않는다.
+- `/weekly`·`/outlets`는 **색인 기준이 아니라 각자의 조건**으로 가른다. 클러스터 단위 기준
+  (기사 3건·진영 2개)이 적용되는 대상이 아니고, 둘 다 우리가 계산한 값만 싣는 페이지다
+  (복제 텍스트 0) → [adsense-compliance.md](./adsense-compliance.md)의 P1-2.
 - **CMP:** EEA·영국·스위스 동의는 AdSense "개인정보 보호 및 메시지"의 Google 자체 CMP가 담당.
   별도 스크립트 없이 위 로더가 배너를 띄운다.
 - 개인화 광고·쿠키 고지는 `src/app/privacy/`(개인정보처리방침)에 포함.

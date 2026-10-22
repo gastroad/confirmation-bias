@@ -102,6 +102,27 @@ describe("buildClusterSummary", () => {
       expect(s).not.toContain("확인되지 않았습니다");
     });
 
+    it("괄호 밖에서 건수를 말했으면 괄호 안에서 다시 세지 않는다", () => {
+      // "진보 성향 매체 7곳(한겨레신문·경향신문·미디어오늘 등 7곳)" — 건수가 두 번 나온다.
+      // meta description으로 그대로 나가던 문장이라 색인 대상 절반에 이 중복이 있었다.
+      const many: SummaryOutlet[] = [
+        ...OUTLETS,
+        { id: "pressian", name: "프레시안", leaning: "left" },
+        { id: "mediatoday", name: "미디어오늘", leaning: "center_left" },
+      ];
+      const s = buildClusterSummary(
+        [
+          article("yonhap", "2026-08-25T21:12:00Z"),
+          article("chosun", "2026-08-25T21:20:00Z"),
+          article("donga", "2026-08-25T21:30:00Z"),
+          article("segye", "2026-08-25T21:40:00Z"),
+        ],
+        many
+      )!;
+      expect(s).toContain("진보 성향 매체 5곳(한겨레신문·경향신문·미디어오늘 등)에서는");
+      expect(s).not.toMatch(/등 \d+곳\)/);
+    });
+
     it("이름이 3곳을 넘으면 접는다", () => {
       const s = buildClusterSummary(
         [

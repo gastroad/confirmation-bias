@@ -1,7 +1,4 @@
-import { unstable_cache } from "next/cache";
-import { findClusterSummaryPage } from "@server/queries/clusters";
-import { CACHE_TTL, DTO_VERSION } from "@server/cache";
-import { toClusterSummary } from "@/entities/cluster";
+import { getClustersPage } from "../../_cluster-data";
 import { parseOutletParam } from "@/features/outlet-filter";
 import { parseDateParam } from "@/features/date-nav";
 import {
@@ -10,29 +7,9 @@ import {
   CURSOR_PARAM,
   LIMIT_PARAM,
 } from "@/shared/config/search-params";
-import type { ClustersPage } from "@/entities/cluster";
 
-// **DTO로 바꾼 뒤에 캐시한다.** unstable_cache는 반환값을 JSON 직렬화하므로 Prisma row를
-// 그대로 캐시하면 Date가 문자열로 돌아와 도메인 매핑이 깨진다.
-const getPage = unstable_cache(
-  async (
-    cursor: string | undefined,
-    limit: number | undefined,
-    outletIds: string[],
-    bucketDateIso: string | undefined
-  ): Promise<ClustersPage> => {
-    const { rows, nextCursor } = await findClusterSummaryPage({
-      cursor,
-      limit,
-      outletIds,
-      bucketDate: bucketDateIso ? new Date(bucketDateIso) : undefined,
-    });
-    return { items: rows.map(toClusterSummary), nextCursor };
-  },
-  ["clusters-page", DTO_VERSION],
-  { revalidate: CACHE_TTL.clusterList, tags: ["clusters"] }
-);
-
+// 첫 페이지는 서버 컴포넌트가 같은 캐시(`_cluster-data`)로 미리 그린다 → src/app/_feed-seed.ts.
+// 이 라우트는 무한 스크롤의 2페이지부터와 필터 전환을 받는다.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -42,7 +19,7 @@ export async function GET(req: Request) {
   const outletIds = parseOutletParam(searchParams.get(OUTLETS_PARAM));
   const bucketDate = parseDateParam(searchParams.get(DATE_PARAM));
 
-  const body = await getPage(
+  const body = await getClustersPage(
     cursor,
     Number.isFinite(limit) ? limit : undefined,
     outletIds,
