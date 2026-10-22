@@ -40,10 +40,16 @@ test.describe("언론사 필터", () => {
     const filtered = await getStats(request, latest.date);
 
     await page.goto(`/?outlets=hani`);
-    const head = page.getByText(/^이슈 [\d,]+$/);
+    const head = page.getByText(/^비교 가능한 이슈 [\d,]+/);
     await expect(head).toBeVisible();
 
-    const shown = Number((await head.textContent())!.replace(/[^\d]/g, ""));
+    // "비교 가능한 이슈 N · 그 외 M" — 앞 숫자만 센다
+    const shown = Number(
+      (await head.textContent())!
+        .replace(/^비교 가능한 이슈\s*/, "")
+        .split("·")[0]
+        .replace(/[^\d]/g, "")
+    );
     // 한 매체로 좁혔으니 전체보다 많을 수 없다
     expect(shown).toBeLessThanOrEqual(all.clusterCount);
     expect(filtered.clusterCount).toBe(all.clusterCount);

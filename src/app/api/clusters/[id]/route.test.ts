@@ -15,6 +15,7 @@ const detailRow = () => ({
   summary: "3개 언론사가 보도했습니다.",
   bucketDate: new Date("2026-08-26T00:00:00.000Z"),
   createdAt: new Date("2026-08-27T00:00:00.000Z"),
+  _count: { comments: 0 },
   articles: [
     {
       id: "a1",

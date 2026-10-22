@@ -162,37 +162,35 @@ test.describe("찾을 수 없는 페이지", () => {
   });
 
   /**
-   * **동적 라우트의 notFound()는 HTTP 200으로 나간다 (soft 404).**
+   * **상태 코드는 그 라우트 위에 Suspense 경계가 있느냐로 갈린다.**
    *
-   * `/d/[date]`·`/clusters/[id]`·`/outlets/[id]`는 async `generateMetadata`를 쓴다.
-   * 응답이 스트리밍으로 시작된 뒤에 `notFound()`가 호출되므로 상태 줄을 되돌릴 수 없다.
-   * 화면과 robots 메타(noindex)는 올바르지만 상태 코드만 200이다.
+   * 경계가 있으면 응답이 200으로 먼저 스트리밍되고 **그 뒤에는 상태 줄을 되돌릴 수 없다** —
+   * `notFound()`가 화면과 robots 메타(noindex)는 맞지만 HTTP 200인 soft 404가 된다.
+   * Next 문서가 "404 상태가 필요하면 본문이 스트리밍되기 전에 확인하라"고 명시한다.
    *
-   * **dev 전용 현상이 아니다** — `next build && next start`로도 확인했다(2026-08-27).
-   * 정적으로 매칭되지 않는 경로(`/nope`)만 제대로 404가 나온다.
+   * 2026-10-22에 `loading.tsx`를 **전부 제거했다**(P0-6). 그 전에는 루트에 있어
+   * `/clusters/<없는 id>`가 라이브에서 200을 냈다 — 기준 미달 페이지 22,691개를 404로
+   * 내리는 것이 P0-6인데 그게 soft 404면 아무 효과가 없다.
    *
-   * 클러스터 id는 재클러스터링마다 바뀌므로 이미 색인된 상세 URL이 대량으로 이 경로를
-   * 탄다. 지금 동작을 그대로 못박아 두고, 고쳐서 404가 나오기 시작하면 이 테스트가
-   * 깨지며 알려 준다 — 그때 기대값을 404로 바꾼다.
+   * **`loading.tsx`를 다시 추가하면 이 테스트들이 깨진다.** 그때는 기대값을 바꾸지 말고
+   * 왜 경계가 필요한지부터 따진다 — 경계 하나가 그 서브트리의 상태 코드와 초기 HTML을
+   * 동시에 바꾼다. → docs/agent/architecture.md의 "상태 코드는 Suspense 경계가 정한다"
    */
-  test("잘못된 날짜는 404 화면을 보여준다 (상태 코드는 현재 200 — soft 404)", async ({ page }) => {
-    const res = await page.goto("/d/2026-13-99");
-    await expect(page.getByText("페이지를 찾을 수 없습니다")).toBeVisible();
-    await expect(page.locator('head meta[name="robots"]').first()).toHaveAttribute(
-      "content",
-      /noindex/
+  test("존재하지 않는 클러스터는 진짜 404다", async ({ page, request }) => {
+    // 상태 코드는 request로 받는다 — 화면이 "찾을 수 없습니다"여도 200일 수 있다.
+    expect((await request.get("/clusters/00000000-0000-0000-0000-000000000000")).status()).toBe(
+      404
     );
-    expect(res?.status()).toBe(200);
+
+    await page.goto("/clusters/00000000-0000-0000-0000-000000000000");
+    await expect(page.getByText("페이지를 찾을 수 없습니다")).toBeVisible();
   });
 
-  test("존재하지 않는 클러스터도 404 화면을 보여준다 (상태 코드는 현재 200)", async ({ page }) => {
-    const res = await page.goto("/clusters/00000000-0000-0000-0000-000000000000");
+  test("잘못된 날짜도 진짜 404다", async ({ page, request }) => {
+    expect((await request.get("/d/2026-13-99")).status()).toBe(404);
+
+    await page.goto("/d/2026-13-99");
     await expect(page.getByText("페이지를 찾을 수 없습니다")).toBeVisible();
-    await expect(page.locator('head meta[name="robots"]').first()).toHaveAttribute(
-      "content",
-      /noindex/
-    );
-    expect(res?.status()).toBe(200);
   });
 });
 

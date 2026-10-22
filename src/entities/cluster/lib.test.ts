@@ -10,7 +10,8 @@ import {
   countLeaningGroups,
   isIndexableCluster,
   INDEX_CRITERIA,
-  partitionBySpread,
+  partitionByIndexable,
+  shouldRemoveCluster,
   selectMostSplit,
   selectMostShared,
   toClusterSummary,
@@ -113,27 +114,94 @@ function cluster(over: Partial<ClusterSummary> & { id: string }): ClusterSummary
   };
 }
 
-describe("partitionBySpread", () => {
-  it("언론사 2곳 이상이면 본 목록, 1곳이면 단독으로 가른다", () => {
-    const { covered, solo } = partitionBySpread([
-      cluster({ id: "a", outletCount: 3 }),
-      cluster({ id: "b", outletCount: 1 }),
-      cluster({ id: "c", outletCount: 2 }),
+describe("partitionByIndexable", () => {
+  const dist = (over: Partial<Record<string, number>>) => ({
+    left: 0,
+    center_left: 0,
+    center: 0,
+    center_right: 0,
+    right: 0,
+    unknown: 0,
+    ...over,
+  });
+
+  it("색인 기준(기사 3건 & 진영 2개)으로 가른다", () => {
+    const { comparable, thin } = partitionByIndexable([
+      cluster({ id: "ok", articleCount: 3, leaningDistribution: dist({ left: 2, right: 1 }) }),
+      cluster({ id: "few", articleCount: 2, leaningDistribution: dist({ left: 1, right: 1 }) }),
+      cluster({ id: "one", articleCount: 5, leaningDistribution: dist({ left: 5 }) }),
     ]);
-    expect(covered.map((c) => c.id)).toEqual(["a", "c"]);
-    expect(solo.map((c) => c.id)).toEqual(["b"]);
+    expect(comparable.map((c) => c.id)).toEqual(["ok"]);
+    expect(thin.map((c) => c.id)).toEqual(["few", "one"]);
+  });
+
+  it("단독 보도(언론사 1곳) 기준과 다른 집합이다", () => {
+    // 2개사가 다뤘지만 같은 진영 → 단독은 아닌데 색인 대상도 아니다.
+    // 실측 3,254개(12%)가 여기 해당한다. 단독 기준으로 가르면 본 목록에 남아 404 링크가 된다.
+    const c = cluster({
+      id: "x",
+      outletCount: 2,
+      articleCount: 2,
+      leaningDistribution: dist({ left: 1, center_left: 1 }),
+    });
+    expect(c.outletCount).toBeGreaterThanOrEqual(2); // 단독이 아니다
+    expect(partitionByIndexable([c]).thin.map((x) => x.id)).toEqual(["x"]);
   });
 
   it("입력 순서를 유지한다 — 서버 정렬을 뒤집지 않는다", () => {
-    const { covered } = partitionBySpread([
-      cluster({ id: "1", outletCount: 9 }),
-      cluster({ id: "2", outletCount: 4 }),
+    const { comparable } = partitionByIndexable([
+      cluster({ id: "1", articleCount: 9, leaningDistribution: dist({ left: 5, right: 4 }) }),
+      cluster({ id: "2", articleCount: 4, leaningDistribution: dist({ left: 2, right: 2 }) }),
     ]);
-    expect(covered.map((c) => c.id)).toEqual(["1", "2"]);
+    expect(comparable.map((c) => c.id)).toEqual(["1", "2"]);
   });
 
   it("빈 목록도 안전하다", () => {
-    expect(partitionBySpread([])).toEqual({ covered: [], solo: [] });
+    expect(partitionByIndexable([])).toEqual({ comparable: [], thin: [] });
+  });
+});
+
+describe("shouldRemoveCluster", () => {
+  const dist = (over: Partial<Record<string, number>>) => ({
+    left: 0,
+    center_left: 0,
+    center: 0,
+    center_right: 0,
+    right: 0,
+    unknown: 0,
+    ...over,
+  });
+
+  it("색인 대상은 남긴다", () => {
+    expect(
+      shouldRemoveCluster({ articleCount: 3, leaningDistribution: dist({ left: 2, right: 1 }) })
+    ).toBe(false);
+  });
+
+  it("기준 미달이고 댓글이 없으면 없앤다", () => {
+    expect(
+      shouldRemoveCluster({
+        articleCount: 1,
+        leaningDistribution: dist({ left: 1 }),
+        commentCount: 0,
+      })
+    ).toBe(true);
+  });
+
+  it("기준 미달이어도 **댓글이 달렸으면 남긴다** — 사람이 쓴 글을 버리지 않는다", () => {
+    expect(
+      shouldRemoveCluster({
+        articleCount: 1,
+        leaningDistribution: dist({ left: 1 }),
+        commentCount: 1,
+      })
+    ).toBe(false);
+  });
+
+  it("commentCount를 모르면 0으로 본다 (목록 DTO에는 없는 필드다)", () => {
+    expect(shouldRemoveCluster({ articleCount: 1, leaningDistribution: dist({ left: 1 }) })).toBe(
+      true
+    );
   });
 });
 
@@ -347,12 +415,13 @@ const detailArticle = (
   ...over,
 });
 
-const detailRow = (articles: ReturnType<typeof detailArticle>[]) => ({
+const detailRow = (articles: ReturnType<typeof detailArticle>[], comments = 0) => ({
   id: "c1",
   representativeTitle: "대표 제목",
   summary: "요약 문장.",
   bucketDate: BUCKET,
   createdAt: CREATED,
+  _count: { comments },
   articles: articles.map((a) => ({ ...a, publishedAt: new Date(a.publishedAt) })),
 });
 
@@ -425,6 +494,7 @@ describe("toClusterStats", () => {
   it("언론사별 건수를 성향 분포로 합친다", () => {
     const stats = toClusterStats({
       clusterCount: 10,
+      indexableClusterCount: 0,
       articleCount: 30,
       outletCounts: [
         { outletId: "hani", count: 5 },
@@ -440,6 +510,7 @@ describe("toClusterStats", () => {
   it("가장 많이 보도한 성향을 고른다", () => {
     const stats = toClusterStats({
       clusterCount: 1,
+      indexableClusterCount: 0,
       articleCount: 9,
       outletCounts: [
         { outletId: "hani", count: 2 },
@@ -452,6 +523,7 @@ describe("toClusterStats", () => {
   it("unknown이 가장 많아도 dominantLeaning이 되지 않는다 — 성향이 아니다", () => {
     const stats = toClusterStats({
       clusterCount: 1,
+      indexableClusterCount: 0,
       articleCount: 100,
       outletCounts: [
         { outletId: "ghost", count: 99 },
@@ -463,7 +535,12 @@ describe("toClusterStats", () => {
   });
 
   it("집계가 비면 dominantLeaning이 null이다", () => {
-    const stats = toClusterStats({ clusterCount: 0, articleCount: 0, outletCounts: [] });
+    const stats = toClusterStats({
+      clusterCount: 0,
+      indexableClusterCount: 0,
+      articleCount: 0,
+      outletCounts: [],
+    });
     expect(stats.dominantLeaning).toBeNull();
     expect(stats.leaningDistribution).toEqual(emptyDistribution());
   });
@@ -471,6 +548,7 @@ describe("toClusterStats", () => {
   it("unknown만 있으면 dominantLeaning이 null이다", () => {
     const stats = toClusterStats({
       clusterCount: 1,
+      indexableClusterCount: 0,
       articleCount: 4,
       outletCounts: [{ outletId: "ghost", count: 4 }],
     });

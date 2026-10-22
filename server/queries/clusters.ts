@@ -103,9 +103,14 @@ export async function findIndexableClusterRefs(criteria: IndexCriteria) {
  * (껍데기만 모인 날짜가 색인되면 그 자체로 품질 감점이다).
  */
 export async function countIndexableClusters(
-  bucketDate: Date,
-  criteria: IndexCriteria
+  criteria: IndexCriteria,
+  scope: { bucketDate?: Date; outletIds?: string[] } = {}
 ): Promise<number> {
+  const { bucketDate, outletIds } = scope;
+  const hasOutlets = Boolean(outletIds && outletIds.length > 0);
+
+  // 진영 수 조건은 전체 기사 기준으로 세고, 언론사 필터는 **클러스터를 고르는 데만** 쓴다
+  // (목록 쿼리의 clusterWhere와 같은 규칙 — 분포는 좁히지 않는다).
   const [row] = await db.$queryRawUnsafe<{ count: number }[]>(
     `WITH grp AS (SELECT * FROM unnest($1::text[], $2::text[]) AS t(leaning, name)),
           keep AS (
@@ -114,13 +119,19 @@ export async function countIndexableClusters(
        JOIN "Article" a ON a."clusterId" = cl.id
        JOIN "Outlet" o ON o.id = a."outletId"
        LEFT JOIN grp ON grp.leaning = o.leaning
-       WHERE cl."articleCount" >= $3::int AND cl."bucketDate" = $5::date
+       WHERE cl."articleCount" >= $3::int
+         AND ($5::date IS NULL OR cl."bucketDate" = $5::date)
+         AND ($6::boolean = false OR EXISTS (
+           SELECT 1 FROM "Article" f WHERE f."clusterId" = cl.id AND f."outletId" = ANY($7::text[])
+         ))
        GROUP BY cl.id
        HAVING count(DISTINCT grp.name) >= $4::int
      )
      SELECT count(*)::int AS count FROM keep`,
     ...criteriaParams(criteria),
-    bucketDate
+    bucketDate ?? null,
+    hasOutlets,
+    outletIds ?? []
   );
   return row?.count ?? 0;
 }
@@ -147,6 +158,11 @@ export async function findClustersInRange(from: Date, to: Date, minArticles: num
   });
 }
 
+/**
+ * 상세 1건. `_count.comments`를 함께 싣는다 — 색인 기준 미달 클러스터는 404로 내리는데
+ * **댓글이 달린 것은 예외**로 남겨야 하기 때문이다(Comment가 ON DELETE CASCADE라 사람의
+ * 글을 조용히 버릴 수 없다). → docs/agent/adsense-compliance.md의 P0-6
+ */
 export async function findClusterDetailRow(id: string) {
   return db.cluster.findUnique({
     where: { id },
@@ -156,6 +172,7 @@ export async function findClusterDetailRow(id: string) {
       summary: true,
       bucketDate: true,
       createdAt: true,
+      _count: { select: { comments: true } },
       articles: {
         orderBy: { publishedAt: "asc" },
         select: {
@@ -175,16 +192,23 @@ export async function findClusterDetailRow(id: string) {
  * 필터 적용된 전체 집계(목록 전체 기준). 무한 스크롤로 일부만 로드해도
  * StatsBar가 정확한 총계를 보여줄 수 있도록 count/groupBy로 가볍게 계산한다.
  */
-export async function findClusterStats(outletIds?: string[], bucketDate?: Date) {
+export async function findClusterStats(
+  outletIds?: string[],
+  bucketDate?: Date,
+  criteria?: IndexCriteria
+) {
   const where = clusterWhere(outletIds, bucketDate);
 
-  const [clusterCount, articleGroups] = await Promise.all([
+  const [clusterCount, articleGroups, indexableClusterCount] = await Promise.all([
     db.cluster.count({ where }),
     db.article.groupBy({
       by: ["outletId"],
       where: where ? { cluster: where } : { clusterId: { not: null } },
       _count: { _all: true },
     }),
+    // 목록 머리가 "비교 가능한 이슈 N · 그 외 M"을 적는다. 불러온 페이지가 아니라
+    // **범위 전체** 기준이어야 스크롤에 따라 숫자가 흔들리지 않는다.
+    criteria ? countIndexableClusters(criteria, { bucketDate, outletIds }) : Promise.resolve(0),
   ]);
 
   const articleCount = articleGroups.reduce((sum, g) => sum + g._count._all, 0);
@@ -193,5 +217,5 @@ export async function findClusterStats(outletIds?: string[], bucketDate?: Date) 
     count: g._count._all,
   }));
 
-  return { clusterCount, articleCount, outletCounts };
+  return { clusterCount, articleCount, outletCounts, indexableClusterCount };
 }

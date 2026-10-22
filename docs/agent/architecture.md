@@ -94,7 +94,7 @@ app/             — Next.js App Router
   about/         — 소개 및 방법론. 성향 분류 근거·클러스터링 방식·**한계 고지**
   outlets/       — 언론사 허브 + `[id]` 상세. `_data.ts`가 집계를 6시간 캐시
   weekly/        — 주간 리포트(선별 게재). 선별 규칙은 `entities/cluster`에, 화면에도 그대로 노출
-  error.tsx · loading.tsx · not-found.tsx — 상태 화면
+  error.tsx · not-found.tsx — 상태 화면 (**loading.tsx는 두지 않는다** — 아래 "상태 코드")
   admin/         — 관리자 전용. 수집·클러스터링 트리거 · comments(댓글 관리) · blocked(저작권 차단)
   api/           — clusters · clusters/[id] · clusters/stats · days · comments · auth/[...path]
 proxy.ts         — 라우트 보호. Next 16에서 middleware.ts가 이 이름으로 바뀌었다
@@ -208,6 +208,33 @@ page.tsx ──▶ seedClusterFeed(outletIds, date)   ← _feed-seed.ts
 > 동적이라서다). `/about`·`/weekly`처럼 클라이언트 훅이 없는 페이지도 같다. 콘텐츠는 **같은
 > 응답 본문에 실려 있고** JS를 실행하는 크롤러(Googlebot·AdsBot)는 최종 DOM을 본다 — 위
 > 변경이 고친 것은 "HTML에 아예 없던" 문제이고, 이 스트리밍 자체는 그 전부터의 구조다.
+
+## 상태 코드는 Suspense 경계가 정한다 (2026-10-22)
+
+**경계가 있으면 `notFound()`가 HTTP 200이 된다.** 응답이 200으로 먼저 스트리밍되고 그 뒤에는
+상태 줄을 되돌릴 수 없다 — 화면과 robots 메타(noindex)는 맞지만 **soft 404**다. Next 문서가
+"404 상태가 필요하면 본문이 스트리밍되기 전에 리소스 존재를 확인하라"고 명시한다.
+
+그래서 **`loading.tsx`를 두지 않는다.** 루트에 있던 동안 라이브 `/clusters/<없는 id>`가
+200을 냈다 — 기준 미달 페이지 22,691개를 404로 내리는 것이 P0-6인데 soft 404면 효과가 없다.
+
+| 라우트           | `notFound()` 결과 | 초기 HTML 본문            |
+| ---------------- | ----------------- | ------------------------- |
+| `/clusters/[id]` | **404** ✅        | 인라인                    |
+| `/d/[date]`      | **404** ✅        | **인라인 1,390자** = 전체 |
+| `/` (홈)         | —                 | **인라인 1,400자** = 전체 |
+
+**경계 하나가 그 서브트리의 상태 코드와 초기 HTML을 동시에 바꾼다.** 경계가 있으면
+`<div hidden>`으로 스트리밍된 뒤 인라인 스크립트가 제자리로 옮기므로, JS를 실행하지 않는
+크롤러에겐 빈 지면이다. 전부 없앤 뒤 홈·날짜 페이지 본문이 **HTML에 그대로** 실린다 —
+"첫 화면은 서버에서 그린다"가 이것으로 완성된다.
+
+- **스켈레톤을 잃은 대가는 작다.** 경계가 없으면 Next가 새 페이지가 준비될 때까지 **이전
+  화면을 그대로 보여준다** — 날짜를 옮길 때 스켈레톤이 깜빡이는 것보다 자연스럽다.
+  (초기 진입은 어차피 완성된 HTML이 온다.)
+- **`loading.tsx`를 다시 추가하려면** 그 서브트리가 soft 404로 돌아가고 본문이 hidden
+  스트리밍이 된다는 것을 먼저 받아들여야 한다. `e2e/navigation.spec.ts`·
+  `e2e/cluster-detail.spec.ts`가 상태 코드를, `e2e/home.spec.ts`가 초기 HTML을 못박아 둔다.
 
 ## 페이지 셸 — 세션·헤더·본문 컨테이너를 한 곳에
 

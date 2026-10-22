@@ -143,33 +143,31 @@ test.describe("클러스터 상세 — 색인 판정", () => {
     expect(robots ?? "").not.toContain("noindex");
   });
 
-  test("기준 미달 클러스터는 열리되 noindex다 — 접근은 막지 않고 색인만 뺀다", async ({
-    page,
+  test("기준 미달 클러스터는 **진짜 404**다 — noindex만으로는 사이트에서 사라지지 않는다", async ({
     request,
   }) => {
     const cluster = await findNonIndexableCluster(request);
     test.skip(!cluster, "기준 미달 클러스터가 없다");
 
-    await page.goto(`/clusters/${cluster!.id}`);
-    // 페이지 자체는 정상 렌더된다
-    await expect(detailTitle(page)).toHaveText(cluster!.representativeTitle);
-    expect(await robotsMeta(page)).toContain("noindex");
-    // follow는 남겨 링크 그래프를 유지한다
-    expect(await robotsMeta(page)).not.toContain("nofollow");
+    // `page.goto`가 아니라 `request`로 받는다 — 상태코드를 봐야 하기 때문이다.
+    // 이게 200이면 soft 404이고(루트에 loading.tsx가 있으면 그렇게 된다) 아무 효과가 없다.
+    const res = await request.get(`/clusters/${cluster!.id}`);
+    expect(res.status()).toBe(404);
   });
 
-  test("색인 대상에서만 광고 로더를 붙인다", async ({ page, request }) => {
-    const indexable = await findIndexableCluster(request);
-    const other = await findNonIndexableCluster(request);
-    test.skip(!indexable || !other, "두 종류의 클러스터가 모두 필요하다");
+  test("존재하지 않는 id도 진짜 404다 — 스트리밍 전에 판정해야 상태코드가 선다", async ({
+    request,
+  }) => {
+    const res = await request.get("/clusters/00000000-0000-0000-0000-000000000000");
+    expect(res.status()).toBe(404);
+  });
 
-    const adsScript = 'script[src*="adsbygoogle"]';
+  test("색인 대상 클러스터에는 광고 로더가 붙는다", async ({ page, request }) => {
+    const indexable = await findIndexableCluster(request);
+    test.skip(!indexable, "색인 대상 클러스터가 없다");
 
     await page.goto(`/clusters/${indexable!.id}`);
-    await expect(page.locator(adsScript)).toHaveCount(1);
-
-    await page.goto(`/clusters/${other!.id}`);
-    await expect(page.locator(adsScript)).toHaveCount(0);
+    await expect(page.locator('script[src*="adsbygoogle"]')).toHaveCount(1);
   });
 });
 

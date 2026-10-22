@@ -51,14 +51,3 @@ export const digest = style({
   fontFamily: vars.font.mono,
   color: vars.color.textFaint,
 });
-
-// --- loading skeleton ---
-export const skeletonWrap = style({
-  width: "100%",
-  maxWidth: vars.layout.maxWidth,
-  margin: "0 auto",
-  padding: "24px 16px",
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-});

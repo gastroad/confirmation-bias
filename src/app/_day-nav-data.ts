@@ -32,7 +32,7 @@ export const getDayNav = unstable_cache(
     const [summary, adjacent, indexableClusterCount] = await Promise.all([
       findDaySummary(bucket),
       findAdjacentBucketDates(bucket),
-      countIndexableClusters(bucket, INDEX_CRITERIA),
+      countIndexableClusters(INDEX_CRITERIA, { bucketDate: bucket }),
     ]);
     return {
       date: dateIso,

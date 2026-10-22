@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findClusterDetailRow } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
-import { toClusterDetail, isIndexableCluster } from "@/entities/cluster";
+import { toClusterDetail, isIndexableCluster, shouldRemoveCluster } from "@/entities/cluster";
 import type { ClusterDetail } from "@/entities/cluster";
 import { ClusterDetailView } from "@/widgets/cluster-detail";
 import { ClusterComments } from "@/widgets/cluster-comments";
@@ -43,7 +43,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const cluster = await getCluster(id);
-  if (!cluster) return { title: "찾을 수 없는 이슈", robots: { index: false, follow: false } };
+  if (!cluster || shouldRemoveCluster(cluster)) {
+    return { title: "찾을 수 없는 이슈", robots: { index: false, follow: false } };
+  }
 
   const title = cluster.representativeTitle;
   const description = metaDescription(cluster);
@@ -74,6 +76,14 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
 
   if (!cluster) notFound();
 
+  // 기준 미달 페이지는 **색인에서만 빼는 것으로 부족하다** — 사이트에 존재하는 것 자체가
+  // "가치가 별로 없는 콘텐츠" 판정의 대상이고 크롤 예산을 먹는다. 댓글이 달린 것만 남긴다.
+  //
+  // ⚠️ 진짜 404가 나오려면 **이 라우트 위에 Suspense 경계가 없어야 한다.** 경계가 있으면
+  // 응답이 200으로 먼저 스트리밍돼 soft 404(200 + noindex)가 된다. 그래서 루트
+  // `loading.tsx`를 날짜 세그먼트로 내렸다 → app/d/[date]/loading.tsx
+  if (shouldRemoveCluster(cluster)) notFound();
+
   return (
     // 홈은 최신 날짜만 보여주므로 과거 클러스터에서는 그날 목록으로 돌아가야 맥락이 이어진다.
     // 색인 대상인 클러스터에서만 광고를 띄운다 → shared/ui/AdSenseLoader
@@ -82,6 +92,7 @@ export default async function ClusterDetailPage({ params }: { params: Promise<{ 
         href: datePath(cluster.bucketDate),
         label: formatBucketDateShort(cluster.bucketDate),
       }}
+      // 여기 도달한 것은 색인 대상이거나 댓글이 달린 예외다. 광고는 색인 대상에만.
       ads={isIndexableCluster(cluster)}
     >
       <JsonLd

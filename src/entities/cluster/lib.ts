@@ -27,6 +27,7 @@ interface SummaryRow {
 }
 
 interface DetailRow extends SummaryRow {
+  _count: { comments: number };
   articles: {
     id: string;
     title: string;
@@ -115,6 +116,7 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     leaningGroupRatios: ratios,
     tilt: calcTilt(ratios),
     articles,
+    commentCount: row._count.comments,
   };
 }
 
@@ -133,6 +135,7 @@ export function toDaySummary(row: {
 export function toClusterStats(raw: {
   clusterCount: number;
   articleCount: number;
+  indexableClusterCount: number;
   outletCounts: { outletId: string; count: number }[];
 }): ClusterStats {
   const dist = emptyDistribution();
@@ -145,6 +148,7 @@ export function toClusterStats(raw: {
 
   return {
     clusterCount: raw.clusterCount,
+    indexableClusterCount: raw.indexableClusterCount,
     articleCount: raw.articleCount,
     leaningDistribution: dist,
     dominantLeaning: dist[dominantLeaning ?? "unknown"] > 0 ? dominantLeaning : null,
@@ -191,14 +195,45 @@ export const INDEX_CRITERIA = {
  * 않는 카드만 나온다. **감추는 게 아니라 분류하는 것이다** — 호출한 쪽이 건수를 밝히고
  * 접어서 보여준다. → docs/agent/adsense-compliance.md
  */
-export function partitionBySpread(clusters: ClusterSummary[]): {
-  covered: ClusterSummary[];
-  solo: ClusterSummary[];
+/**
+ * **이 페이지를 사이트에서 없애야 하는가.**
+ *
+ * `noindex`는 검색 색인에서만 빼고 사이트 순회는 막지 않는다. AdSense가 판정하는 대상은
+ * 색인이 아니라 **사이트**이고, 2026-10-22 실측으로 전체 27,108개 중 **22,691개(84%)가
+ * 기준 미달이면서 링크로 도달 가능**했다. 심사자가 둘러보면 대부분이 헤드라인 한 줄짜리다.
+ * 크롤 예산도 이쪽에 쓰인다(Google이 아는 페이지가 사이트의 52%, 대기열 866개).
+ *
+ * **댓글이 달린 것은 남긴다.** Comment가 ON DELETE CASCADE라 사람이 쓴 글을 조용히
+ * 버릴 수 없고, 댓글이 있다는 것 자체가 그 페이지에 사람의 기여가 있다는 뜻이다.
+ *
+ * → docs/agent/adsense-compliance.md의 P0-6
+ */
+export function shouldRemoveCluster(
+  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution"> & {
+    commentCount?: number;
+  }
+): boolean {
+  if (isIndexableCluster(cluster)) return false;
+  return (cluster.commentCount ?? 0) === 0;
+}
+
+/**
+ * 목록을 **색인 기준으로** 가른다. 링크를 걸 수 있는 것과 그럴 수 없는 것의 경계다 —
+ * `shouldRemoveCluster`로 404가 되는 페이지에 링크를 남기면 목록이 깨진 링크를 뿌린다.
+ *
+ * **"단독 보도"(언론사 1곳) 기준과 다른 집합이다.** 비색인인데 2개사 이상인 클러스터가
+ * 3,254개(12%) 있어서, 단독 기준으로 가르면 그것들이 본 목록에 남아 404로 가는 링크가 된다.
+ * 2026-10-22까지 있던 `partitionBySpread`가 그 기준이었고, 같은 실수를 다시 하지 않도록
+ * 배럴에서 **제거했다.**
+ */
+export function partitionByIndexable(clusters: ClusterSummary[]): {
+  comparable: ClusterSummary[];
+  thin: ClusterSummary[];
 } {
-  const covered: ClusterSummary[] = [];
-  const solo: ClusterSummary[] = [];
-  for (const c of clusters) (c.outletCount >= 2 ? covered : solo).push(c);
-  return { covered, solo };
+  const comparable: ClusterSummary[] = [];
+  const thin: ClusterSummary[] = [];
+  for (const c of clusters) (isIndexableCluster(c) ? comparable : thin).push(c);
+  return { comparable, thin };
 }
 
 /**

@@ -194,10 +194,16 @@ GitHub Actions runner는 **UTC**로 돈다. `bucket.ts`는 오프셋을 더한 �
 "이슈가 335개다" 같은 단언은 내일 깨지지만, "화면의 이슈 수 == `/api/clusters/stats`의
 `clusterCount`"는 데이터가 바뀌어도 함께 바뀐다 — 그리고 더 강한 것을 검증한다.
 
-- 데이터 조건이 안 맞으면 `test.skip(...)`으로 건너뛴다(단독 보도가 없는 날 등).
-- 목록 정렬이 기사 수 내림차순이라 **단독 보도(1건)는 첫 페이지에 없다.**
-  `findDayWithSoloOnFirstPage`로 첫 페이지에 실제로 걸리는 날짜를 찾아 쓴다.
+- 데이터 조건이 안 맞으면 `test.skip(...)`으로 건너뛴다(기준 미달 이슈가 없는 날 등).
+- 목록 정렬이 기사 수 내림차순이라 **작은 이슈는 첫 페이지에 없다.**
+  `findDayWithThinOnFirstPage`로 첫 페이지에 실제로 걸리는 날짜를 찾아 쓴다.
+  ⚠️ "기준 미달"(기사 3건 미만 **또는** 한 진영만)과 "단독 보도"(언론사 1곳)는 **다른
+  집합이다** — 화면이 색인 기준으로 가르므로 전자를 쓴다.
 - **robots 메타는 기다렸다 읽는다**(`robotsMeta` 헬퍼). async `generateMetadata`의 결과는
   body 끝으로 스트리밍된 뒤 스크립트가 head로 옮기므로, 바로 읽으면 null이다.
   dev에서는 통과하고 프로덕션 빌드에서만 터진다.
 - 서버를 막 띄운 직후에는 콜드 스타트가 겹쳐 흔들린다 → `expect.timeout`을 10초로 뒀다.
+- **상태 코드는 `page.goto`가 아니라 `request.get`으로 본다.** 화면이 "찾을 수 없습니다"를
+  보여도 HTTP 200일 수 있다 — Suspense 경계(`loading.tsx`)가 있으면 soft 404가 되고, 그래서
+  이 앱에는 `loading.tsx`가 없다 → [architecture.md](./architecture.md)의
+  "상태 코드는 Suspense 경계가 정한다"

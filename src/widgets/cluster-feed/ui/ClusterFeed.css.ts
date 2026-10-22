@@ -43,6 +43,12 @@ globalStyle(`${lede} b`, {
   color: vars.color.text,
 });
 
+/** 목록 머리의 보조 수치(그 외 N건). 주 수치보다 한 단계 흐리게 둔다. */
+export const headAside = style({
+  color: vars.color.textFaint,
+  opacity: 0.75,
+});
+
 export const listHead = style({
   display: "flex",
   alignItems: "baseline",
@@ -197,6 +203,18 @@ export const soloItem = style({
   selectors: {
     "&:hover": { background: vars.color.bg },
   },
+});
+
+/**
+ * 기준 미달 항목. `soloItem`과 같은 자리·같은 여백이지만 **링크가 아니다** — 상세 페이지가
+ * 404이므로 hover 반응을 주지 않는다(누를 수 있어 보이면 거짓말이 된다).
+ */
+export const thinItem = style({
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  padding: "9px 14px",
+  color: "inherit",
 });
 
 export const soloTitle = style({
