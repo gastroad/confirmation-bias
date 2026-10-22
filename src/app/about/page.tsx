@@ -5,15 +5,21 @@ import {
   LEANING_ORDER,
   LEANING_LABELS,
   LEANING_COLORS,
+  LEANING_GROUP_LABELS,
   OUTLETS,
+  OUTLET_ARTICLE_CAP,
   TILT_BALANCE_THRESHOLD,
+  TILT_METHOD_VERSIONS,
+  TILT_METHOD_VERSION,
+  tiltSide,
+  workTiltExample,
 } from "@/entities/outlet";
 import { INDEX_MIN_ARTICLES, INDEX_MIN_LEANING_GROUPS } from "@/entities/cluster";
 import { SITE_NAME, CONTACT_EMAIL } from "@/shared/config/site";
 import * as styles from "./about.css";
 
 // 방법론이 실질적으로 바뀌면(임계값·성향 분류·수집 주기) 이 날짜를 갱신한다.
-const UPDATED_AT = "2026년 8월 27일";
+const UPDATED_AT = "2026년 10월 23일";
 
 // server/clustering/daily.ts의 DEFAULT_THRESHOLD. 그 모듈은 openai를 끌고 오므로
 // 정적 페이지에서 import하지 않고 값만 옮겨 적는다. 바꾸면 여기도 같이 고친다.
@@ -51,6 +57,72 @@ function OutletTable() {
         );
       })}
     </div>
+  );
+}
+
+/** "보수 +80%p" / "균형". 목록의 편중 라벨과 같은 표기. */
+function tiltText(tilt: number): string {
+  const side = tiltSide(tilt);
+  if (side === "balanced") return "균형";
+  return `${LEANING_GROUP_LABELS[side]} +${Math.round(Math.abs(tilt))}%p`;
+}
+
+const pct = (ratio: number) => `${Math.round(ratio * 100)}%`;
+
+/**
+ * 계산 예시. **숫자를 손으로 적지 않는다** — 입력(`TILT_METHOD_EXAMPLE`)만 정해 두고
+ * 화면이 실제 함수로 계산한다. 정의가 바뀌면 이 표도 같이 바뀌고, 바뀐 결과는
+ * `model.test.ts`가 현재 버전과 함께 못박고 있어 이력 없이 바뀌지 않는다.
+ */
+function TiltExample() {
+  const ex = workTiltExample();
+  const cons = ex.ratios.conservative;
+  const prog = ex.ratios.progressive;
+
+  return (
+    <>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th scope="col">매체</th>
+              <th scope="col">성향</th>
+              <th scope="col" className={styles.num}>
+                수집 기사
+              </th>
+              <th scope="col" className={styles.num}>
+                반영 기사
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {ex.rows.map(({ outlet, articles, counted }) => (
+              <tr key={outlet.id}>
+                <td>{outlet.name}</td>
+                <td>{LEANING_LABELS[outlet.leaning]}</td>
+                <td className={styles.num}>{articles}</td>
+                <td className={styles.num}>{counted}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colSpan={2}>
+                합계
+              </th>
+              <td className={styles.num}>{ex.totalArticles}</td>
+              <td className={styles.num}>{ex.totalCounted}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className={styles.paragraph}>
+        진보 {pct(prog)} − 보수 {pct(cons)} = <strong>{tiltText(ex.tilt)}</strong>. 상한 없이 수집
+        기사 {ex.totalArticles}건을 그대로 셌다면 <strong>{tiltText(ex.uncappedTilt)}</strong>
+        였습니다 — 매체 세 곳이 다룬 사건에서 한 매체의 사진 기사 연속 발행이 수치를 정했던
+        셈입니다.
+      </p>
+    </>
   );
 }
 
@@ -154,9 +226,11 @@ export default function AboutPage() {
           <strong>막대가 어느 쪽으로 튀어나왔는지가 곧 그 사건의 보도 편중</strong>입니다.
         </p>
         <p className={styles.paragraph}>
-          편향 수치는 <strong>진보 매체 비율 − 보수 매체 비율</strong>(%p)입니다. 이 값이 ±
-          {TILT_BALANCE_THRESHOLD}%p 이내면 &ldquo;균형&rdquo;으로 봅니다. 이 기준은 디자인이 아니라
-          서비스의 주장이므로 목록 화면에도 그대로 적어 둡니다.
+          편향 수치는 <strong>진보 기사 비율 − 보수 기사 비율</strong>(%p)입니다. 매체 수가 아니라
+          기사 수로 세되, 한 매체는 한 사건에서 <strong>최대 {OUTLET_ARTICLE_CAP}건</strong>까지만
+          셉니다(아래 &ldquo;편향 수치는 어떻게 계산하나&rdquo;). 이 값이 ±{TILT_BALANCE_THRESHOLD}
+          %p 이내면 &ldquo;균형&rdquo;으로 봅니다. 이 기준은 디자인이 아니라 서비스의 주장이므로
+          목록 화면에도 그대로 적어 둡니다.
         </p>
         <p className={styles.paragraph}>
           검색엔진에 노출되는 사건은{" "}
@@ -166,6 +240,47 @@ export default function AboutPage() {
           이 등장한 것으로 한정합니다. 한 매체만 쓴 사건은 비교할 대상이 없어 이 서비스가 더할 수
           있는 게 없기 때문입니다. 그런 사건도 사이트에서는 그대로 볼 수 있습니다.
         </p>
+      </section>
+
+      <section className={styles.section} id="tilt">
+        <h2 className={styles.heading}>편향 수치는 어떻게 계산하나</h2>
+        <p className={styles.paragraph}>
+          한 사건에 묶인 기사를 진보 · 중도 · 보수로 나눠 세고, 진보 기사 비율에서 보수 기사 비율을
+          뺍니다. 양수면 진보 쪽, 음수면 보수 쪽으로 더 많이 다뤘다는 뜻입니다. 막대가 중심선에서
+          튀어나온 길이가 이 값과 같습니다.
+        </p>
+        <p className={styles.paragraph}>
+          <strong>한 매체는 한 사건에서 최대 {OUTLET_ARTICLE_CAP}건까지만 셉니다.</strong> 같은
+          장면의 사진 기사를 수십 건씩 연달아 내는 매체가 있어, 기사 수를 그대로 세면 매체 한 곳이
+          그 사건의 수치를 정해 버립니다. {OUTLET_ARTICLE_CAP}건은 본 기사 · 후속 · 종합 기사를 담는
+          범위이고, 한 매체가 한 사건에 쓴 기사의 대부분이 이 안에 듭니다. 매체 수만 세지 않는
+          이유는 여러 건을 써서 비중 있게 다룬 사실도 보도량의 일부이기 때문입니다.
+        </p>
+        <h3 className={styles.subheading}>계산 예시</h3>
+        <p className={styles.paragraph}>실제로 묶였던 사건 하나의 구성입니다.</p>
+        <TiltExample />
+        <p className={styles.paragraph}>
+          하루 전체의 막대도 같은 규칙입니다. 사건마다 상한을 적용한 뒤 그날의 사건을 모두 더합니다.
+          주간 리포트의 &ldquo;가장 크게 갈린 이슈&rdquo;는 반영 기사가 일정 수 이상인 사건만 후보로
+          둡니다.
+        </p>
+
+        <h3 className={styles.subheading}>정의 변경 이력</h3>
+        <p className={styles.paragraph}>
+          현재 정의는 <span className={styles.mono}>v{TILT_METHOD_VERSION}</span>입니다. 계산 방법이
+          바뀌면 여기에 남깁니다. 같은 사건이라도 버전에 따라 수치가 다를 수 있습니다.
+        </p>
+        <ol className={styles.versions}>
+          {TILT_METHOD_VERSIONS.map((v) => (
+            <li key={v.version} className={styles.version}>
+              <span className={styles.versionHead}>
+                <span className={styles.mono}>v{v.version}</span> ·{" "}
+                <span className={styles.mono}>{v.date}</span>
+              </span>
+              <span>{v.change}</span>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className={styles.section}>

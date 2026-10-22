@@ -12,6 +12,7 @@ const findClusterSummaryPage = vi.hoisted(() => vi.fn());
 vi.mock("@server/queries/clusters", () => ({ findClusterStats, findClusterSummaryPage }));
 
 const { GET } = await import("./route");
+const { OUTLET_ARTICLE_CAP } = await import("@/entities/outlet");
 
 const req = (qs = "") => new Request(`http://localhost:3000/api/clusters/stats${qs}`);
 
@@ -41,14 +42,20 @@ describe("GET /api/clusters/stats", () => {
     expect(criteria).toMatchObject({ minArticles: 3, minLeaningGroups: 2 });
   });
 
+  it("매체당 상한을 쿼리에 넘긴다 — 하루 막대가 이슈 카드와 같은 규칙으로 센다", async () => {
+    await GET(req());
+    const cap = findClusterStats.mock.calls.at(-1)![3];
+    expect(cap).toBe(OUTLET_ARTICLE_CAP);
+  });
+
   it("언론사별 건수를 성향 분포 DTO로 합쳐 돌려준다", async () => {
     findClusterStats.mockResolvedValue({
       clusterCount: 12,
       articleCount: 30,
       indexableClusterCount: 5,
       outletCounts: [
-        { outletId: "hani", count: 10 },
-        { outletId: "chosun", count: 20 },
+        { outletId: "hani", count: 10, counted: 10 },
+        { outletId: "chosun", count: 20, counted: 20 },
       ],
     });
 

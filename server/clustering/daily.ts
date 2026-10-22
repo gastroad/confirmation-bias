@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { db } from "../db";
 import { agglomerate } from "./hac";
 import { generateEmbeddings } from "./embed";
-import { dot } from "./similarity";
-import { centroidOf, decodeEmbedding, encodeEmbedding, normalizeInPlace } from "./vector";
+import { decodeEmbedding, encodeEmbedding, normalizeInPlace } from "./vector";
+import { representativeIndex } from "./representative";
 import { bucketRange, formatBucketDate } from "./bucket";
 import { buildClusterSummary } from "./summary";
 
@@ -156,16 +156,6 @@ export function successorByOldCluster(
   return successor;
 }
 
-/** 그룹 centroid에 가장 가까운 기사의 제목. LLM 호출 없이 대표성을 얻는다. */
-function representativeIndex(vectors: readonly Float32Array[], group: readonly number[]): number {
-  if (group.length === 1) return group[0];
-  const centroid = centroidOf(vectors, group);
-  return group.reduce(
-    (best, i) => (dot(vectors[i], centroid) > dot(vectors[best], centroid) ? i : best),
-    group[0]
-  );
-}
-
 /**
  * KST 하루치를 통째로 다시 클러스터링한다.
  *
@@ -231,7 +221,7 @@ export async function clusterDay(
       data: groups.map((group, gi) => ({
         id: clusterIds[gi],
         bucketDate: bucket,
-        representativeTitle: titles[representativeIndex(vectors, group)],
+        representativeTitle: titles[representativeIndex(vectors, titles, group)],
         articleCount: group.length,
         summary: summaries[gi],
       })),

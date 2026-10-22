@@ -22,6 +22,8 @@ export {
   emptyDistribution,
   calcLeaningGroupRatios,
   calcTilt,
+  OUTLET_ARTICLE_CAP,
+  countLeaningDistribution,
 } from "../model";
 
 export { LeaningBar } from "../ui/LeaningBar";

@@ -28,28 +28,30 @@ RSS 피드
 
 ## 디렉토리 역할
 
-| 경로                              | 역할                                                                                 |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| `server/db.ts`                    | Prisma 싱글턴. 전체 BE에서 이것만 import                                             |
-| `server/auth.ts`                  | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md)    |
-| `server/session-cookie.ts`        | 세션 쿠키 존재 판정(순수 함수). 왕복 단축 → [caching.md](./caching.md)               |
-| `server/cache.ts`                 | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                     |
-| `server/github.ts`                | `workflow_dispatch` 호출 (관리자 수동 트리거)                                        |
-| `server/queries/clusters.ts`      | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                              |
-| `server/clustering/embed.ts`      | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)               |
-| `server/clustering/similarity.ts` | 내적·코사인 유사도 순수 함수                                                         |
-| `server/clustering/vector.ts`     | 임베딩 Float32 bytes 인코딩·정규화·centroid                                          |
-| `server/clustering/bucket.ts`     | KST 날짜 버킷 변환 (`toBucketDate` 등)                                               |
-| `server/clustering/hac.ts`        | 응집 클러스터링 (average linkage, 순수 함수)                                         |
-| `server/clustering/daily.ts`      | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                              |
-| `server/clustering/summary.ts`    | 클러스터 요약 문장 생성 (보도 편중·침묵한 진영·보도 시차). **LLM 미사용, 순수 함수** |
-| `server/clustering/llm-judge.ts`  | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                      |
-| `scripts/collect.ts`              | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md)   |
-| `scripts/cluster-day.ts`          | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)                 |
-| `scripts/cleanup-dirty-dates.ts`  | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                     |
-| `scripts/backfill-summary.ts`     | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
-| `prisma/schema.prisma`            | Outlet / Cluster / Article 모델                                                      |
-| `src/`                            | FSD 구조 Next.js 앱 (아래 별도 설명)                                                 |
+| 경로                                  | 역할                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| `server/db.ts`                        | Prisma 싱글턴. 전체 BE에서 이것만 import                                             |
+| `server/auth.ts`                      | Neon Auth 인스턴스 + 세션 래퍼. **SDK 의존을 여기로 격리** → [auth.md](./auth.md)    |
+| `server/session-cookie.ts`            | 세션 쿠키 존재 판정(순수 함수). 왕복 단축 → [caching.md](./caching.md)               |
+| `server/cache.ts`                     | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                     |
+| `server/github.ts`                    | `workflow_dispatch` 호출 (관리자 수동 트리거)                                        |
+| `server/queries/clusters.ts`          | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                              |
+| `server/clustering/embed.ts`          | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)               |
+| `server/clustering/similarity.ts`     | 내적·코사인 유사도 순수 함수                                                         |
+| `server/clustering/vector.ts`         | 임베딩 Float32 bytes 인코딩·정규화·centroid                                          |
+| `server/clustering/bucket.ts`         | KST 날짜 버킷 변환 (`toBucketDate` 등)                                               |
+| `server/clustering/hac.ts`            | 응집 클러스터링 (average linkage, 순수 함수)                                         |
+| `server/clustering/daily.ts`          | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                              |
+| `server/clustering/representative.ts` | 대표 제목 선정(centroid 최근접, **사진 캡션 제외**). 순수 함수                       |
+| `server/clustering/summary.ts`        | 클러스터 요약 문장 생성 (보도 편중·침묵한 진영·보도 시차). **LLM 미사용, 순수 함수** |
+| `server/clustering/llm-judge.ts`      | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                      |
+| `scripts/collect.ts`                  | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md)   |
+| `scripts/cluster-day.ts`              | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)                 |
+| `scripts/cleanup-dirty-dates.ts`      | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                     |
+| `scripts/backfill-titles.ts`          | 캡션 대표 제목만 다시 골라 UPDATE. **클러스터를 재생성하지 않는다**                  |
+| `scripts/backfill-summary.ts`         | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
+| `prisma/schema.prisma`                | Outlet / Cluster / Article 모델                                                      |
+| `src/`                                | FSD 구조 Next.js 앱 (아래 별도 설명)                                                 |
 
 ## FSD 레이어 (src/)
 
@@ -147,8 +149,35 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
   주간 리포트는 순위 열(28px)만큼 막대가 오른쪽으로 밀려 있어 행의 50%가 막대의 중점이
   아니다 — 거기에 축을 그으면 맞지 않는 자리에 축이 선다.
 
-편향 수치는 `calcTilt`(진보% − 보수%)이고, `TILT_BALANCE_THRESHOLD`(±5%p) 안이면 "균형"으로
+편향 수치는 `calcTilt`(진보 기사% − 보수 기사%)이고, `TILT_BALANCE_THRESHOLD`(±5%p) 안이면 "균형"으로
 본다. 이 임계값은 디자인이 아니라 **서비스의 주장**이라 화면(목록 헤더)에 그대로 노출한다.
+
+### 매체당 상한 — 한 매체가 수치를 정하지 못하게 (2026-10-23, 정의 v2)
+
+비율의 분자·분모는 **반영 기사 수**다. `countLeaningDistribution`이 한 이슈에서 매체당
+`OUTLET_ARTICLE_CAP`(3)건까지만 센다. 막대 기하·`tilt`·하루 스펙트럼·주간 리포트 선별이 전부
+이 분포에서 나오므로 **막대와 수치가 갈리지 않는다.** `articleCount`(카드의 "N건")는 수집 건수
+그대로이고, 반영 건수는 `countedArticleCount`에 따로 싣는다.
+
+- 계기: 천지일보 기사의 51%가 포토다. 국감 하루에 같은 장면 캡션 18건이 한 클러스터에 묶여
+  매체 3곳짜리 이슈가 "보수 +95%p"로 주간 리포트 1위에 올랐고, TOP10 중 5건이 그런 이슈였다.
+- **지표를 둘로 나누지 않는다**(보도량 편중 / 매체 참여 편중). 카드에 막대가 둘이면 카드끼리
+  한 중심선으로 비교한다는 이 화면의 주장이 깨진다. 막대 하나에서 왜곡만 걷어낸다.
+- 3인 근거(이슈·매체 쌍 기준): 91%가 2건 이하다. 상한 1은 매체 수를 세는 것과 같아 색인 대상의
+  57%가 바뀌고, 3이면 4건 이상인 꼬리(5%)만 깎여 13%가 바뀐다.
+- 상한으로 수치만 깎으면 표본이 작다는 사실은 남는다(매체 3곳이면 상한 1이어도 ±67%p).
+  그래서 주간 리포트의 표본 하한(`SPLIT_MIN_ARTICLES`)도 **반영 기사 수**로 잰다.
+- 하루 스펙트럼은 클러스터마다 상한을 적용한 뒤 더한다. `findClusterStats`가 SQL로 세고,
+  상한 값은 `STATS_OUTLET_ARTICLE_CAP`으로 넘겨받는다(`server/`는 `src/`를 import할 수 없다).
+- 색인 기준(`INDEX_MIN_ARTICLES`)은 **수집 건수 그대로**다. 바꾸면 404가 되는 페이지 집합이
+  바뀐다(P0-6) — 별도 판단이 필요하다.
+- 상세 페이지는 상한이 걸린 매체를 판정 문장 아래에 밝힌다(`findCappedOutlets`). 막대 라벨의
+  건수가 아래 세 열의 건수와 다른 이유를 화면이 스스로 말해야 한다.
+
+**정의를 바꾸면 `TILT_METHOD_VERSIONS`에 항목을 추가한다.** /about이 그 이력과 계산 예시
+(`workTiltExample` — 숫자를 손으로 적지 않고 같은 함수로 계산한다)를 그린다. `model.test.ts`의
+"편중 수치 정의"가 예시 결과를 현재 버전 번호와 함께 못박아, 이력 없이 계산만 바뀌면 깨진다.
+v1 시절 /about은 "진보 매체 비율 − 보수 매체 비율"이라고 적었고 코드는 기사 수를 세고 있었다.
 
 ## 버튼 — 생김새는 `shared/ui/Button` 하나에서 나온다
 

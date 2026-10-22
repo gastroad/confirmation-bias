@@ -32,7 +32,7 @@ DTO(`toClusterSummary` 등)는 이미 ISO 문자열이라 직렬화가 안전하
 이 값을 함께 올린다.
 
 ```ts
-export const DTO_VERSION = "v5";
+export const DTO_VERSION = "v6";
 // ...
 unstable_cache(fn, ["clusters-page", DTO_VERSION], { ... });
 ```

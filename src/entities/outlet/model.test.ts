@@ -15,6 +15,11 @@ import {
   LEANING_ORDER,
   GROUP_BY_LEANING,
   calcBarGeometry,
+  OUTLET_ARTICLE_CAP,
+  countLeaningDistribution,
+  TILT_METHOD_VERSIONS,
+  TILT_METHOD_VERSION,
+  workTiltExample,
 } from "./model";
 
 describe("emptyDistribution", () => {
@@ -360,5 +365,79 @@ describe("calcBarGeometry — 세그먼트", () => {
     const g = calcBarGeometry(barDist({ left: 2, center: 4, right: 2 }))!;
     const pct = (l: string) => g.segments.find((s) => s.leaning === l)?.percent ?? 0;
     expect(g.midpoint).toBeCloseTo(pct("left") + pct("center") / 2);
+  });
+});
+
+describe("countLeaningDistribution", () => {
+  const repeat = (id: string, n: number) => Array.from({ length: n }, () => id);
+
+  it("상한 안이면 기사 수 그대로 센다", () => {
+    expect(countLeaningDistribution(["hani", "hani", "chosun"])).toEqual({
+      ...emptyDistribution(),
+      left: 2,
+      right: 1,
+    });
+  });
+
+  it("한 매체는 OUTLET_ARTICLE_CAP건까지만 센다", () => {
+    const dist = countLeaningDistribution([...repeat("cheonji", 18), "seoul"]);
+    expect(dist.right).toBe(OUTLET_ARTICLE_CAP);
+    expect(dist.center).toBe(1);
+  });
+
+  it("상한은 매체마다 따로 건다 — 같은 성향의 두 매체는 각자 상한까지", () => {
+    const dist = countLeaningDistribution([...repeat("cheonji", 9), ...repeat("chosun", 9)]);
+    expect(dist.right).toBe(OUTLET_ARTICLE_CAP * 2);
+  });
+
+  it("명단에 없는 매체는 unknown으로 센다(상한도 같다)", () => {
+    expect(countLeaningDistribution(repeat("ghost", 10)).unknown).toBe(OUTLET_ARTICLE_CAP);
+  });
+
+  it("상한이 1이면 매체 수를 세는 것과 같아진다 — 그래서 1로 두지 않는다", () => {
+    // 보도량이라는 지표의 뜻이 사라진다. 상한은 꼬리만 깎는다 → model.ts의 OUTLET_ARTICLE_CAP
+    expect(OUTLET_ARTICLE_CAP).toBeGreaterThan(1);
+  });
+});
+
+/**
+ * **편중 수치 정의를 못박는다.** /about이 이 예시를 그대로 계산해 보여주므로, 계산이 바뀌면
+ * 화면의 숫자도 바뀐다. 그게 의도한 변경이면 `TILT_METHOD_VERSIONS` 맨 앞에 항목을 추가하고
+ * 아래 기대값의 버전과 결과를 함께 고친다 — 버전을 올리지 않고 숫자만 고치지 않는다.
+ */
+describe("편중 수치 정의 (/about 계산 예시)", () => {
+  it("현재 정의(v2)로 예시를 계산하면 보수 +80%p, 상한 없이는 +95%p", () => {
+    const ex = workTiltExample();
+    expect({
+      version: TILT_METHOD_VERSION,
+      totalArticles: ex.totalArticles,
+      totalCounted: ex.totalCounted,
+      tilt: Math.round(ex.tilt),
+      uncappedTilt: Math.round(ex.uncappedTilt),
+    }).toEqual({ version: 2, totalArticles: 20, totalCounted: 5, tilt: -80, uncappedTilt: -95 });
+  });
+
+  it("예시의 행별 반영 건수가 분포 계산과 같다", () => {
+    const ex = workTiltExample();
+    expect(ex.rows.reduce((n, r) => n + r.counted, 0)).toBe(ex.totalCounted);
+  });
+
+  it("예시는 목록과 같은 함수로 계산된다 — calcTilt(countLeaningDistribution)", () => {
+    const ex = workTiltExample([
+      { outletId: "hani", articles: 5 },
+      { outletId: "chosun", articles: 1 },
+    ]);
+    const direct = calcTilt(
+      calcLeaningGroupRatios(countLeaningDistribution([...Array(5).fill("hani"), "chosun"]))
+    );
+    expect(ex.tilt).toBeCloseTo(direct);
+  });
+
+  it("변경 이력은 최신이 맨 앞이고 버전이 겹치지 않는다", () => {
+    const versions = TILT_METHOD_VERSIONS.map((v) => v.version);
+    expect(versions).toEqual([...versions].sort((a, b) => b - a));
+    expect(new Set(versions).size).toBe(versions.length);
+    expect(TILT_METHOD_VERSION).toBe(versions[0]);
+    expect(TILT_METHOD_VERSIONS.every((v) => /^\d{4}-\d{2}-\d{2}$/.test(v.date))).toBe(true);
   });
 });

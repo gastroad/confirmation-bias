@@ -1,7 +1,12 @@
 import { unstable_cache } from "next/cache";
 import { findClusterSummaryPage, findClusterStats } from "@server/queries/clusters";
 import { CACHE_TTL, DTO_VERSION } from "@server/cache";
-import { toClusterSummary, toClusterStats, INDEX_CRITERIA } from "@/entities/cluster";
+import {
+  toClusterSummary,
+  toClusterStats,
+  INDEX_CRITERIA,
+  STATS_OUTLET_ARTICLE_CAP,
+} from "@/entities/cluster";
 import type { ClustersPage, ClusterStats } from "@/entities/cluster";
 
 /**
@@ -39,7 +44,8 @@ export const getClusterStats = unstable_cache(
       await findClusterStats(
         outletIds,
         bucketDateIso ? new Date(bucketDateIso) : undefined,
-        INDEX_CRITERIA
+        INDEX_CRITERIA,
+        STATS_OUTLET_ARTICLE_CAP
       )
     ),
   ["clusters-stats", DTO_VERSION],

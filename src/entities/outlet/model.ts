@@ -159,9 +159,127 @@ export function calcLeaningGroupRatios(dist: LeaningDistribution): LeaningGroupR
 /**
  * 진보 비율 − 보수 비율 (백분율 포인트). 양수면 진보 쪽으로 더 많이 보도됐다는 뜻.
  * 중심선 기준 막대가 어느 쪽으로 튀어나왔는지를 수치로 옮긴 값이다.
+ *
+ * 비율의 분모·분자는 **반영 기사 수**다 — 매체 수가 아니고, 수집한 기사 수 그대로도 아니다.
+ * `countLeaningDistribution`이 매체당 `OUTLET_ARTICLE_CAP`건까지만 센다.
  */
 export function calcTilt(ratios: LeaningGroupRatios): number {
   return (ratios.progressive - ratios.conservative) * 100;
+}
+
+/**
+ * 한 매체가 **한 이슈에서** 편중 수치에 기여하는 최대 기사 수.
+ *
+ * 천지일보는 기사의 51%가 포토 기사라(다른 매체는 전부 5% 이하) 국감 하루에 같은 장면의
+ * 캡션을 18건씩 낸다. 기사 수를 그대로 세면 매체 3곳짜리 이슈가 "보수 +95%p"가 되고,
+ * 2026-10-23 라이브 주간 리포트 편중 TOP10 중 5건이 그런 이슈였다.
+ *
+ * 3인 이유: (이슈, 매체) 쌍의 91%가 2건 이하이고 3건까지가 본 기사·후속·종합의 통상 범위다.
+ * 1로 두면 매체 수를 세는 것과 같아져 "보도량"이라는 지표의 뜻이 사라지고(색인 대상의 57%가
+ * 바뀐다), 3이면 4건 이상 몰아 쓴 꼬리(쌍의 5%)만 깎인다(색인 대상의 13%가 바뀐다).
+ *
+ * 지표를 둘(보도량 편중·매체 참여 편중)로 나누지 않고 이 상한 하나로 왜곡만 걷어낸다 —
+ * 막대가 둘이면 카드끼리 같은 중심선으로 비교한다는 주장이 깨진다.
+ * → docs/agent/architecture.md의 "중심선(meridian)"
+ */
+export const OUTLET_ARTICLE_CAP = 3;
+
+/**
+ * 한 이슈의 기사들을 성향 분포로 센다. **매체당 `OUTLET_ARTICLE_CAP`건까지만.**
+ * 막대의 기하·편중 수치·주간 리포트 선별이 전부 이 분포에서 나온다.
+ *
+ * 명단에 없는 매체는 `unknown`으로 센다(진영 수를 부풀리지 않는다).
+ */
+export function countLeaningDistribution(outletIds: readonly string[]): LeaningDistribution {
+  const perOutlet = new Map<string, number>();
+  for (const id of outletIds) perOutlet.set(id, (perOutlet.get(id) ?? 0) + 1);
+
+  const dist = emptyDistribution();
+  for (const [id, n] of perOutlet) {
+    dist[OUTLET_MAP[id]?.leaning ?? "unknown"] += Math.min(n, OUTLET_ARTICLE_CAP);
+  }
+  return dist;
+}
+
+export interface TiltMethodVersion {
+  version: number;
+  /** "YYYY-MM-DD" */
+  date: string;
+  change: string;
+}
+
+/**
+ * 편중 수치 정의의 변경 이력. **정의를 바꾸면 맨 앞에 항목을 추가한다.**
+ * 방법론 페이지(/about)가 이 목록과 아래 계산 예시를 그대로 그린다.
+ *
+ * `model.test.ts`의 "편중 수치 정의" 테스트가 예시의 결과를 현재 버전과 함께 못박아 둔다 —
+ * 계산을 바꾸고 이력을 남기지 않으면 거기서 깨진다. 예전엔 /about이 "진보 매체 비율 −
+ * 보수 매체 비율"이라고 적은 채 코드는 기사 수 비율을 계산하고 있었다(문장은 코드를 따라오지
+ * 않는다).
+ */
+export const TILT_METHOD_VERSIONS: readonly TiltMethodVersion[] = [
+  {
+    version: 2,
+    date: "2026-10-23",
+    change: `한 매체가 한 사건에서 기여하는 기사를 최대 ${OUTLET_ARTICLE_CAP}건으로 제한했습니다. 같은 장면의 사진 기사를 연달아 내는 매체 하나가 수치를 좌우하던 문제를 막기 위해서입니다.`,
+  },
+  {
+    version: 1,
+    date: "2026-08-25",
+    change: "진영별 기사 수 비율의 차이(진보 − 보수)로 편중을 계산하기 시작했습니다.",
+  },
+];
+
+export const TILT_METHOD_VERSION = TILT_METHOD_VERSIONS[0].version;
+
+/**
+ * 방법론 페이지의 계산 예시. 2026-10-23 주간 리포트 1위였던 이슈의 실제 구성이다
+ * (천지일보 18건 · 한국경제 1건 · 서울신문 1건). 입력만 여기 두고 결과는 화면이 계산한다.
+ */
+export const TILT_METHOD_EXAMPLE: readonly { outletId: string; articles: number }[] = [
+  { outletId: "cheonji", articles: 18 },
+  { outletId: "hankyung", articles: 1 },
+  { outletId: "seoul", articles: 1 },
+];
+
+export interface TiltWorkedExample {
+  rows: {
+    outlet: OutletMetadata;
+    articles: number;
+    counted: number;
+  }[];
+  totalArticles: number;
+  totalCounted: number;
+  /** 상한 없이 기사 수를 그대로 셌을 때(버전 1) */
+  uncappedTilt: number;
+  tilt: number;
+  ratios: LeaningGroupRatios;
+}
+
+export function workTiltExample(
+  example: readonly { outletId: string; articles: number }[] = TILT_METHOD_EXAMPLE
+): TiltWorkedExample {
+  const outletIds = example.flatMap(({ outletId, articles }) =>
+    Array.from({ length: articles }, () => outletId)
+  );
+  const uncapped = emptyDistribution();
+  for (const id of outletIds) uncapped[OUTLET_MAP[id]?.leaning ?? "unknown"]++;
+
+  const dist = countLeaningDistribution(outletIds);
+  const ratios = calcLeaningGroupRatios(dist);
+
+  return {
+    rows: example.map(({ outletId, articles }) => ({
+      outlet: OUTLET_MAP[outletId],
+      articles,
+      counted: Math.min(articles, OUTLET_ARTICLE_CAP),
+    })),
+    totalArticles: outletIds.length,
+    totalCounted: Object.values(dist).reduce((s, n) => s + n, 0),
+    uncappedTilt: calcTilt(calcLeaningGroupRatios(uncapped)),
+    tilt: calcTilt(ratios),
+    ratios,
+  };
 }
 
 /**

@@ -37,6 +37,12 @@ export const criteria = style({
   marginTop: 14,
 });
 
+export const criteriaLink = style({
+  color: "inherit",
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
+});
+
 export const section = style({
   marginTop: 36,
 });
