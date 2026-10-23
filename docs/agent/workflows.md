@@ -20,37 +20,23 @@ npm run cluster:day -- --date=2026-08-20 --dry-run --threshold=0.65   # 임계�
 설계·임계값 근거는 [daily-clustering.md](./daily-clustering.md).
 
 ```bash
-# 3. RSS pubDate 이상치로 생긴 과거 버킷 정리 (일회성). 먼저 --dry-run으로 대상을 본다
-npm run cleanup:dates -- --dry-run
-npm run cleanup:dates
-```
-
-댓글이 달린 클러스터가 대상에 있으면 **지우지 않고 중단한다**(Comment는 ON DELETE CASCADE라
-사람이 판단해야 한다). 수집 단계의 재발 방지는 `scripts/collect.ts`의 `MAX_PAST_DAYS`가 맡는다.
-
-```bash
-# 4. 기존 클러스터에 요약 문장 백필. 문장 규칙을 고친 뒤 전체에 반영할 때도 이걸 쓴다
+# 3. 기존 클러스터에 요약 문장 백필. 문장 규칙을 고친 뒤, 또는 DB `Outlet` 명단이 바뀐 뒤 쓴다
+#    (침묵 문장은 DB의 언론사 목록으로 만든다 — `db:seed` 다음에 돌린다)
 npm run backfill:summary -- --dry-run          # 쓰지 않고 표본만
 npm run backfill:summary                       # 전체 재생성
 npm run backfill:summary -- --missing-only     # summary가 비어 있는 것만
 ```
 
 ```bash
-# 5. 대표 제목이 사진 캡션인 클러스터만 제목을 다시 고른다 (멱등, 제목만 UPDATE)
+# 4. 대표 제목이 사진 캡션인 클러스터만 제목을 다시 고른다 (멱등, 제목만 UPDATE)
 npm run backfill:titles -- --dry-run
 npm run backfill:titles
 ```
 
 ```bash
-# 5-b. 기사 전부가 사진 캡션인 클러스터에 photoOnly를 세운다 (멱등). 참이면 색인 제외 → 404
+# 5. 기사 전부가 사진 캡션인 클러스터에 photoOnly를 세운다 (멱등). 참이면 색인 제외 → 404
 npm run backfill:photo-only -- --dry-run
 npm run backfill:photo-only
-```
-
-```bash
-# 6. 이미 적재된 제목·발췌의 HTML 엔티티 잔재 복원 (멱등)
-npm run repair:titles -- --dry-run
-npm run repair:titles
 ```
 
 ⚠️ **백필에 `cluster:day --all`을 쓰지 않는다.** `clusterDay`는 그 날짜의 클러스터를 지우고
@@ -61,10 +47,11 @@ npm run repair:titles
 
 ```bash
 npm run db:migrate   # 마이그레이션 적용 (DIRECT_URL 사용)
-npm run db:seed      # Outlet 15개 시드
+npm run db:seed      # Outlet 17개 시드 (목록에서 빠진 기사 0건짜리는 정리)
 ```
 
-**스키마 변경은 `db:push`가 아니라 마이그레이션으로 한다**(2026-08-24 전환).
+**스키마 변경은 `prisma db push`가 아니라 마이그레이션으로 한다**(2026-08-24 전환). `db:push` npm
+스크립트는 2026-10-23에 지웠다.
 
 ```bash
 # 1. prisma/schema.prisma 수정 후 SQL 생성

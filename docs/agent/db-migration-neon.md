@@ -39,9 +39,12 @@ Neon은 egress를 사실상 제한하지 않아 **수집 주기를 다시 좁힐
 FK 때문에 **Outlet → Cluster → Article 순서**로 옮긴다. `pg_dump`는 `--table` 나열 순서가 아니라
 자체 순서로 뱉으므로 테이블별로 분리해 실행한다.
 
-스크립트: `scripts/migrate-to-neon.sh` (일회성. 재실행하면 데이터가 중복된다)
+스크립트: `scripts/migrate-to-neon.sh` (일회성. 2026-10-23에 지웠다 — git 이력에 있다)
 
 ## 검증: `npm run db:verify`
+
+> 스크립트와 npm 명령은 **2026-10-23에 지웠다**(Supabase 삭제로 대조할 대상이 없다). 아래는
+> 당시 기록이다. 다시 이관한다면 git 이력의 `scripts/verify-db.ts`를 되살려 쓴다.
 
 `scripts/verify-db.ts`가 지문을 뽑아 이관 전후를 대조한다.
 **해시를 전부 Postgres 안에서 계산**하는 게 핵심 — 23,861건 임베딩을 앱으로 퍼오면
@@ -91,6 +94,8 @@ curl -sSI https://www.confirmationbias.app/ | grep x-vercel-id
 
 ## 롤백 플랜
 
+> **종료됨.** Supabase 프로젝트를 2026-10-23에 삭제했다. 아래는 롤백 창이 열려 있던 동안의 절차다.
+
 Supabase 프로젝트를 **2026-09-07까지 유지**한다. 되돌리려면:
 
 1. `.env`의 `DATABASE_URL`/`DIRECT_URL`을 `SUPABASE_*` 값으로 되돌린다 (같은 파일에 보존돼 있다)
@@ -113,4 +118,5 @@ Supabase 프로젝트를 **2026-09-07까지 유지**한다. 되돌리려면:
 - [ ] GitHub Actions Secrets `DATABASE_URL` 교체 — **사용자**
 - [ ] Vercel 환경변수 `DATABASE_URL` 교체 — **사용자**
 - [ ] 프로덕션 배포 후 `x-vercel-id` 함수 리전이 `sin1`인지 확인
-- [ ] 2026-09-07 이후: Supabase 프로젝트 삭제 + `.env`의 `SUPABASE_*` 제거
+- [x] Supabase 프로젝트 삭제 (2026-10-23) + `db:verify`·`migrate-to-neon.sh` 제거
+- [ ] `.env`의 `SUPABASE_*` 제거 — **사용자**(로컬 파일)

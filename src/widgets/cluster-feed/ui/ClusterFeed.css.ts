@@ -193,21 +193,9 @@ export const soloList = style({
   padding: "4px 0",
 });
 
-export const soloItem = style({
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 12,
-  padding: "9px 14px",
-  color: "inherit",
-  textDecoration: "none",
-  selectors: {
-    "&:hover": { background: vars.color.bg },
-  },
-});
-
 /**
- * 기준 미달 항목. `soloItem`과 같은 자리·같은 여백이지만 **링크가 아니다** — 상세 페이지가
- * 404이므로 hover 반응을 주지 않는다(누를 수 있어 보이면 거짓말이 된다).
+ * 기준 미달 항목. **링크가 아니다** — 상세 페이지가 404이므로 hover 반응을 주지 않는다
+ * (누를 수 있어 보이면 거짓말이 된다).
  */
 export const thinItem = style({
   display: "flex",

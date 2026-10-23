@@ -136,18 +136,17 @@ npm run dev          # http://localhost:3000
 
 ## 📜 npm 스크립트
 
-| 스크립트                         | 설명                          |
-| -------------------------------- | ----------------------------- |
-| `npm run dev`                    | 개발 서버 (localhost:3000)    |
-| `npm run build` / `start`        | 프로덕션 빌드 / 실행          |
-| `npm run collect`                | RSS 수집                      |
-| `npm run cluster:day`            | 하루치 배치 클러스터링        |
-| `npm run db:migrate` / `db:seed` | 마이그레이션 / 언론사 시드    |
-| `npm run db:verify`              | DB 지문 출력 (이관 전후 대조) |
-| `npm run test:unit`              | 단위 테스트 (Vitest)          |
-| `npm run test:e2e`               | E2E 테스트 (Playwright)       |
-| `npm run lint`                   | ESLint                        |
-| `npm run format`                 | Prettier 포맷팅               |
+| 스크립트                         | 설명                       |
+| -------------------------------- | -------------------------- |
+| `npm run dev`                    | 개발 서버 (localhost:3000) |
+| `npm run build` / `start`        | 프로덕션 빌드 / 실행       |
+| `npm run collect`                | RSS 수집                   |
+| `npm run cluster:day`            | 하루치 배치 클러스터링     |
+| `npm run db:migrate` / `db:seed` | 마이그레이션 / 언론사 시드 |
+| `npm run test:unit`              | 단위 테스트 (Vitest)       |
+| `npm run test:e2e`               | E2E 테스트 (Playwright)    |
+| `npm run lint`                   | ESLint                     |
+| `npm run format`                 | Prettier 포맷팅            |
 
 ## 🧪 테스트
 
@@ -196,7 +195,7 @@ UI 레이어는 DB에 직접 접근하지 않고 `entities/*/api.ts` 클라이�
 | 진보     | 한겨레신문, 프레시안, 여성신문, 오마이뉴스, 미디어오늘 |
 
 > 성향 분류는 미디어 연구를 참고한 상대적 위치 표시이며, 절대적 기준이 아닙니다.
-> 시사인은 RSS 피드가 2023년 이후 갱신되지 않아 수집을 중단했습니다(과거 기사는 유지).
+> 시사인은 RSS 피드가 2023년 이후 갱신되지 않아 목록에서 제외했습니다.
 
 기사는 **제목 + 300자 발췌 + 출처 + 원문 링크**만 표시하며 전문을 저장하지 않습니다.
 저작권자의 표시 중단 요청은 [이용약관](https://www.confirmationbias.app/terms)의 문의처로

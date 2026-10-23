@@ -27,7 +27,7 @@ test.describe("언론사 상세", () => {
   });
 
   test("집계 문장에 NaN이나 undefined가 새지 않는다", async ({ page }) => {
-    for (const id of ["hani", "chosun", "yonhap", "sisain"]) {
+    for (const id of ["hani", "chosun", "yonhap", "womennews"]) {
       await page.goto(`/outlets/${id}`);
       const body = await page.locator("main").textContent();
       expect(body, id).not.toMatch(/NaN|undefined/);

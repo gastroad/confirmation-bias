@@ -13,7 +13,7 @@
 | 호스팅 | Vercel (Hobby) — Next.js 서빙만. 함수 리전 `sin1`(싱가포르) |
 
 > SQLite → Supabase(2026-06-29) → **Neon(2026-08-24)**. 이관 경위·검증 절차는
-> [db-migration-neon.md](./db-migration-neon.md) 참고. 롤백용 Supabase 프로젝트는 2026-09-07까지 유지.
+> [db-migration-neon.md](./db-migration-neon.md) 참고. 롤백용 Supabase 프로젝트는 2026-10-23에 삭제했다.
 
 ## 환경변수 (`.env`)
 
@@ -86,12 +86,18 @@ Next.js는 자동으로 `.env` 로드.
 
 Supabase에서 목을 조르던 **egress 5GB/월** 제약은 Neon에 없다. 대신 다른 축이 걸린다.
 
-| 한도    | Neon Free   | 현재                               |
-| ------- | ----------- | ---------------------------------- |
-| storage | 0.5GB       | **101MB** (Article 89 / Cluster 3) |
-| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend          |
+| 한도    | Neon Free   | 현재 (2026-10-23 실측)                                           |
+| ------- | ----------- | ---------------------------------------------------------------- |
+| storage | 0.5GB       | **265MB (53%)** — Article 240MB/61,082행 · Cluster 17MB/27,540행 |
+| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend                                        |
 
-- **storage는 2026-08-24에 261MB → 101MB로 줄였다.** `Cluster.centroidJson`을 없애고(일별 배치는
+> ⚠️ **storage가 한도의 절반을 넘었다.** 기사 행당 ~4.1KB(임베딩 2KB + 제목·발췌·인덱스),
+> 하루 ~470건 유입이라 남은 ~247MB는 **약 4개월**이다(2027-02 전후). 이 문서가 오랫동안
+> "101MB"라고 적고 있어 아무도 보지 않았다 — 그 값은 2026-08-24 축소 직후의 것이다.
+> 대응은 [launch-todo.md](./launch-todo.md)의 "오래된 클러스터 아카이빙". 새 테이블을 제안할 때는
+> 이 표의 값으로 판단한다.
+
+- **storage는 2026-08-24에 261MB → 101MB로 줄였다**(그 뒤 유입으로 다시 늘었다 — 위 표). `Cluster.centroidJson`을 없애고(일별 배치는
   배치가 끝나면 centroid를 다시 쓰지 않는다) `Article`의 임베딩을 JSON 문자열(~10KB)에서
   `Bytes`(2,048B)로 옮겼다. → [daily-clustering.md](./daily-clustering.md)
   같은 날 `description`을 300자로 자르고 미사용 `body` 컬럼을 지워 89MB가 됐다

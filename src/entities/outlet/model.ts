@@ -72,7 +72,6 @@ export const OUTLETS: OutletMetadata[] = [
     leaning: "left",
     leaningLabel: "진보",
   },
-  { id: "sisain", name: "시사인", domain: "sisain.co.kr", leaning: "left", leaningLabel: "진보" },
   {
     id: "pressian",
     name: "프레시안",
