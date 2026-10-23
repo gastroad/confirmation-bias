@@ -17,6 +17,7 @@ RSS 피드
           ├─ hac.ts — average linkage 응집 클러스터링 (threshold 0.62)
           ├─ summary.ts — 진영별 보도·침묵·시차를 문장으로 (자체 작성 텍스트)
           └─ 트랜잭션: 해당 날짜 클러스터 삭제 → 재생성 → 기사 배정  ⇒ 멱등
+  scripts/prune-embeddings.ts   — 같은 cron 뒤에. 14일 지난 임베딩을 NULL로 (storage 증가율 1/3)
               │
               └─▶ server/queries/*  — 순수 Prisma 조회 (커서 페이지네이션/집계)
                     └─▶ API 라우트 (src/app/api/**)  — 파라미터 파싱 + 도메인 매핑
@@ -45,6 +46,7 @@ RSS 피드
 | `server/clustering/similarity.ts`     | 내적·코사인 유사도 순수 함수                                                         |
 | `server/clustering/vector.ts`         | 임베딩 Float32 bytes 인코딩·정규화·centroid                                          |
 | `server/clustering/bucket.ts`         | KST 날짜 버킷 변환 (`toBucketDate` 등)                                               |
+| `server/clustering/retention.ts`      | 임베딩 보존 기간(14일)·cutoff. 근거 수치를 상수 옆에 둔다                            |
 | `server/clustering/hac.ts`            | 응집 클러스터링 (average linkage, 순수 함수)                                         |
 | `server/clustering/daily.ts`          | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                              |
 | `server/clustering/representative.ts` | 대표 제목 선정(centroid 최근접, **사진 캡션 제외**). 순수 함수                       |
@@ -55,6 +57,7 @@ RSS 피드
 | `scripts/backfill-titles.ts`          | 캡션 대표 제목만 다시 골라 UPDATE. **클러스터를 재생성하지 않는다**                  |
 | `scripts/backfill-photo-only.ts`      | `Cluster.photoOnly`(기사 전부가 사진 캡션)만 UPDATE. 참이면 색인 제외 → 404          |
 | `scripts/backfill-summary.ts`         | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
+| `scripts/prune-embeddings.ts`         | 14일 지난 임베딩을 비운다. **기본 dry-run**. VACUUM은 안 한다                        |
 | `scripts/grant-admin.ts`              | 최초 관리자 부여(`neon_auth."user"` 직접 갱신) → [auth.md](./auth.md)                |
 | `scripts/vercel-ignore-build.sh`      | Vercel Ignored Build Step. 워크트리 씨앗 커밋의 프리뷰 빌드를 건너뛴다               |
 | `prisma/schema.prisma`                | Outlet / Cluster / Article 모델                                                      |

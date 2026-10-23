@@ -11,6 +11,9 @@ import { isPhotoCaption, representativeIndex } from "../server/clustering/repres
 // 재생성**하므로 색인된 URL이 전량 404가 된다. 이 스크립트는 id·기사 배정을 건드리지 않고
 // `representativeTitle`만 UPDATE한다(`backfill-summary.ts`와 같은 이유).
 //
+// ⚠️ 임베딩으로 centroid를 다시 잡으므로 **임베딩 보존 기간(server/clustering/retention.ts) 안의
+// 날짜만** 고칠 수 있다. 그보다 오래된 클러스터는 건너뛰고 수를 보고한다.
+//
 // 대상을 캡션 제목으로 좁혀도 결과가 전체 재계산과 같다 — 지금 제목이 캡션이 아니면 그게 이미
 // centroid 최근접이고, 캡션을 빼는 규칙은 그 답을 바꾸지 않는다.
 
@@ -32,6 +35,7 @@ async function main() {
 
   let written = 0;
   let unchanged = 0;
+  let noEmbedding = 0;
   const samples: string[] = [];
 
   for (let start = 0; start < targets.length; start += BATCH) {
@@ -49,7 +53,10 @@ async function main() {
     const titles: string[] = [];
     for (const c of batch) {
       const arts = c.articles.filter((a) => a.embedding !== null);
-      if (arts.length === 0) continue;
+      if (arts.length === 0) {
+        noEmbedding++;
+        continue;
+      }
       const vectors = arts.map((a) => normalizeInPlace(decodeEmbedding(a.embedding!)));
       const articleTitles = arts.map((a) => a.title);
       const next =
@@ -93,6 +100,11 @@ async function main() {
   console.log(
     `\n${dryRun ? "⚠️  DRY RUN — " : "✅ "}${written.toLocaleString()}개 제목을 ${dryRun ? "바꿀 예정입니다(쓰지 않음)" : "바꿨습니다"}. 기사 전부가 캡션이라 그대로 둔 것 ${unchanged.toLocaleString()}개.`
   );
+  if (noEmbedding > 0) {
+    console.log(
+      `⚠️  임베딩이 비어 있어 건너뛴 클러스터 ${noEmbedding.toLocaleString()}개 — 임베딩 보존 기간이 지난 날짜다.`
+    );
+  }
 }
 
 main()

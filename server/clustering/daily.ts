@@ -20,6 +20,11 @@ export interface ClusterDayOptions {
   threshold?: number;
   /** true면 DB에 쓰지 않고 통계만 낸다(임계값 튜닝용). */
   dryRun?: boolean;
+  /**
+   * dry-run에서도 임베딩이 없는 기사를 임베딩한다(메모리에서만 — DB에 쓰지 않는다).
+   * 보존 기간(`retention.ts`)이 지나 임베딩을 비운 날짜로 튜닝할 때 쓴다.
+   */
+  embedMissing?: boolean;
 }
 
 export interface ClusterDayResult {
@@ -29,6 +34,8 @@ export interface ClusterDayResult {
   largest: number;
   singletons: number;
   embedded: number;
+  /** 임베딩이 없어 클러스터링에서 뺀 기사 수. dry-run에서 `embedMissing` 없이 돌 때만 0이 아니다. */
+  skipped: number;
 }
 
 interface Loaded {
@@ -44,7 +51,11 @@ interface Loaded {
 }
 
 /** 임베딩이 없는 기사는 여기서 채운다. collect는 임베딩을 만들지 않는다. */
-async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedded: number }> {
+async function loadDay(
+  bucket: Date,
+  dryRun: boolean,
+  embedMissing: boolean
+): Promise<Loaded & { embedded: number; skipped: number }> {
   const { start, end } = bucketRange(bucket);
   const rows = await db.article.findMany({
     where: { publishedAt: { gte: start, lt: end } },
@@ -63,11 +74,13 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
   const missing = rows.filter((r) => r.embedding === null);
   const fresh = new Map<string, number[]>();
 
-  if (missing.length > 0 && !dryRun) {
+  if (missing.length > 0 && (!dryRun || embedMissing)) {
     const texts = missing.map((r) => [r.title, r.description].filter(Boolean).join(" "));
     const embeddings = await generateEmbeddings(texts);
     missing.forEach((r, i) => fresh.set(r.id, embeddings[i]));
+  }
 
+  if (missing.length > 0 && !dryRun) {
     await db.$executeRawUnsafe(
       `UPDATE "Article" AS a SET embedding = v.emb
        FROM (SELECT unnest($1::text[]) AS id, unnest($2::bytea[]) AS emb) v
@@ -90,7 +103,7 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
       : fresh.has(r.id)
         ? Float32Array.from(fresh.get(r.id)!)
         : null;
-    if (!raw) continue; // dry-run에서 임베딩이 없는 기사는 제외
+    if (!raw) continue; // dry-run에서 임베딩이 없는 기사는 제외(skipped로 보고한다)
 
     ids.push(r.id);
     titles.push(r.title);
@@ -110,6 +123,7 @@ async function loadDay(bucket: Date, dryRun: boolean): Promise<Loaded & { embedd
     publishedAt,
     previousClusterByArticle,
     embedded: dryRun ? 0 : missing.length,
+    skipped: rows.length - ids.length,
   };
 }
 
@@ -164,14 +178,22 @@ export function successorByOldCluster(
  */
 export async function clusterDay(
   bucket: Date,
-  { threshold = DEFAULT_THRESHOLD, dryRun = false }: ClusterDayOptions = {}
+  { threshold = DEFAULT_THRESHOLD, dryRun = false, embedMissing = false }: ClusterDayOptions = {}
 ): Promise<ClusterDayResult> {
   const bucketDate = formatBucketDate(bucket);
-  const { ids, titles, vectors, outletIds, publishedAt, previousClusterByArticle, embedded } =
-    await loadDay(bucket, dryRun);
+  const {
+    ids,
+    titles,
+    vectors,
+    outletIds,
+    publishedAt,
+    previousClusterByArticle,
+    embedded,
+    skipped,
+  } = await loadDay(bucket, dryRun, embedMissing);
 
   if (vectors.length === 0) {
-    return { bucketDate, articles: 0, clusters: 0, largest: 0, singletons: 0, embedded };
+    return { bucketDate, articles: 0, clusters: 0, largest: 0, singletons: 0, embedded, skipped };
   }
 
   const groups = agglomerate(vectors, { threshold }).sort((a, b) => b.length - a.length);
@@ -183,6 +205,7 @@ export async function clusterDay(
     largest: sizes[0] ?? 0,
     singletons: sizes.filter((s) => s === 1).length,
     embedded,
+    skipped,
   };
 
   if (dryRun) return result;

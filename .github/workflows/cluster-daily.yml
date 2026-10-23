@@ -47,3 +47,12 @@ jobs:
           else
             npm run cluster:day
           fi
+
+      # 보존 기간(server/clustering/retention.ts)이 지난 임베딩을 비운다. 평소엔 하루치(~500행)다.
+      # --max-rows: 첫 대량 회수(수만 행)는 cron이 하지 않는다 — 사람이 dry-run을 보고 로컬에서
+      # 한 번 돌린다. 그 전까지 이 스텝은 쓰지 않고 실패해 Actions에 드러난다.
+      # → docs/agent/infrastructure.md의 "임베딩 보존 기간"
+      - name: Prune old embeddings
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run prune:embeddings -- --apply --max-rows=5000
