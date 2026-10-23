@@ -61,7 +61,7 @@ describe("toOutletStats", () => {
 
   it("기사가 없으면 날짜가 null이다", () => {
     const s = toOutletStats({
-      outletId: "sisain",
+      outletId: "womennews",
       articleCount: 0,
       clusterCount: 0,
       soloCount: 0,
@@ -112,9 +112,9 @@ describe("sortOutletsByVolume", () => {
     const sorted = sortOutletsByVolume([
       stats({ outletId: "sbs", articleCount: 117 }),
       stats({ outletId: "hani", articleCount: 1407 }),
-      stats({ outletId: "sisain", articleCount: 0 }),
+      stats({ outletId: "womennews", articleCount: 0 }),
     ]);
-    expect(sorted.map((s) => s.outletId)).toEqual(["hani", "sbs", "sisain"]);
+    expect(sorted.map((s) => s.outletId)).toEqual(["hani", "sbs", "womennews"]);
   });
 
   it("동률이면 OUTLETS 순서로 결정적", () => {
@@ -209,7 +209,7 @@ describe("toOutletProfile", () => {
   it("기사가 없는 매체도 프로필을 만든다 (페이지는 열되 색인만 뺀다)", () => {
     const profile = toOutletProfile({
       stats: statsRow({
-        outletId: "sisain",
+        outletId: "womennews",
         articleCount: 0,
         clusterCount: 0,
         soloCount: 0,

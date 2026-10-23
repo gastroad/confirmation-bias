@@ -20,7 +20,7 @@ export interface OutletStatsRow {
 }
 
 /**
- * 언론사 18곳 전부를 한 번에. 페이지마다 따로 물으면 왕복이 18배가 되고,
+ * 언론사 17곳 전부를 한 번에. 페이지마다 따로 물으면 왕복이 17배가 되고,
  * `firstMover`는 어차피 전체 기사를 훑어야 나온다.
  */
 export async function findOutletStats(): Promise<OutletStatsRow[]> {

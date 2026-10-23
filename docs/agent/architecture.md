@@ -36,6 +36,11 @@ RSS 피드
 | `server/cache.ts`                     | 캐시 수명 상수. 캐싱은 DTO 경계에서 → [caching.md](./caching.md)                     |
 | `server/github.ts`                    | `workflow_dispatch` 호출 (관리자 수동 트리거)                                        |
 | `server/queries/clusters.ts`          | 클러스터 조회(커서 페이지네이션·상세·집계). 순수 Prisma                              |
+| `server/queries/days.ts`              | 날짜별 집계(날짜 내비·sitemap). `Cluster`만으로 계산                                 |
+| `server/queries/outlets.ts`           | 언론사별 집계(`/outlets`·`/outlets/[id]`) — 전부 자체 계산값                         |
+| `server/queries/comments.ts`          | 댓글 조회·작성·삭제. 권한 판정을 where 절에 넣는다 → [comments.md](./comments.md)    |
+| `server/queries/blocked-urls.ts`      | 저작권 차단 목록. 등록과 기존 기사 삭제를 한 트랜잭션으로                            |
+| `server/feed-entities.ts`             | 피드 텍스트의 HTML 엔티티 복원(프레시안의 `&` 빠진 `quot;` 포함). collect가 쓴다     |
 | `server/clustering/embed.ts`          | OpenAI text-embedding-3-small 배치 호출 (100건/req, 5-retry, 431 방어)               |
 | `server/clustering/similarity.ts`     | 내적·코사인 유사도 순수 함수                                                         |
 | `server/clustering/vector.ts`         | 임베딩 Float32 bytes 인코딩·정규화·centroid                                          |
@@ -44,13 +49,14 @@ RSS 피드
 | `server/clustering/daily.ts`          | 일별 배치 오케스트레이션 (`clusterDay`, threshold 0.62)                              |
 | `server/clustering/representative.ts` | 대표 제목 선정(centroid 최근접, **사진 캡션 제외**). 순수 함수                       |
 | `server/clustering/summary.ts`        | 클러스터 요약 문장 생성 (보도 편중·침묵한 진영·보도 시차). **LLM 미사용, 순수 함수** |
-| `server/clustering/llm-judge.ts`      | LLM 판정. **현재 미사용** (재도입 여부 검토 중)                                      |
+| `scripts/feed_specs.json`             | 수집 대상 피드 목록. `OUTLETS`와 따로 관리한다 → [rss-feeds.md](./rss-feeds.md)      |
 | `scripts/collect.ts`                  | RSS 수집 → Article 직접 적재. `pubDate`/`dc:date` → [rss-feeds.md](./rss-feeds.md)   |
 | `scripts/cluster-day.ts`              | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)                 |
-| `scripts/cleanup-dirty-dates.ts`      | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                     |
 | `scripts/backfill-titles.ts`          | 캡션 대표 제목만 다시 골라 UPDATE. **클러스터를 재생성하지 않는다**                  |
 | `scripts/backfill-photo-only.ts`      | `Cluster.photoOnly`(기사 전부가 사진 캡션)만 UPDATE. 참이면 색인 제외 → 404          |
 | `scripts/backfill-summary.ts`         | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
+| `scripts/grant-admin.ts`              | 최초 관리자 부여(`neon_auth."user"` 직접 갱신) → [auth.md](./auth.md)                |
+| `scripts/vercel-ignore-build.sh`      | Vercel Ignored Build Step. 워크트리 씨앗 커밋의 프리뷰 빌드를 건너뛴다               |
 | `prisma/schema.prisma`                | Outlet / Cluster / Article 모델                                                      |
 | `src/`                                | FSD 구조 Next.js 앱 (아래 별도 설명)                                                 |
 

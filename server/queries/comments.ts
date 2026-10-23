@@ -10,10 +10,6 @@ export async function findComments(clusterId: string) {
   });
 }
 
-export async function countComments(clusterId: string): Promise<number> {
-  return db.comment.count({ where: { clusterId } });
-}
-
 export async function createComment(input: {
   clusterId: string;
   authorId: string;

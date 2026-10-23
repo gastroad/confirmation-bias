@@ -90,8 +90,8 @@ function createPrismaClient() {
 
 ```bash
 npm run db:generate
-npm run db:push      # Supabase에 테이블 생성
-npm run db:seed      # Outlet 15개 시드
+npm run db:push      # Supabase에 테이블 생성 (이 npm 스크립트는 2026-10-23에 지웠다 — 지금은 db:migrate)
+npm run db:seed      # Outlet 15개 시드 (당시. 2026-10-23 현재 17개)
 ```
 
 ### 7단계 — 검증

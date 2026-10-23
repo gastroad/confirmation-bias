@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { getLatestDay, getStats } from "./fixtures";
 
 test.describe("언론사 필터", () => {
-  test("기본은 접혀 있다 — 18개를 펼쳐 두면 하루 스펙트럼이 화면 밖으로 밀린다", async ({
+  test("기본은 접혀 있다 — 17개를 펼쳐 두면 하루 스펙트럼이 화면 밖으로 밀린다", async ({
     page,
   }) => {
     await page.goto("/");
@@ -92,7 +92,7 @@ test.describe("언론사 필터", () => {
   test("어떤 매체도 보도하지 않은 조합이면 필터 조정을 권한다", async ({ page, request }) => {
     const latest = await getLatestDay(request);
     // 기사가 거의 없는 매체 조합을 과거 날짜에 걸어 빈 목록을 만든다
-    await page.goto(`/d/${latest.date}?outlets=sisain`);
+    await page.goto(`/d/${latest.date}?outlets=womennews`);
 
     const empty = page.getByText("선택한 언론사가 보도한 이슈가 없습니다.");
     const list = page.locator('a[href^="/clusters/"]').first();

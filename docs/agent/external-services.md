@@ -73,7 +73,7 @@ confirmation-bias 실서비스는 **6개 외부 서비스**로 구성된다. 이
 | 주의      | `.env` 값을 **작은따옴표로 감쌀 것** — 연결 문자열의 `&`가 셸 `source`에서 깨진다                                 |
 
 > 이관 경위·검증·롤백은 [db-migration-neon.md](./db-migration-neon.md).
-> 롤백용 Supabase 프로젝트를 **2026-09-07까지** 유지 중.
+> 롤백용 Supabase 프로젝트는 **2026-10-23에 삭제했다.** 되돌릴 경로는 없다.
 
 ### 4. Neon Auth — 인증 (Managed Better Auth)
 
@@ -160,8 +160,6 @@ confirmation-bias 실서비스는 **6개 외부 서비스**로 구성된다. 이
 **2026-08-24에 웹 런타임 전제가 바뀌었다.** 그전까지 Vercel에 필요한 건 `DATABASE_URL` 하나였으나
 인증 도입으로 셋이 늘었다. 누락하면 **프로덕션에서만** 터진다(로컬은 `.env`가 있어 멀쩡하다).
 
-`VERIFY_DATABASE_URL`은 시크릿이 아니라 `npm run db:verify`가 비교 대상 DB를 받는 임시 변수다.
-
 ## 장애 시 빠른 점검
 
 | 증상                             | 1순위 확인                                                     |
@@ -179,5 +177,5 @@ confirmation-bias 실서비스는 **6개 외부 서비스**로 구성된다. 이
 
 - **전부 무료 티어**로 운영 중(Vercel Hobby · Neon Free · ImprovMX Free · GitHub public).
   OpenAI만 사용량 과금이며 임베딩이 없는 기사에만 발생한다.
-- 향후 비용 발생 트리거: 수익화 시 Vercel Pro($20/월) · **Neon storage 0.5GB 초과**(현재 101MB) ·
+- 향후 비용 발생 트리거: 수익화 시 Vercel Pro($20/월) · **Neon storage 0.5GB 초과**(2026-10-23 265MB — 약 4개월 남음 → [infrastructure.md](./infrastructure.md)) ·
   Neon compute 100 CU-h/월 · OpenAI 사용량.
