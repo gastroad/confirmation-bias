@@ -119,4 +119,4 @@ Supabase 프로젝트를 **2026-09-07까지 유지**한다. 되돌리려면:
 - [ ] Vercel 환경변수 `DATABASE_URL` 교체 — **사용자**
 - [ ] 프로덕션 배포 후 `x-vercel-id` 함수 리전이 `sin1`인지 확인
 - [x] Supabase 프로젝트 삭제 (2026-10-23) + `db:verify`·`migrate-to-neon.sh` 제거
-- [ ] `.env`의 `SUPABASE_*` 제거 — **사용자**(로컬 파일)
+- [x] `.env`의 `SUPABASE_*`·`NEON_DATABASE_URL`·`NEON_DIRECT_URL`(이관 스크립트용) 제거 (2026-10-23)
