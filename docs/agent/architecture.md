@@ -170,8 +170,12 @@ transform-origin = midpoint             ← 진입 애니메이션이 자라는 
   그래서 주간 리포트의 표본 하한(`SPLIT_MIN_ARTICLES`)도 **반영 기사 수**로 잰다.
 - 하루 스펙트럼은 클러스터마다 상한을 적용한 뒤 더한다. `findClusterStats`가 SQL로 세고,
   상한 값은 `STATS_OUTLET_ARTICLE_CAP`으로 넘겨받는다(`server/`는 `src/`를 import할 수 없다).
-- 색인 기준(`INDEX_MIN_ARTICLES`)은 **수집 건수 그대로**다. 바꾸면 404가 되는 페이지 집합이
-  바뀐다(P0-6) — 별도 판단이 필요하다.
+- 색인 기준(`INDEX_MIN_ARTICLES`)은 **수집 건수 그대로**다. 반영 건수로 바꿀지 검토했고
+  (2026-10-23) **바꾸지 않았다** — 진영 2개 이상이면 매체도 2곳 이상이라 두 기준의 통과 집합이
+  같다(실측 27,540개 중 차이 0). 단 이건 상한이 `INDEX_MIN_ARTICLES − INDEX_MIN_LEANING_GROUPS + 1`
+  (= 2) 이상일 때만 성립한다. 상한을 1로 내리면 갈리고, 그러면 404가 되는 페이지 집합이 바뀐다(P0-6).
+  `entities/cluster/lib.test.ts`의 "색인 기준 — 수집 건수와 반영 건수가 같은 집합을 고른다"가
+  이 결론을 들고 있다.
 - 상세 페이지는 상한이 걸린 매체를 판정 문장 아래에 밝힌다(`findCappedOutlets`). 막대 라벨의
   건수가 아래 세 열의 건수와 다른 이유를 화면이 스스로 말해야 한다.
 

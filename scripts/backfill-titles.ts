@@ -61,7 +61,9 @@ async function main() {
           )
         ];
 
-      if (next === c.representativeTitle) {
+      // 기사 전부가 캡션이면 centroid 최근접 캡션으로 갈아 끼우게 되는데, 꼬리표 없는 캡션이
+      // `[포토]` 캡션(때로는 다른 인물)으로 바뀔 뿐이라 개선이 아니다. 쓰지 않는다.
+      if (next === c.representativeTitle || isPhotoCaption(next)) {
         unchanged++;
         continue;
       }
