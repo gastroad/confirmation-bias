@@ -127,9 +127,8 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
       20MB뿐이고, 지워도 기사 240MB는 `clusterId`만 NULL이 되어 남으며, 색인 URL 404와 `Comment`
       CASCADE를 치른다(효과 7%에 비용 최대). 임베딩 보존 기간 14일 + `prune:embeddings`(기본
       dry-run) + cron 일일 정리로 증가율이 ~72MB/월 → ~23MB/월이 된다. 첫 대량 회수(52,412행)와
-      일반 `VACUUM`은 2026-10-23 14:40 KST에 돌렸다 — `pg_database_size`는 heap 재기록으로
-      268 → 305MB로 늘었고 그 공간은 이후 유입이 재사용한다.
-      **남은 것(선택):** 시각을 골라 `VACUUM FULL "Article"` 한 번 — 305MB → 약 130MB. 자동화하지 않는다.
+      `VACUUM FULL "Article"`(1.5초)은 2026-10-23 14:40~14:43 KST에 돌렸다 —
+      `pg_database_size` **268 → 112MB**(0.5GB의 22%).
       → [infrastructure.md](./infrastructure.md)의 "임베딩 보존 기간"
 - [x] **언론사 성향 분류 근거 투명성** ✅ 완료(2026-08-27) — `/about` 신설.
       5단계 배치와 소속 매체를 `OUTLETS`에서 렌더해 공개하고, **이 배치가 운영자가 정한

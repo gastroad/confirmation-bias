@@ -86,15 +86,15 @@ Next.js는 자동으로 `.env` 로드.
 
 Supabase에서 목을 조르던 **egress 5GB/월** 제약은 Neon에 없다. 대신 다른 축이 걸린다.
 
-| 한도    | Neon Free   | 현재 (2026-10-23 실측, `pg_database_size`)                       |
-| ------- | ----------- | ---------------------------------------------------------------- |
-| storage | 0.5GB       | **268MB (54%)** — Article 240MB/61,364행 · Cluster 20MB/27,540행 |
-| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend                                        |
+| 한도    | Neon Free   | 현재 (2026-10-23 실측, `pg_database_size`)                                             |
+| ------- | ----------- | -------------------------------------------------------------------------------------- |
+| storage | 0.5GB       | **112MB (22%)** — Article 84MB(heap 45 · 인덱스 17 · TOAST 23)/61,364행 · Cluster 20MB |
+| compute | 100 CU-h/월 | 5분 무활동 시 autosuspend                                                              |
 
-> ⚠️ **storage가 한도의 절반을 넘었고, 그 절반이 다시 읽히지 않는 임베딩이다.** `Article` 240MB의
+> 2026-10-23 임베딩 보존 기간 도입 **전**에는 268MB(54%)였다. 당시 `Article` 240MB의
 > 내부는 heap 51MB · 인덱스 27MB · **TOAST 162MB**이고 TOAST에 있는 것이 임베딩이다. 행당
-> ~4.0KB × 월 14,000~19,000건이라 남은 ~244MB는 **약 3.4개월**이었다. 대응은 아래
-> "임베딩 보존 기간". 새 테이블을 제안할 때는 이 표의 값으로 판단한다.
+> ~4.0KB × 월 14,000~19,000건이라 남은 ~244MB는 **약 3.4개월**이었다. 아래 "임베딩 보존 기간"
+> 이후 증가는 월 ~23MB다. 새 테이블을 제안할 때는 이 표의 값으로 판단한다.
 
 **어느 수치인가.** 이 문서의 storage 값은 전부 **`pg_database_size`**(DB 안에서 잰 값)다. Neon 콘솔의
 Storage는 시점 복구(PITR) 히스토리까지 함께 집계해 이보다 클 수 있다 — 한도가 어느 쪽에 걸리는지는
@@ -159,11 +159,12 @@ npm run prune:embeddings -- --apply      # 확인 후 반영(2,000행씩 UPDATE,
     수집(`collect.yml`, KST 0·3·6·…·21시 17분)·클러스터링(KST 05:00) 실행과 겹치면 안 된다.
     GitHub Actions 탭에서 진행 중인 실행이 없는지 보고, 수집 직후 시각을 고른다.
   - Neon 콘솔 → SQL Editor에서 `VACUUM (FULL, VERBOSE, ANALYZE) "Article";` (트랜잭션 밖이어야
-    한다). 소요 시간은 재지 않았다. 완료 후 `pg_database_size`로 약 130MB(25%)인지 확인하고
-    위 표를 갱신한다.
+    한다). 완료 후 `pg_database_size`를 재서 위 표를 갱신한다.
 
-> 2026-10-23 14:40 KST에 첫 `--apply`(52,412행) + 일반 `VACUUM (ANALYZE) "Article"`을 돌렸다.
-> `pg_database_size` 267.7 → **305.1MB**(heap 재기록), heap·TOAST dead tuple 0. 위 표는 적용 전 값이다.
+> **적용 기록(2026-10-23).** 14:40 KST 첫 `--apply`(52,412행) + 일반 `VACUUM` → 267.7 → 305.1MB
+> (heap 재기록). 14:43 KST `VACUUM (FULL, ANALYZE) "Article"` — **1.5초**, 진행 중인 Actions 없음을
+> 확인하고 `DIRECT_URL` 세션에서 `lock_timeout = '10s'`로 돌렸다 → **112MB**. `Article` 277 → 84MB.
+> 행 수·남은 임베딩(8,450) 그대로, 직후 라이브 사이트 200.
 
 ### 지연(latency) 구조
 
