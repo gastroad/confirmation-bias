@@ -24,6 +24,9 @@ model Cluster {
   summary             String?
   // 비정규화. 날짜별 목록이 크기순 정렬 + 키셋 페이지네이션을 하므로 매번 세지 않는다.
   articleCount        Int      @default(0)
+  // 기사 전부가 사진 캡션인가(server/clustering/representative.ts의 isPhotoCaption).
+  // 색인 판정이 DTO와 SQL 양쪽에서 이 값을 본다 — 캡션 판정은 정규식이라 SQL로 옮길 수 없다.
+  photoOnly           Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

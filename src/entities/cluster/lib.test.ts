@@ -54,6 +54,7 @@ describe("isIndexableCluster", () => {
   it("기사 수가 모자라면 성향이 갈려도 제외한다", () => {
     expect(
       isIndexableCluster({
+        photoOnly: false,
         articleCount: INDEX_MIN_ARTICLES - 1,
         leaningDistribution: dist({ left: 1, right: 1 }),
       })
@@ -63,6 +64,7 @@ describe("isIndexableCluster", () => {
   it("한 진영만 등장하면 기사가 많아도 제외한다 — 비교가 성립하지 않는다", () => {
     expect(
       isIndexableCluster({
+        photoOnly: false,
         articleCount: 12,
         leaningDistribution: dist({ left: 8, center_left: 4 }),
       })
@@ -72,15 +74,31 @@ describe("isIndexableCluster", () => {
   it("기사 3건 이상 + 두 진영 이상이면 색인한다", () => {
     expect(
       isIndexableCluster({
+        photoOnly: false,
         articleCount: INDEX_MIN_ARTICLES,
         leaningDistribution: dist({ left: 2, right: 1 }),
       })
     ).toBe(true);
   });
 
+  it("기사 전부가 사진 캡션이면 기준을 넘어도 제외한다 — 세울 본 기사가 없다", () => {
+    // 2026-10-22 주간 리포트 9위: 서울신문 캡션 2건 + 천지일보 [포토] 8건
+    const leaningDistribution = dist({ center: 2, right: OUTLET_ARTICLE_CAP });
+    expect(isIndexableCluster({ photoOnly: false, articleCount: 10, leaningDistribution })).toBe(
+      true
+    );
+    expect(isIndexableCluster({ photoOnly: true, articleCount: 10, leaningDistribution })).toBe(
+      false
+    );
+  });
+
   it("unknown 언론사만으로는 진영 수를 채우지 못한다", () => {
     expect(
-      isIndexableCluster({ articleCount: 9, leaningDistribution: dist({ left: 8, unknown: 1 }) })
+      isIndexableCluster({
+        photoOnly: false,
+        articleCount: 9,
+        leaningDistribution: dist({ left: 8, unknown: 1 }),
+      })
     ).toBe(false);
   });
 });
@@ -113,8 +131,10 @@ describe("색인 기준 — 수집 건수와 반영 건수가 같은 집합을 �
         if (ids.length === 0) return;
         const leaningDistribution = countLeaningDistribution(ids);
         const counted = Object.values(leaningDistribution).reduce((a, b) => a + b, 0);
-        expect(isIndexableCluster({ articleCount: counted, leaningDistribution })).toBe(
-          isIndexableCluster({ articleCount: ids.length, leaningDistribution })
+        expect(
+          isIndexableCluster({ photoOnly: false, articleCount: counted, leaningDistribution })
+        ).toBe(
+          isIndexableCluster({ photoOnly: false, articleCount: ids.length, leaningDistribution })
         );
         compared++;
         return;
@@ -157,6 +177,7 @@ function cluster(over: Partial<ClusterSummary> & { id: string }): ClusterSummary
     leaningDistribution: dist({ left: 3, right: 2 }),
     leaningGroupRatios: { progressive: 0.6, neutral: 0, conservative: 0.4 },
     tilt: 20,
+    photoOnly: false,
     ...over,
     // 상한에 걸린 매체가 없으면 두 값이 같다. 다른 경우만 테스트가 따로 적는다.
     countedArticleCount: over.countedArticleCount ?? over.articleCount ?? 5,
@@ -223,13 +244,18 @@ describe("shouldRemoveCluster", () => {
 
   it("색인 대상은 남긴다", () => {
     expect(
-      shouldRemoveCluster({ articleCount: 3, leaningDistribution: dist({ left: 2, right: 1 }) })
+      shouldRemoveCluster({
+        photoOnly: false,
+        articleCount: 3,
+        leaningDistribution: dist({ left: 2, right: 1 }),
+      })
     ).toBe(false);
   });
 
   it("기준 미달이고 댓글이 없으면 없앤다", () => {
     expect(
       shouldRemoveCluster({
+        photoOnly: false,
         articleCount: 1,
         leaningDistribution: dist({ left: 1 }),
         commentCount: 0,
@@ -240,6 +266,7 @@ describe("shouldRemoveCluster", () => {
   it("기준 미달이어도 **댓글이 달렸으면 남긴다** — 사람이 쓴 글을 버리지 않는다", () => {
     expect(
       shouldRemoveCluster({
+        photoOnly: false,
         articleCount: 1,
         leaningDistribution: dist({ left: 1 }),
         commentCount: 1,
@@ -247,10 +274,24 @@ describe("shouldRemoveCluster", () => {
     ).toBe(false);
   });
 
+  it("사진만으로 된 클러스터는 기준을 넘어도 없앤다 — 댓글이 있으면 남긴다", () => {
+    const photo = {
+      photoOnly: true,
+      articleCount: 10,
+      leaningDistribution: dist({ center: 2, right: 3 }),
+    };
+    expect(shouldRemoveCluster({ ...photo, commentCount: 0 })).toBe(true);
+    expect(shouldRemoveCluster({ ...photo, commentCount: 1 })).toBe(false);
+  });
+
   it("commentCount를 모르면 0으로 본다 (목록 DTO에는 없는 필드다)", () => {
-    expect(shouldRemoveCluster({ articleCount: 1, leaningDistribution: dist({ left: 1 }) })).toBe(
-      true
-    );
+    expect(
+      shouldRemoveCluster({
+        photoOnly: false,
+        articleCount: 1,
+        leaningDistribution: dist({ left: 1 }),
+      })
+    ).toBe(true);
   });
 });
 
@@ -357,6 +398,7 @@ const summaryRow = (
   summary: null,
   bucketDate: BUCKET,
   createdAt: CREATED,
+  photoOnly: false,
   articles: articles.map((a) => ({ outletId: a.outletId, publishedAt: new Date(a.publishedAt) })),
   ...over,
 });
@@ -495,6 +537,7 @@ const detailRow = (articles: ReturnType<typeof detailArticle>[], comments = 0) =
   summary: "요약 문장.",
   bucketDate: BUCKET,
   createdAt: CREATED,
+  photoOnly: false,
   _count: { comments },
   articles: articles.map((a) => ({ ...a, publishedAt: new Date(a.publishedAt) })),
 });

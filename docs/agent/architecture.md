@@ -49,6 +49,7 @@ RSS 피드
 | `scripts/cluster-day.ts`              | 하루치 클러스터링 실행 (`--date`/`--from..--to`/`--all`/`--dry-run`)                 |
 | `scripts/cleanup-dirty-dates.ts`      | RSS `pubDate` 이상치로 생긴 과거 버킷 정리 (일회성, `--dry-run`)                     |
 | `scripts/backfill-titles.ts`          | 캡션 대표 제목만 다시 골라 UPDATE. **클러스터를 재생성하지 않는다**                  |
+| `scripts/backfill-photo-only.ts`      | `Cluster.photoOnly`(기사 전부가 사진 캡션)만 UPDATE. 참이면 색인 제외 → 404          |
 | `scripts/backfill-summary.ts`         | 기존 클러스터에 `summary`만 UPDATE. **클러스터를 재생성하지 않는다**                 |
 | `prisma/schema.prisma`                | Outlet / Cluster / Article 모델                                                      |
 | `src/`                                | FSD 구조 Next.js 앱 (아래 별도 설명)                                                 |

@@ -25,6 +25,7 @@ interface SummaryRow {
   summary: string | null;
   bucketDate: Date;
   createdAt: Date;
+  photoOnly: boolean;
   articles: { outletId: string; publishedAt: Date }[];
 }
 
@@ -76,6 +77,7 @@ export function toClusterSummary(row: SummaryRow): ClusterSummary {
     leaningDistribution: dist,
     leaningGroupRatios: ratios,
     tilt: calcTilt(ratios),
+    photoOnly: row.photoOnly,
   };
 }
 
@@ -117,6 +119,7 @@ export function toClusterDetail(row: DetailRow): ClusterDetail {
     leaningDistribution: dist,
     leaningGroupRatios: ratios,
     tilt: calcTilt(ratios),
+    photoOnly: row.photoOnly,
     articles,
     commentCount: row._count.comments,
   };
@@ -168,14 +171,19 @@ export function countLeaningGroups(dist: LeaningDistribution): number {
 /**
  * 이 클러스터가 색인 대상인가. 기준의 근거는 `INDEX_MIN_ARTICLES` 주석에 있다.
  *
+ * **기사 전부가 사진 캡션이면 기준을 넘어도 뺀다**(2026-10-23). 매체 둘이 같은 장면의 캡션만
+ * 낸 이슈는 "같은 사건, 세 갈래 제목"을 세울 본 기사가 없고, 페이지 본문이 남의 캡션 목록이다.
+ * 실측으로 색인 대상 4,476개 중 18개였고(댓글 0) 그중 14개가 서울신문+천지일보다.
+ *
  * DTO만 보고 판정하므로 상세 페이지는 **DB를 다시 치지 않는다.** sitemap은 1만 건을 전부
  * DTO로 만들 수 없어 같은 기준을 SQL로 표현한다(`findIndexableClusterRefs`) — 임계값은
  * 거기에도 이 상수를 넘겨 단일 출처를 유지한다.
  */
 export function isIndexableCluster(
-  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution">
+  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution" | "photoOnly">
 ): boolean {
   return (
+    !cluster.photoOnly &&
     cluster.articleCount >= INDEX_MIN_ARTICLES &&
     countLeaningGroups(cluster.leaningDistribution) >= INDEX_MIN_LEANING_GROUPS
   );
@@ -243,7 +251,7 @@ export function findCappedOutlets(articles: readonly ArticleWithOutlet[]): Cappe
  * → docs/agent/adsense-compliance.md의 P0-6
  */
 export function shouldRemoveCluster(
-  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution"> & {
+  cluster: Pick<ClusterSummary, "articleCount" | "leaningDistribution" | "photoOnly"> & {
     commentCount?: number;
   }
 ): boolean {

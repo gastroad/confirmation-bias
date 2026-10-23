@@ -24,6 +24,7 @@ const row = (id: string, articles: { outletId: string; publishedAt: string }[] =
   summary: null,
   bucketDate: new Date("2026-08-26T00:00:00.000Z"),
   createdAt: new Date("2026-08-27T00:00:00.000Z"),
+  photoOnly: false,
   articles: articles.map((a) => ({ outletId: a.outletId, publishedAt: new Date(a.publishedAt) })),
 });
 
