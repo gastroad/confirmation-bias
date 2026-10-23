@@ -42,6 +42,12 @@ npm run backfill:titles
 ```
 
 ```bash
+# 5-b. 기사 전부가 사진 캡션인 클러스터에 photoOnly를 세운다 (멱등). 참이면 색인 제외 → 404
+npm run backfill:photo-only -- --dry-run
+npm run backfill:photo-only
+```
+
+```bash
 # 6. 이미 적재된 제목·발췌의 HTML 엔티티 잔재 복원 (멱등)
 npm run repair:titles -- --dry-run
 npm run repair:titles
@@ -49,7 +55,7 @@ npm run repair:titles
 
 ⚠️ **백필에 `cluster:day --all`을 쓰지 않는다.** `clusterDay`는 그 날짜의 클러스터를 지우고
 **새 id로 재생성**하므로 1만여 개 URL이 전부 바뀌고 이미 색인된 URL이 전량 404가 된다.
-`backfill:summary`·`backfill:titles`는 클러스터를 건드리지 않고 한 컬럼만 UPDATE한다.
+`backfill:summary`·`backfill:titles`·`backfill:photo-only`는 클러스터를 건드리지 않고 한 컬럼만 UPDATE한다.
 
 ## DB 초기화 (처음 셋업)
 

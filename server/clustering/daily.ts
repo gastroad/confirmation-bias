@@ -3,7 +3,7 @@ import { db } from "../db";
 import { agglomerate } from "./hac";
 import { generateEmbeddings } from "./embed";
 import { decodeEmbedding, encodeEmbedding, normalizeInPlace } from "./vector";
-import { representativeIndex } from "./representative";
+import { isPhotoCaption, representativeIndex } from "./representative";
 import { bucketRange, formatBucketDate } from "./bucket";
 import { buildClusterSummary } from "./summary";
 
@@ -223,6 +223,7 @@ export async function clusterDay(
         bucketDate: bucket,
         representativeTitle: titles[representativeIndex(vectors, titles, group)],
         articleCount: group.length,
+        photoOnly: group.every((i) => isPhotoCaption(titles[i])),
         summary: summaries[gi],
       })),
     });

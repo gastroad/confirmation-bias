@@ -26,6 +26,11 @@ export interface ClusterSummary {
   leaningGroupRatios: LeaningGroupRatios;
   /** 진보 비율 − 보수 비율 (%p, 반영 기사 수 기준). 중심선에서 어느 쪽으로 얼마나 벗어났는지 */
   tilt: number;
+  /**
+   * 기사 전부가 사진 캡션인가. 참이면 색인 기준을 넘어도 색인하지 않는다 → `isIndexableCluster`.
+   * 판정은 파이프라인이 한다(캡션 판정이 `server/clustering/representative.ts`에 있다).
+   */
+  photoOnly: boolean;
 }
 
 export interface ClusterDetail extends ClusterSummary {

@@ -117,6 +117,7 @@ export async function findOutletRecentClusters(
      JOIN "Outlet" o ON o.id = a."outletId"
      LEFT JOIN grp ON grp.leaning = o.leaning
      WHERE cl."articleCount" >= $3::int
+       AND cl."photoOnly" = false
        AND EXISTS (
          SELECT 1 FROM "Article" mine
          WHERE mine."clusterId" = cl.id AND mine."outletId" = $5

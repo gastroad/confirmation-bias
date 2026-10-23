@@ -44,6 +44,7 @@ export async function findClusterSummaryPage({ cursor, limit, outletIds, bucketD
       summary: true,
       bucketDate: true,
       createdAt: true,
+      photoOnly: true,
       articles: { select: { outletId: true, publishedAt: true } },
     },
   });
@@ -80,7 +81,8 @@ interface ClusterRefRow {
  *
  * 성향 그룹 수는 Prisma로 표현할 수 없어 raw SQL이다. 1만 건을 전부 DTO로 만들어 거르는
  * 것보다 DB에서 거르는 편이 egress·메모리 양쪽에서 싸다. 판정 결과는 상세 페이지의
- * `isIndexableCluster`(DTO 기반)와 같아야 한다.
+ * `isIndexableCluster`(DTO 기반)와 같아야 한다 — 사진만으로 된 클러스터(`photoOnly`)를
+ * 빼는 조건도 여기와 `countIndexableClusters`·`findOutletRecentClusters`에 함께 있다.
  */
 export async function findIndexableClusterRefs(criteria: IndexCriteria) {
   return db.$queryRawUnsafe<ClusterRefRow[]>(
@@ -91,6 +93,7 @@ export async function findIndexableClusterRefs(criteria: IndexCriteria) {
      JOIN "Outlet" o ON o.id = a."outletId"
      LEFT JOIN grp ON grp.leaning = o.leaning
      WHERE cl."articleCount" >= $3::int
+       AND cl."photoOnly" = false
      GROUP BY cl.id, cl."updatedAt", cl."bucketDate"
      HAVING count(DISTINCT grp.name) >= $4::int
      ORDER BY cl."bucketDate" DESC, cl.id DESC`,
@@ -120,6 +123,7 @@ export async function countIndexableClusters(
        JOIN "Outlet" o ON o.id = a."outletId"
        LEFT JOIN grp ON grp.leaning = o.leaning
        WHERE cl."articleCount" >= $3::int
+         AND cl."photoOnly" = false
          AND ($5::date IS NULL OR cl."bucketDate" = $5::date)
          AND ($6::boolean = false OR EXISTS (
            SELECT 1 FROM "Article" f WHERE f."clusterId" = cl.id AND f."outletId" = ANY($7::text[])
@@ -153,6 +157,7 @@ export async function findClustersInRange(from: Date, to: Date, minArticles: num
       summary: true,
       bucketDate: true,
       createdAt: true,
+      photoOnly: true,
       articles: { select: { outletId: true, publishedAt: true } },
     },
   });
@@ -172,6 +177,7 @@ export async function findClusterDetailRow(id: string) {
       summary: true,
       bucketDate: true,
       createdAt: true,
+      photoOnly: true,
       _count: { select: { comments: true } },
       articles: {
         orderBy: { publishedAt: "asc" },
