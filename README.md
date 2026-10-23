@@ -142,6 +142,7 @@ npm run dev          # http://localhost:3000
 | `npm run build` / `start`        | 프로덕션 빌드 / 실행       |
 | `npm run collect`                | RSS 수집                   |
 | `npm run cluster:day`            | 하루치 배치 클러스터링     |
+| `npm run prune:embeddings`       | 14일 지난 임베딩 정리      |
 | `npm run db:migrate` / `db:seed` | 마이그레이션 / 언론사 시드 |
 | `npm run test:unit`              | 단위 테스트 (Vitest)       |
 | `npm run test:e2e`               | E2E 테스트 (Playwright)    |
@@ -194,7 +195,8 @@ UI 레이어는 DB에 직접 접근하지 않고 `entities/*/api.ts` 클라이�
 | 중도진보 | 경향신문                                               |
 | 진보     | 한겨레신문, 프레시안, 여성신문, 오마이뉴스, 미디어오늘 |
 
-> 성향 분류는 미디어 연구를 참고한 상대적 위치 표시이며, 절대적 기준이 아닙니다.
+> 성향 분류는 운영자가 정한 상대적 위치이며, 특정 연구의 측정치를 그대로 옮긴 것이 아닙니다.
+> 출처를 밝힐 수 있는 정량 지표가 아니므로 이견이 있을 수 있습니다. 근거는 [소개 및 방법론](https://www.confirmationbias.app/about)에 있습니다.
 > 시사인은 RSS 피드가 2023년 이후 갱신되지 않아 목록에서 제외했습니다.
 
 기사는 **제목 + 300자 발췌 + 출처 + 원문 링크**만 표시하며 전문을 저장하지 않습니다.

@@ -39,6 +39,16 @@ npm run backfill:photo-only -- --dry-run
 npm run backfill:photo-only
 ```
 
+```bash
+# 6. 보존 기간(14일)이 지난 임베딩을 비운다 (멱등). 기본이 DRY RUN이고 cron이 매일 돌린다.
+#    첫 대량 회수만 사람이 한 번 --apply로 — cron은 --max-rows=5000에 걸려 대신하지 않는다
+npm run prune:embeddings
+npm run prune:embeddings -- --apply
+```
+
+→ [infrastructure.md](./infrastructure.md)의 "임베딩 보존 기간". `VACUUM FULL`은 그 문서의 절차대로
+사람이 시각을 골라 한 번만 돌린다.
+
 ⚠️ **백필에 `cluster:day --all`을 쓰지 않는다.** `clusterDay`는 그 날짜의 클러스터를 지우고
 **새 id로 재생성**하므로 1만여 개 URL이 전부 바뀌고 이미 색인된 URL이 전량 404가 된다.
 `backfill:summary`·`backfill:titles`·`backfill:photo-only`는 클러스터를 건드리지 않고 한 컬럼만 UPDATE한다.

@@ -55,7 +55,13 @@ _(클러스터 수 / 최대 크기)_
 
 ```bash
 npm run cluster:day -- --date=2026-08-20 --dry-run --threshold=0.65
+npm run cluster:day -- --date=2026-08-20 --dry-run --embed-missing --threshold=0.65
 ```
+
+⚠️ **임베딩은 14일만 남는다**(`retention.ts`의 `EMBEDDING_RETENTION_DAYS`). 그보다 오래된 날짜는
+dry-run이 임베딩 없는 기사를 빼고 돌아 결과가 비거나 줄어든다 — 스크립트가 뺀 건수를 경고한다.
+`--embed-missing`을 붙이면 메모리에서 다시 임베딩한다(DB엔 쓰지 않는다. 하루치 ~500건에
+$0.002 수준). → [infrastructure.md](./infrastructure.md)의 "임베딩 보존 기간"
 
 ## "최대 클러스터 크기"는 품질 지표가 아니다
 
@@ -123,6 +129,10 @@ LLM 호출이 0이면서 "첫 기사 제목"보다 대표성이 좋다.
   [adsense-compliance.md](./adsense-compliance.md)의 P0-6-b. 기존 클러스터는
   `npm run backfill:photo-only`로 채운다.
 
+- `backfill:titles`는 centroid를 임베딩으로 다시 잡으므로 **임베딩 보존 기간(14일) 안의 날짜만**
+  고친다. 그보다 오래된 클러스터는 건너뛰고 수를 출력한다. 캡션 규칙을 또 고쳐 과거까지
+  반영해야 하면 재임베딩 경로가 먼저 필요하다(2026-10-23 적용분은 보존 기간 도입 전에 끝났다).
+
 기존 클러스터에는 `npm run backfill:titles`로 반영한다 — **`cluster:day`로 재생성하지 않는다**
 (id가 바뀌어 색인 URL이 404가 된다). 대상은 지금 제목이 캡션인 것뿐이다. 캡션이 아닌 제목은
 이미 centroid 최근접이라 새 규칙으로도 같은 답이 나온다. 2026-10-23 dry-run 결과 426개 중
@@ -135,6 +145,9 @@ LLM 호출이 0이면서 "첫 기사 제목"보다 대표성이 좋다.
 | `Article.embedding` | `embeddingJson` 문자열 ≈10KB    | **Float32 raw bytes 2,048B**      |
 | `Cluster.centroid`  | `centroidJson` ≈10KB × 11,376개 | **제거** (배치 후 다시 쓰지 않음) |
 | DB 크기             | 261MB                           | **109MB** (이후 101MB)            |
+
+이후 유입으로 268MB(2026-10-23)까지 늘었고, 그 절반이 임베딩(TOAST)이라 **14일 보존 기간**을
+두었다 → [infrastructure.md](./infrastructure.md)의 "임베딩 보존 기간".
 
 `Bytes` 인코딩은 `vector.ts`가 `DataView`로 처리한다. Buffer를 쓰지 않는 이유는 (1) 엔디안 명시
 (2) byteOffset 정렬 제약 회피 (3) Prisma 7의 `Bytes`가 `Uint8Array<ArrayBuffer>`라 `Buffer`와
