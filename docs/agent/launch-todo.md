@@ -121,13 +121,15 @@ GitHub Actions가 수집 3시간마다 / 클러스터링 하루 1회로 자동 �
 - [x] **클러스터 품질 튜닝 / 검증** ✅ 1차 완료(2026-08-24)
       증분 배정 → 일별 배치 HAC로 전환. **최대 클러스터 253건 → 85건**(그마저 실제 대형 이슈).
       임계값 0.62는 세 날짜 실측 + 육안 검증으로 결정. → [daily-clustering.md](./daily-clustering.md)
-- [ ] **storage 증가 억제 — 클러스터가 아니라 임베딩을 정리한다** (2026-10-23 방향 수정)
-      268MB / Neon Free 0.5GB(54%) 중 `Article` TOAST 162MB가 **다시 읽히지 않는 임베딩**이다.
+- [x] **storage 증가 억제 — 클러스터가 아니라 임베딩을 정리한다** ✅ 완료(2026-10-23)
+      268MB / Neon Free 0.5GB(54%) 중 `Article` TOAST 162MB가 **다시 읽히지 않는 임베딩**이었다.
       예전 항목은 "오래된 클러스터 아카이빙"이었으나 **그 방향으로는 풀리지 않는다** — `Cluster`는
       20MB뿐이고, 지워도 기사 240MB는 `clusterId`만 NULL이 되어 남으며, 색인 URL 404와 `Comment`
-      CASCADE를 치른다(효과 7%에 비용 최대). - [x] 임베딩 보존 기간 14일 + `prune:embeddings`(기본 dry-run) + cron 일일 정리. 증가율
-      ~72MB/월 → ~23MB/월 - [ ] **첫 대량 회수(52,412행)를 사람이 dry-run 확인 후 `--apply`로 한 번** — 그 전까지
-      cron의 정리 스텝은 `--max-rows`에 걸려 실패로 드러난다 - [ ] (선택) 시각을 골라 `VACUUM FULL "Article"` 한 번 — 268MB → 약 130MB. 자동화하지 않는다
+      CASCADE를 치른다(효과 7%에 비용 최대). 임베딩 보존 기간 14일 + `prune:embeddings`(기본
+      dry-run) + cron 일일 정리로 증가율이 ~72MB/월 → ~23MB/월이 된다. 첫 대량 회수(52,412행)와
+      일반 `VACUUM`은 2026-10-23 14:40 KST에 돌렸다 — `pg_database_size`는 heap 재기록으로
+      268 → 305MB로 늘었고 그 공간은 이후 유입이 재사용한다.
+      **남은 것(선택):** 시각을 골라 `VACUUM FULL "Article"` 한 번 — 305MB → 약 130MB. 자동화하지 않는다.
       → [infrastructure.md](./infrastructure.md)의 "임베딩 보존 기간"
 - [x] **언론사 성향 분류 근거 투명성** ✅ 완료(2026-08-27) — `/about` 신설.
       5단계 배치와 소속 매체를 `OUTLETS`에서 렌더해 공개하고, **이 배치가 운영자가 정한

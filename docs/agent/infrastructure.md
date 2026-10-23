@@ -162,6 +162,9 @@ npm run prune:embeddings -- --apply      # 확인 후 반영(2,000행씩 UPDATE,
     한다). 소요 시간은 재지 않았다. 완료 후 `pg_database_size`로 약 130MB(25%)인지 확인하고
     위 표를 갱신한다.
 
+> 2026-10-23 14:40 KST에 첫 `--apply`(52,412행) + 일반 `VACUUM (ANALYZE) "Article"`을 돌렸다.
+> `pg_database_size` 267.7 → **305.1MB**(heap 재기록), heap·TOAST dead tuple 0. 위 표는 적용 전 값이다.
+
 ### 지연(latency) 구조
 
 DB가 싱가포르이므로 **Vercel 함수 리전을 같이 맞춰야 한다.** `vercel.json`의 `regions: ["sin1"]`이 그것.
