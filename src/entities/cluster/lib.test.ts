@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  countLeaningDistribution,
   emptyDistribution,
   GROUP_BY_LEANING,
   LEANING_GROUPS,
@@ -81,6 +82,50 @@ describe("isIndexableCluster", () => {
     expect(
       isIndexableCluster({ articleCount: 9, leaningDistribution: dist({ left: 8, unknown: 1 }) })
     ).toBe(false);
+  });
+});
+
+// 색인 기준을 수집 건수(articleCount) 대신 반영 건수(countedArticleCount)로 잴지 검토했고
+// 바꾸지 않았다(2026-10-23). 두 기준의 통과 집합이 같아서다 — 실측 27,540개 중 차이 0건.
+//
+// 진영이 2개 이상이면 매체도 2곳 이상이다. 최악은 매체가 딱 그만큼이고 한 곳이 나머지를 다 쓴
+// 경우라, 반영 건수 ≥ (진영 하한 − 1) + min(남은 건수, 상한)이다. 그래서 상한이
+// `INDEX_MIN_ARTICLES − INDEX_MIN_LEANING_GROUPS + 1`(지금 2) 이상인 동안만 성립한다.
+// 상한을 1로 내리면 매체 2곳·2+1건 이슈가 수집 3건 / 반영 2건으로 갈린다 — 그때는 이 결론부터
+// 다시 내려야 한다(색인 집합이 바뀌면 404 집합이 바뀐다 → P0-6).
+describe("색인 기준 — 수집 건수와 반영 건수가 같은 집합을 고른다", () => {
+  it("매체당 상한이 두 기준을 가르지 않을 만큼 크다", () => {
+    expect(OUTLET_ARTICLE_CAP).toBeGreaterThanOrEqual(
+      INDEX_MIN_ARTICLES - INDEX_MIN_LEANING_GROUPS + 1
+    );
+  });
+
+  it("매체 구성·건수를 전부 돌려도 판정이 같다", () => {
+    // 진보·중도·보수·같은 진영의 두 번째 매체·명단 밖 매체
+    const outlets = ["hani", "yonhap", "chosun", "cheonji", "not-in-list"];
+    const maxPerOutlet = OUTLET_ARTICLE_CAP + 2;
+    let compared = 0;
+
+    const counts = new Array<number>(outlets.length).fill(0);
+    const visit = (k: number) => {
+      if (k === outlets.length) {
+        const ids = outlets.flatMap((id, i) => new Array<string>(counts[i]).fill(id));
+        if (ids.length === 0) return;
+        const leaningDistribution = countLeaningDistribution(ids);
+        const counted = Object.values(leaningDistribution).reduce((a, b) => a + b, 0);
+        expect(isIndexableCluster({ articleCount: counted, leaningDistribution })).toBe(
+          isIndexableCluster({ articleCount: ids.length, leaningDistribution })
+        );
+        compared++;
+        return;
+      }
+      for (let n = 0; n <= maxPerOutlet; n++) {
+        counts[k] = n;
+        visit(k + 1);
+      }
+    };
+    visit(0);
+    expect(compared).toBe((maxPerOutlet + 1) ** outlets.length - 1);
   });
 });
 
